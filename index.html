@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Apoyo Docente (FINAL)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .page {
+            display: none;
+        }
+    </style>
+</head>
+<body class="p-8">
+
+    <div id="loading" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+    </div>
+    
+    <div id="login-page" class="page flex items-center justify-center min-h-screen">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+            <h1 class="text-4xl font-extrabold mb-6 text-center text-white">Plataforma de Apoyo Docente</h1>
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-300">Iniciar Sesión</h2>
+            
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="username" class="block text-gray-400 mb-2 font-semibold">Usuario (Email)</label>
+                    <input type="email" id="username" class="w-full p-3 rounded-xl bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="usuario@docente.com" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-400 mb-2 font-semibold">Contraseña</label>
+                    <input type="password" id="password" class="w-full p-3 rounded-xl bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="**********" required>
+                </div>
+                <button type="submit" class="w-full p-3 bg-blue-600 rounded-xl text-white font-bold text-lg hover:bg-blue-700 transition-colors duration-200 shadow-md">
+                    Iniciar Sesión
+                </button>
+            </form>
+            <div class="relative flex py-5 items-center">
+                <div class="flex-grow border-t border-gray-600"></div>
+                <span class="flex-shrink mx-4 text-gray-500">o</span>
+                <div class="flex-grow border-t border-gray-600"></div>
+            </div>
+            <button id="google-login-btn" class="w-full p-3 bg-red-600 rounded-xl text-white font-bold text-lg hover:bg-red-700 transition-colors duration-200 flex items-center justify-center shadow-md">
+                <img src="https://img.icons8.com/color/24/000000/google-logo.png" class="mr-3" alt="Google icon"/>
+                Iniciar Sesión con Google
+            </button>
+        </div>
+    </div>
+
+    <div id="dashboard-page" class="page container mx-auto p-4 hidden">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-4xl font-extrabold text-white">Panel Docente</h1>
+            <div class="flex items-center space-x-4">
+                <span id="user-id" class="text-gray-400 text-sm"></span>
+                <button id="logout-btn" class="px-4 py-2 bg-gray-700 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 shadow-md">
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+        
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl mb-6 border border-gray-700">
+            <h2 class="text-2xl font-bold mb-4 text-white">Crear Materia</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-gray-700 p-6 rounded-xl shadow-inner">
+                    <h3 class="font-bold text-xl mb-2 text-white">Creación Manual</h3>
+                    <form id="create-manual-form">
+                        <input type="text" id="materia-nombre" class="w-full p-3 mb-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nombre de la Materia" required>
+                        <textarea id="materia-descripcion" class="w-full p-3 mb-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Descripción de la materia"></textarea>
+                        <button type="submit" class="w-full p-3 bg-blue-600 rounded-xl text-white font-bold hover:bg-blue-700 transition-colors duration-200 shadow-md">
+                            Crear Manualmente
+                        </button>
+                    </form>
+                </div>
+                <div class="bg-gray-700 p-6 rounded-xl shadow-inner">
+                    <h3 class="font-bold text-xl mb-2 text-white">Creación con IA</h3>
+                    <form id="create-ai-form">
+                        <textarea id="ai-plan" class="w-full p-3 mb-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Describe el plan de estudios para la IA..." required></textarea>
+                        <button type="submit" class="w-full p-3 bg-green-600 rounded-xl text-white font-bold hover:bg-green-700 transition-colors duration-200 shadow-md">
+                            Crear con IA
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700">
+            <h2 class="text-2xl font-bold mb-4 text-white">Mis Materias</h2>
+            <div id="materias-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+        </div>
+    </div>
+    
+    <div id="materia-page" class="page container mx-auto p-4 hidden">
+        <button id="back-to-dashboard" class="mb-6 px-4 py-2 bg-gray-700 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 shadow-md">
+            &larr; Volver al Panel
+        </button>
+        <h1 id="materia-title" class="text-4xl font-extrabold text-white mb-6"></h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+            <button id="btn-asistencia" class="p-6 bg-blue-600 text-white rounded-xl font-bold text-xl hover:bg-blue-700 transition-colors duration-200 shadow-md">
+                Asistencia
+            </button>
+            <button id="btn-actividades" class="p-6 bg-purple-600 text-white rounded-xl font-bold text-xl hover:bg-purple-700 transition-colors duration-200 shadow-md">
+                Actividades
+            </button>
+            <button id="btn-evaluaciones" class="p-6 bg-red-600 text-white rounded-xl font-bold text-xl hover:bg-red-700 transition-colors duration-200 shadow-md">
+                Evaluaciones
+            </button>
+            <button id="btn-material" class="p-6 bg-green-600 text-white rounded-xl font-bold text-xl hover:bg-green-700 transition-colors duration-200 shadow-md">
+                Material Didáctico
+            </button>
+            <button id="btn-estudiantes" class="p-6 bg-yellow-600 text-white rounded-xl font-bold text-xl hover:bg-yellow-700 transition-colors duration-200 shadow-md">
+                Gestión de Estudiantes
+            </button>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700">
+            <h2 class="text-2xl font-bold text-white mb-4">Ponderación Final por Estudiante</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead class="bg-gray-700">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Matrícula
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Asistencia
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Actividades
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Evaluaciones
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Calificación Final
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="final-grades-table-body" class="bg-gray-800 divide-y divide-gray-700">
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-400">Cargando datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="asistencia-page" class="page container mx-auto p-4 hidden">
+        <button id="back-from-asistencia" class="mb-6 px-4 py-2 bg-gray-700 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 shadow-md">
+            &larr; Volver a la Materia
+        </button>
+        <h2 class="text-3xl font-bold text-white mb-6">Panel de Asistencia</h2>
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700">
+            <div class="flex flex-col md:flex-row items-center justify-between mb-6">
+                <div class="text-center md:text-left mb-4 md:mb-0">
+                    <p class="text-xl font-semibold text-white">Unidad: <span id="asistencia-unidad" class="text-yellow-400">1</span></p>
+                    <p class="text-gray-400">Selecciona la unidad y genera un código QR para que los estudiantes se registren.</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button id="generate-qr-btn" class="p-3 bg-blue-600 rounded-xl text-white font-bold hover:bg-blue-700 transition-colors duration-200 shadow-md">
+                        Generar QR
+                    </button>
+                    <button id="cancel-qr-btn" class="p-3 bg-red-600 rounded-xl text-white font-bold hover:bg-red-700 transition-colors duration-200 shadow-md hidden">
+                        Cancelar QR
+                    </button>
+                </div>
+            </div>
+
+            <div id="qr-section" class="flex flex-col items-center mb-6 hidden">
+                <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-300">
+                    <canvas id="qr-canvas" class="w-48 h-48"></canvas>
+                </div>
+                <div class="text-center mt-4">
+                    <p class="text-2xl font-bold text-white">QR Activo por: <span id="qr-timer" class="text-yellow-400"></span></p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-white mb-4">Registro en Tiempo Real</h3>
+                <div id="attendance-list" class="bg-gray-700 p-4 rounded-xl shadow-inner h-64 overflow-y-auto">
+                    <p class="text-gray-400 text-center">Esperando registros...</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-700 p-6 rounded-xl shadow-inner mb-6">
+                <h3 class="font-bold text-xl mb-2 text-white">Asistencia Manual</h3>
+                <div id="manual-attendance-list">
+                    <p class="text-gray-400 text-center">Cargando lista de estudiantes...</p>
+                </div>
+            </div>
+
+            <button id="close-attendance-btn" class="w-full p-3 bg-green-600 rounded-xl text-white font-bold text-lg hover:bg-green-700 transition-colors duration-200 shadow-md">
+                Cerrar Asistencia del Día
+            </button>
+        </div>
+    </div>
+    
+    <div id="actividades-page" class="page container mx-auto p-4 hidden">
+        <button id="back-from-actividades" class="mb-6 px-4 py-2 bg-gray-700 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 shadow-md">
+            &larr; Volver a la Materia
+        </button>
+        <h2 class="text-3xl font-bold text-white mb-6">Panel de Actividades</h2>
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700 mb-6">
+            <h3 class="text-xl font-semibold text-white mb-4">Agregar Actividad</h3>
+            <form id="add-activity-form">
+                <div class="mb-3">
+                    <label for="unidad-select-act" class="block text-gray-400 mb-2">Unidad</label>
+                    <select id="unidad-select-act" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="1">Unidad 1</option>
+                        <option value="2">Unidad 2</option>
+                        <option value="3">Unidad 3</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="activity-name" class="block text-gray-400 mb-2">Nombre de la Actividad</label>
+                    <input type="text" id="activity-name" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-3">
+                    <label for="activity-url" class="block text-gray-400 mb-2">Enlace de la Actividad (Opcional)</label>
+                    <input type="url" id="activity-url" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: https://docs.google.com/document/d/..." >
+                </div>
+                <button type="submit" class="w-full p-3 bg-blue-600 rounded-xl text-white font-bold hover:bg-blue-700 transition-colors duration-200 shadow-md">
+                    Agregar Actividad
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700">
+            <h3 class="text-xl font-semibold text-white mb-4">Lista de Actividades</h3>
+            <div class="flex space-x-4 mb-4">
+                <button id="batch-grade-btn-act" class="p-3 bg-purple-600 rounded-xl text-white font-bold hover:bg-purple-700 transition-colors duration-200 shadow-md">
+                    Calificar por Lote
+                </button>
+            </div>
+            <div id="activities-list" class="bg-gray-700 p-4 rounded-xl shadow-inner min-h-32">
+                <p class="text-gray-400 text-center">No hay actividades registradas en esta unidad.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="evaluaciones-page" class="page container mx-auto p-4 hidden">
+        <button id="back-from-evaluaciones" class="mb-6 px-4 py-2 bg-gray-700 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 shadow-md">
+            &larr; Volver a la Materia
+        </button>
+        <h2 class="text-3xl font-bold text-white mb-6">Panel de Evaluaciones</h2>
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700 mb-6">
+            <h3 class="text-xl font-semibold text-white mb-4">Crear Examen o Reporte</h3>
+            <form id="add-evaluacion-form">
+                <div class="mb-3">
+                    <label for="unidad-select-eval" class="block text-gray-400 mb-2">Unidad</label>
+                    <select id="unidad-select-eval" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="1">Unidad 1</option>
+                        <option value="2">Unidad 2</option>
+                        <option value="3">Unidad 3</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="eval-name" class="block text-gray-400 mb-2">Nombre de la Evaluación</label>
+                    <input type="text" id="eval-name" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-3">
+                    <label for="eval-url" class="block text-gray-400 mb-2">Enlace del Formulario/Reporte (Opcional)</label>
+                    <input type="url" id="eval-url" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: https://forms.google.com/...">
+                </div>
+                <button type="submit" class="w-full p-3 bg-red-600 rounded-xl text-white font-bold hover:bg-red-700 transition-colors duration-200 shadow-md">
+                    Crear Evaluación
+                </button>
+            </form>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700">
+            <h3 class="text-xl font-semibold text-white mb-4">Lista de Evaluaciones</h3>
+            <div id="evaluaciones-list" class="bg-gray-700 p-4 rounded-xl shadow-inner min-h-32">
+                <p class="text-gray-400 text-center">No hay evaluaciones registradas en esta unidad.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="material-page" class="page container mx-auto p-4 hidden">
+        <button id="back-from-material" class="mb-6 px-4 py-2 bg-gray-700 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 shadow-md">
+            &larr; Volver a la Materia
+        </button>
+        <h2 class="text-3xl font-bold text-white mb-6">Panel de Material Didáctico</h2>
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700 mb-6">
+            <h3 class="text-xl font-semibold text-white mb-4">Agregar Nuevo Material</h3>
+            <form id="add-material-form">
+                <div class="mb-3">
+                    <label for="unidad-select-mat" class="block text-gray-400 mb-2">Unidad</label>
+                    <select id="unidad-select-mat" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="1">Unidad 1</option>
+                        <option value="2">Unidad 2</option>
+                        <option value="3">Unidad 3</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="material-name" class="block text-gray-400 mb-2">Nombre del Archivo</label>
+                    <input type="text" id="material-name" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-3">
+                    <label for="material-url" class="block text-gray-400 mb-2">Enlace del Archivo (Simulado)</label>
+                    <input type="url" id="material-url" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: https://docs.google.com/document/d/..." required>
+                </div>
+                <button type="submit" class="w-full p-3 bg-green-600 rounded-xl text-white font-bold hover:bg-green-700 transition-colors duration-200 shadow-md">
+                    Agregar Material
+                </button>
+            </form>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700">
+            <h3 class="text-xl font-semibold text-white mb-4">Materiales de la Unidad</h3>
+            <div id="material-list" class="bg-gray-700 p-4 rounded-xl shadow-inner min-h-32">
+                <p class="text-gray-400 text-center">No hay material didáctico registrado en esta unidad.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="estudiantes-page" class="page container mx-auto p-4 hidden">
+        <button id="back-from-estudiantes" class="mb-6 px-4 py-2 bg-gray-700 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 shadow-md">
+            &larr; Volver a la Materia
+        </button>
+        <h2 class="text-3xl font-bold text-white mb-6">Gestión de Estudiantes</h2>
+
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700 mb-6">
+            <h3 class="text-xl font-semibold text-white mb-4">Agregar Estudiante</h3>
+            <form id="add-student-form">
+                <div class="mb-3">
+                    <label for="student-matricula-input" class="block text-gray-400 mb-2">Matrícula</label>
+                    <input type="text" id="student-matricula-input" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: A01234567" required>
+                </div>
+                   <div class="mb-3">
+                    <label for="student-name-input" class="block text-gray-400 mb-2">Nombre</label>
+                    <input type="text" id="student-name-input" class="w-full p-3 rounded-xl bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Juan Pérez" required>
+                </div>
+                <button type="submit" class="w-full p-3 bg-yellow-600 rounded-xl text-white font-bold hover:bg-yellow-700 transition-colors duration-200 shadow-md">
+                    Agregar Estudiante
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700">
+            <h3 class="text-xl font-semibold text-white mb-4">Lista de Estudiantes</h3>
+            <div id="students-list" class="bg-gray-700 p-4 rounded-xl shadow-inner min-h-32">
+                <p class="text-gray-400 text-center">No hay estudiantes registrados en esta materia.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="edit-modal-subject" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+            <h2 class="text-2xl font-bold mb-4 text-white">Editar Materia</h2>
+            <form id="edit-form-subject">
+                <input type="hidden" id="edit-materia-id">
+                <div class="mb-4">
+                    <label for="edit-materia-nombre" class="block text-gray-400 mb-2 font-semibold">Nombre de la Materia</label>
+                    <input type="text" id="edit-materia-nombre" class="w-full p-3 rounded-xl bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-6">
+                    <label for="edit-materia-descripcion" class="block text-gray-400 mb-2 font-semibold">Descripción</label>
+                    <textarea id="edit-materia-descripcion" class="w-full p-3 rounded-xl bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancel-edit-subject-btn" class="px-4 py-2 bg-gray-600 rounded-xl text-white font-bold hover:bg-gray-700 transition-colors duration-200">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 rounded-xl text-white font-bold hover:bg-blue-700 transition-colors duration-200">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="edit-modal-generic" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+            <h2 id="edit-modal-title" class="text-2xl font-bold mb-4 text-white"></h2>
+            <form id="edit-form-generic">
+                <input type="hidden" id="edit-generic-id">
+                <div class="mb-4">
+                    <label for="edit-generic-name" class="block text-gray-400 mb-2 font-semibold">Nombre</label>
+                    <input type="text" id="edit-generic-name" class="w-full p-3 rounded-xl bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-6">
+                    <label id="edit-generic-url-label" for="edit-generic-url" class="block text-gray-400 mb-2 font-semibold">Enlace (Opcional)</label>
+                    <input type="text" id="edit-generic-url" class="w-full p-3 rounded-xl bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancel-edit-generic-btn" class="px-4 py-2 bg-gray-600 rounded-xl text-white font-bold hover:bg-gray-700 transition-colors duration-200">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 rounded-xl text-white font-bold hover:bg-blue-700 transition-colors duration-200">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="message-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700 text-center">
+            <p id="modal-message" class="text-xl font-semibold text-white mb-6"></p>
+            <div class="flex justify-center space-x-4">
+                <button id="modal-ok-btn" class="px-6 py-2 bg-blue-600 rounded-xl text-white font-bold hover:bg-blue-700 transition-colors duration-200">OK</button>
+                <button id="modal-cancel-btn" class="px-6 py-2 bg-gray-600 rounded-xl text-white font-bold hover:bg-gray-700 transition-colors duration-200 hidden">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="student-page" class="page flex items-center justify-center min-h-screen hidden">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+            <h1 class="text-4xl font-extrabold mb-6 text-center text-white">Registro de Asistencia</h1>
+            <div id="student-attendance-message" class="bg-gray-700 p-4 rounded-xl text-center text-white font-semibold hidden"></div>
+            <form id="student-attendance-form">
+                <div class="mb-4 mt-6">
+                    <label for="student-qr-data" class="block text-gray-400 mb-2 font-semibold">Datos del QR (Token)</label>
+                    <input type="text" id="student-qr-data" class="w-full p-3 rounded-xl bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder='Pega aquí los datos del QR' required>
+                </div>
+                <div class="mb-6">
+                    <label for="student-matricula" class="block text-gray-400 mb-2 font-semibold">Tu Matrícula</label>
+                    <input type="text" id="student-matricula" class="w-full p-3 rounded-xl bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <button type="submit" class="w-full p-3 bg-blue-600 rounded-xl text-white font-bold text-lg hover:bg-blue-700 transition-colors duration-200 shadow-md">
+                    Registrar Asistencia
+                </button>
+            </form>
+            <div class="mt-6 text-center">
+                <a href="#login-page" id="return-to-login" class="text-gray-400 hover:underline">Volver a la página de inicio de sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 🚨🚨🚨 REEMPLAZA ESTOS VALORES CON TU CONFIGURACIÓN DE SUPABASE 🚨🚨🚨
+        const SUPABASE_URL = 'TU_SUPABASE_URL'; 
+        const SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY';
+        // ----------------------------------------------------------------------
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const EDGE_FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1/`; // URL base para las Edge Functions
+        const appId = 'docente-plataforma-app'; // Mantener por convención
+
+        let userId = null;
+        let appState = {
+            currentPage: 'login-page',
+            selectedMateria: null,
+            qrTimer: null,
+            selectedUnit: 1, 
+            students: [],
+            attendanceChannel: null, 
+        };
+
+        const elements = {
+            loginPage: document.getElementById('login-page'),
+            dashboardPage: document.getElementById('dashboard-page'),
+            materiaPage: document.getElementById('materia-page'),
+            asistenciaPage: document.getElementById('asistencia-page'),
+            actividadesPage: document.getElementById('actividades-page'),
+            evaluacionesPage: document.getElementById('evaluaciones-page'),
+            materialPage: document.getElementById('material-page'),
+            estudiantesPage: document.getElementById('estudiantes-page'),
+            studentPage: document.getElementById('student-page'),
+            loading: document.getElementById('loading'),
+            userIdSpan: document.getElementById('user-id'),
+            loginForm: document.getElementById('login-form'),
+            googleLoginBtn: document.getElementById('google-login-btn'),
+            logoutBtn: document.getElementById('logout-btn'),
+            createManualForm: document.getElementById('create-manual-form'),
+            createAiForm: document.getElementById('create-ai-form'),
+            materiasList: document.getElementById('materias-list'),
+            materiaTitle: document.getElementById('materia-title'),
+            backToDashboardBtn: document.getElementById('back-to-dashboard'),
+            btnAsistencia: document.getElementById('btn-asistencia'),
+            btnActividades: document.getElementById('btn-actividades'),
+            btnEvaluaciones: document.getElementById('btn-evaluaciones'),
+            btnMaterial: document.getElementById('btn-material'),
+            btnEstudiantes: document.getElementById('btn-estudiantes'),
+            backFromAsistencia: document.getElementById('back-from-asistencia'),
+            backFromActividades: document.getElementById('back-from-actividades'),
+            backFromEvaluaciones: document.getElementById('back-from-evaluaciones'),
+            backFromMaterial: document.getElementById('back-from-material'),
+            backFromEstudiantes: document.getElementById('back-from-estudiantes'),
+            generateQrBtn: document.getElementById('generate-qr-btn'),
+            cancelQrBtn: document.getElementById('cancel-qr-btn'),
+            qrSection: document.getElementById('qr-section'),
+            qrCanvas: document.getElementById('qr-canvas'),
+            qrTimerDisplay: document.getElementById('qr-timer'),
+            attendanceList: document.getElementById('attendance-list'),
+            closeAttendanceBtn: document.getElementById('close-attendance-btn'),
+            unidadSelectAct: document.getElementById('unidad-select-act'),
+            addActivityForm: document.getElementById('add-activity-form'),
+            activitiesList: document.getElementById('activities-list'),
+            batchGradeBtnAct: document.getElementById('batch-grade-btn-act'),
+            unidadSelectEval: document.getElementById('unidad-select-eval'),
+            addEvaluacionForm: document.getElementById('add-evaluacion-form'),
+            evaluacionesList: document.getElementById('evaluaciones-list'),
+            unidadSelectMat: document.getElementById('unidad-select-mat'),
+            addMaterialForm: document.getElementById('add-material-form'),
+            materialList: document.getElementById('material-list'),
+            addStudentForm: document.getElementById('add-student-form'),
+            studentsList: document.getElementById('students-list'),
+            editModalSubject: document.getElementById('edit-modal-subject'),
+            editFormSubject: document.getElementById('edit-form-subject'),
+            editMateriaId: document.getElementById('edit-materia-id'),
+            editMateriaNombre: document.getElementById('edit-materia-nombre'),
+            editMateriaDescripcion: document.getElementById('edit-materia-descripcion'),
+            cancelEditSubjectBtn: document.getElementById('cancel-edit-subject-btn'),
+            editModalGeneric: document.getElementById('edit-modal-generic'),
+            editModalTitle: document.getElementById('edit-modal-title'),
+            editFormGeneric: document.getElementById('edit-form-generic'),
+            editGenericId: document.getElementById('edit-generic-id'),
+            editGenericName: document.getElementById('edit-generic-name'),
+            editGenericUrl: document.getElementById('edit-generic-url'),
+            cancelEditGenericBtn: document.getElementById('cancel-edit-generic-btn'),
+            messageModal: document.getElementById('message-modal'),
+            modalMessage: document.getElementById('modal-message'),
+            modalOkBtn: document.getElementById('modal-ok-btn'),
+            modalCancelBtn: document.getElementById('modal-cancel-btn'),
+            studentAttendanceForm: document.getElementById('student-attendance-form'),
+            studentAttendanceMessage: document.getElementById('student-attendance-message'),
+            returnToLogin: document.getElementById('return-to-login'),
+            finalGradesTableBody: document.getElementById('final-grades-table-body'),
+            manualAttendanceList: document.getElementById('manual-attendance-list'),
+        };
+
+        // --- EDGE FUNCTIONS / RPC CALLER ---
+        const functionsCaller = {
+            httpsCallable: (name) => async (params) => {
+                const user = await supabase.auth.getUser();
+                const token = user.data.session?.access_token || SUPABASE_ANON_KEY;
+                
+                // 1. Lógica para funciones que usan Edge Functions (HTTP)
+                if (name === 'readSheetsData' || name === 'writeSheetsData' || name === 'createGoogleForm') {
+                    const response = await fetch(EDGE_FUNCTIONS_URL + name, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Usamos el token de sesión del usuario autenticado
+                            'Authorization': `Bearer ${token}`, 
+                        },
+                        body: JSON.stringify(params),
+                    });
+                    // Las Edge Functions devuelven su propio JSON
+                    return await response.json(); 
+                }
+
+                // 2. Lógica para funciones que usan RPCs de PostgreSQL
+                if (name === 'createSubjectFolders') {
+                    const { data } = await supabase.rpc('create_subject_folders', { subject_name: params.subjectName, semester: params.semester });
+                    return { data: data };
+                }
+                if (name === 'gradeWithGemini') {
+                    const { data } = await supabase.rpc('grade_with_gemini', { prompt: params.prompt, rubric: params.rubric });
+                    return { data: data };
+                }
+
+                throw new Error(`RPC/Function ${name} not implemented or misconfigured.`);
+            }
+        };
+
+        const { httpsCallable } = functionsCaller;
+        // --------------------------------------------------------------------------
+
+
+        // --- UTILIDADES GLOBALES ---
+
+        function showLoading() { elements.loading.classList.remove('hidden'); }
+        function hideLoading() { elements.loading.classList.add('hidden'); }
+        
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+            const page = document.getElementById(pageId);
+            if (page) {
+                page.style.display = 'block';
+                appState.currentPage = pageId;
+                
+                if (pageId !== 'asistencia-page' && appState.attendanceChannel) {
+                    supabase.removeChannel(appState.attendanceChannel);
+                    appState.attendanceChannel = null;
+                    if (appState.qrTimer) {
+                        clearInterval(appState.qrTimer);
+                        appState.qrTimer = null;
+                        elements.qrSection.classList.add('hidden');
+                        elements.cancelQrBtn.classList.add('hidden');
+                        elements.generateQrBtn.classList.remove('hidden');
+                    }
+                }
+            }
+        }
+        
+        function showModal(message, isConfirmation = false, onConfirm = () => {}) {
+            elements.modalMessage.textContent = message;
+            elements.modalCancelBtn.classList.toggle('hidden', !isConfirmation);
+            elements.modalOkBtn.onclick = () => {
+                elements.messageModal.classList.add('hidden');
+                if (isConfirmation) {
+                    onConfirm();
+                }
+            };
+            if (isConfirmation) {
+                elements.modalCancelBtn.onclick = () => {
+                    elements.messageModal.classList.add('hidden');
+                };
+            }
+            elements.messageModal.classList.remove('hidden');
+        }
+
+        async function getUserId() {
+            const { data: { user } } = await supabase.auth.getUser();
+            return user ? user.id : null;
+        }
+
+        async function initSupabaseAndAuth() {
+            try {
+                showLoading();
+                const user = await getUserId();
+                
+                if (user) {
+                    userId = user;
+                    elements.userIdSpan.textContent = `ID de Usuario: ${userId}`;
+                    showPage('dashboard-page');
+                    await fetchMaterias();
+                } else {
+                    if (window.location.hash === '#student-page') {
+                        showPage('student-page');
+                    } else {
+                        showPage('login-page');
+                    }
+                }
+            } catch (error) {
+                console.error("Error initializing Supabase:", error.message);
+                showModal("Error al inicializar la plataforma.");
+                showPage('login-page');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (session && session.user) {
+                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                    if (!userId || userId !== session.user.id) {
+                        userId = session.user.id;
+                        initSupabaseAndAuth();
+                    }
+                }
+            } else if (event === 'SIGNED_OUT') {
+                userId = null;
+                showPage('login-page');
+            }
+        });
+        
+        // --- AUTHENTICATION FLOW ---
+        
+        elements.loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            showLoading();
+            try {
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+            } catch (error) {
+                console.error("Error during login:", error.message);
+                showModal("Usuario o contraseña incorrectos.");
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        elements.googleLoginBtn.addEventListener('click', async () => {
+            showLoading();
+            try {
+                const { error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo: window.location.origin }
+                });
+                if (error) throw error;
+            } catch (error) {
+                console.error("Error during Google login:", error.message);
+                showModal("No se pudo iniciar sesión con Google.");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        elements.logoutBtn.addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            userId = null;
+            showPage('login-page');
+            elements.userIdSpan.textContent = '';
+        });
+        
+        // --- SUBJECT MANAGEMENT (DASHBOARD) ---
+        
+        elements.createManualForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('materia-nombre').value.trim();
+            const descripcion = document.getElementById('materia-descripcion').value.trim();
+            
+            if (nombre === '') { showModal("El nombre de la materia no puede estar vacío."); return; }
+            
+            showLoading();
+            try {
+                // Llama a RPC simulada de Cloud Function (Postgres RPC)
+                await httpsCallable('createSubjectFolders')({ subjectName: nombre, semester: '2024-2' });
+
+                const { error } = await supabase
+                    .from('materias') 
+                    .insert([{ docente_id: userId, nombre, descripcion, created_at: new Date().toISOString() }]);
+                if (error) throw error;
+                
+                showModal(`Materia creada exitosamente.`);
+                e.target.reset();
+                await fetchMaterias();
+            } catch (error) {
+                console.error("Error creating subject:", error.message);
+                showModal("Error al crear la materia.");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        elements.createAiForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const plan = document.getElementById('ai-plan').value.trim();
+
+            showLoading();
+            try {
+                // Llama a RPC simulada de Cloud Function
+                await httpsCallable('createSubjectFolders')({ subjectName: "Materia IA", semester: '2024-2' });
+
+                const simulatedResponse = {
+                    nombre: "Materia Generada por IA",
+                    descripcion: `Este es un plan de estudios generado por IA basado en: "${plan}"`
+                };
+
+                const { error } = await supabase
+                    .from('materias')
+                    .insert([{ docente_id: userId, nombre: simulatedResponse.nombre, descripcion: simulatedResponse.descripcion, created_at: new Date().toISOString() }]);
+                if (error) throw error;
+
+                showModal('Materia creada con IA exitosamente.');
+                e.target.reset();
+                await fetchMaterias();
+            } catch (error) {
+                console.error("Error creating subject with AI:", error.message);
+                showModal("Error al crear la materia con IA.");
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        async function fetchMaterias() {
+            if (!userId) return;
+            elements.materiasList.innerHTML = '';
+            showLoading();
+            try {
+                const { data: materias, error } = await supabase
+                    .from('materias')
+                    .select('*')
+                    .eq('docente_id', userId)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!materias || materias.length === 0) {
+                    elements.materiasList.innerHTML = '<p class="text-gray-400 text-center col-span-full">No hay materias registradas. Crea una para empezar.</p>';
+                    return;
+                }
+                
+                materias.forEach(materia => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-700 p-4 rounded-xl shadow-md';
+                    card.innerHTML = `
+                        <div class="cursor-pointer hover:bg-gray-600 p-2 rounded-lg" data-id="${materia.id}">
+                            <h3 class="font-bold text-lg text-white mb-1">${materia.nombre}</h3>
+                            <p class="text-gray-400 text-sm">${materia.descripcion || 'Sin descripción'}</p>
+                        </div>
+                        <div class="mt-4 flex justify-end space-x-2">
+                            <button class="edit-btn px-3 py-1 bg-yellow-600 rounded-lg text-white text-sm font-semibold hover:bg-yellow-700 transition-colors duration-200" data-id="${materia.id}" data-nombre="${materia.nombre}" data-descripcion="${materia.descripcion || ''}">
+                                Editar
+                            </button>
+                            <button class="delete-btn px-3 py-1 bg-red-600 rounded-lg text-white text-sm font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${materia.id}">
+                                Eliminar
+                            </button>
+                        </div>
+                    `;
+                    
+                    const selectCard = card.querySelector('div.cursor-pointer');
+                    selectCard.addEventListener('click', () => {
+                        appState.selectedMateria = materia;
+                        showMateriaPage();
+                    });
+                    
+                    const editBtn = card.querySelector('.edit-btn');
+                    editBtn.addEventListener('click', (e) => showEditModalSubject({
+                        id: e.target.dataset.id,
+                        nombre: e.target.dataset.nombre,
+                        descripcion: e.target.dataset.descripcion
+                    }));
+
+                    const deleteBtn = card.querySelector('.delete-btn');
+                    deleteBtn.addEventListener('click', (e) => deleteSubject(e.target.dataset.id));
+                    
+                    elements.materiasList.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Error fetching subjects:", error.message);
+                showModal("Error al cargar las materias.");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showEditModalSubject(materia) {
+            elements.editMateriaId.value = materia.id;
+            elements.editMateriaNombre.value = materia.nombre;
+            elements.editMateriaDescripcion.value = materia.descripcion;
+            elements.editModalSubject.classList.remove('hidden');
+        }
+
+        elements.cancelEditSubjectBtn.addEventListener('click', () => {
+            elements.editModalSubject.classList.add('hidden');
+        });
+
+        elements.editFormSubject.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = elements.editMateriaId.value;
+            const nombre = elements.editMateriaNombre.value;
+            const descripcion = elements.editMateriaDescripcion.value;
+
+            showLoading();
+            try {
+                const { error } = await supabase
+                    .from('materias')
+                    .update({ nombre, descripcion })
+                    .eq('id', id)
+                    .eq('docente_id', userId);
+
+                if (error) throw error;
+
+                elements.editModalSubject.classList.add('hidden');
+                showModal('Materia actualizada exitosamente.');
+                await fetchMaterias();
+            } catch (error) {
+                console.error("Error updating subject:", error.message);
+                showModal("Error al actualizar la materia.");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        async function deleteSubject(id) {
+            showModal("¿Estás seguro de que quieres eliminar esta materia? Esta acción es irreversible.", true, async () => {
+                showLoading();
+                try {
+                    const { error } = await supabase
+                        .from('materias')
+                        .delete()
+                        .eq('id', id)
+                        .eq('docente_id', userId);
+
+                    if (error) throw error;
+
+                    showModal('Materia eliminada exitosamente.');
+                    await fetchMaterias();
+                } catch (error) {
+                    console.error("Error deleting subject:", error.message);
+                    showModal("Error al eliminar la materia.");
+                } finally {
+                    hideLoading();
+                }
+            });
+        }
+        
+        function showMateriaPage() {
+            if (!appState.selectedMateria) return;
+            elements.materiaTitle.textContent = appState.selectedMateria.nombre;
+            showPage('materia-page');
+            fetchFinalGradesSummary();
+        }
+        
+        async function fetchFinalGradesSummary() {
+            if (!userId || !appState.selectedMateria) return;
+            
+            elements.finalGradesTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-400">Cargando datos...</td></tr>';
+            showLoading();
+            
+            try {
+                const { data: studentsList, error: studentError } = await supabase
+                    .from('estudiantes')
+                    .select('*')
+                    .eq('materia_id', appState.selectedMateria.id);
+                
+                if (studentError) throw studentError;
+                appState.students = studentsList || [];
+
+                if (appState.students.length === 0) {
+                    elements.finalGradesTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-400">No hay estudiantes registrados.</td></tr>';
+                    hideLoading();
+                    return;
+                }
+
+                let finalGrades = appState.students.reduce((acc, student) => {
+                    acc[student.matricula] = { name: student.name, attendance: 0, activities: [], evaluations: [] };
+                    return acc;
+                }, {});
+
+                // --- Llama a Edge Function REAL (simulada en el backend) ---
+                const attendanceSheetData = await httpsCallable('readSheetsData')({ subjectId: appState.selectedMateria.id, type: 'asistencias' });
+                
+                if (attendanceSheetData.data && attendanceSheetData.data.success) {
+                    for (const matricula in finalGrades) {
+                        let totalAttendance = 0;
+                        let daysCount = 0;
+                        for (const date in attendanceSheetData.data.data) {
+                            if (attendanceSheetData.data.data[date] && attendanceSheetData.data.data[date][matricula]) {
+                                totalAttendance++;
+                            }
+                            daysCount++;
+                        }
+                        finalGrades[matricula].attendance = daysCount > 0 ? (totalAttendance / daysCount) * 100 : 0;
+                    }
+                }
+
+                const activitiesSheetData = await httpsCallable('readSheetsData')({ subjectId: appState.selectedMateria.id, type: 'actividades' });
+                if (activitiesSheetData.data && activitiesSheetData.data.success) {
+                    for (const grade of activitiesSheetData.data.data) {
+                        if (finalGrades[grade.matricula]) {
+                           finalGrades[grade.matricula].activities.push(grade.grade);
+                        }
+                    }
+                }
+                
+                const evaluationsSheetData = await httpsCallable('readSheetsData')({ subjectId: appState.selectedMateria.id, type: 'evaluaciones' });
+                if (evaluationsSheetData.data && evaluationsSheetData.data.success) {
+                    for (const grade of evaluationsSheetData.data.data) {
+                        if (finalGrades[grade.matricula]) {
+                            finalGrades[grade.matricula].evaluations.push(grade.grade);
+                        }
+                    }
+                }
+                // --- Fin de Edge Function Calls ---
+
+                // Render the table
+                elements.finalGradesTableBody.innerHTML = '';
+                
+                for (const [matricula, data] of Object.entries(finalGrades)) {
+                    const avgActivities = data.activities.length > 0 ? data.activities.reduce((a, b) => a + b) / data.activities.length : 0;
+                    const avgEvaluations = data.evaluations.length > 0 ? data.evaluations.reduce((a, b) => a + b) / data.evaluations.length : 0;
+                    const finalGrade = (data.attendance * 0.1) + (avgActivities * 0.45) + (avgEvaluations * 0.45);
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">${matricula}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${data.attendance.toFixed(2)}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${avgActivities.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${avgEvaluations.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-lg font-bold text-yellow-400">${finalGrade.toFixed(2)}</td>
+                    `;
+                    elements.finalGradesTableBody.appendChild(row);
+                }
+                
+            } catch (error) {
+                console.error("Error fetching final grades:", error.message);
+                elements.finalGradesTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-400">Error al cargar el resumen de calificaciones.</td></tr>';
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- NAVIGATION WITHIN SUBJECT ---
+        elements.backToDashboardBtn.addEventListener('click', () => showPage('dashboard-page'));
+        elements.btnAsistencia.addEventListener('click', () => { showPage('asistencia-page'); fetchStudentsForAttendance(); });
+        elements.btnActividades.addEventListener('click', async () => { showPage('actividades-page'); await fetchActivities(); });
+        elements.btnEvaluaciones.addEventListener('click', async () => { showPage('evaluaciones-page'); await fetchEvaluaciones(); });
+        elements.btnMaterial.addEventListener('click', async () => { showPage('material-page'); await fetchMaterial(); });
+        elements.btnEstudiantes.addEventListener('click', async () => { showPage('estudiantes-page'); await fetchStudents(); });
+        elements.backFromAsistencia.addEventListener('click', () => showPage('materia-page'));
+        elements.backFromActividades.addEventListener('click', () => showPage('materia-page'));
+        elements.backFromEvaluaciones.addEventListener('click', () => showPage('materia-page'));
+        elements.backFromMaterial.addEventListener('click', () => showPage('materia-page'));
+        elements.backFromEstudiantes.addEventListener('click', () => showPage('materia-page'));
+
+        // --- ATTENDANCE PANEL LOGIC ---
+        elements.generateQrBtn.addEventListener('click', async () => {
+            if (!appState.selectedMateria) { showModal("Por favor, selecciona una materia primero."); return; }
+            showLoading();
+            const attendanceToken = crypto.randomUUID();
+            const qrData = JSON.stringify({ materiaId: appState.selectedMateria.id, userId, token: attendanceToken });
+
+            try {
+                const { error } = await supabase
+                    .from('temp_attendance')
+                    .insert([{ token: attendanceToken, materia_id: appState.selectedMateria.id, docente_id: userId, is_active: true }]);
+                if (error) throw error;
+            } catch (error) {
+                console.error("Error creating temp attendance doc:", error.message);
+                showModal("Error al iniciar la sesión de asistencia: " + error.message);
+                hideLoading();
+                return;
+            }
+
+            QRCode.toCanvas(elements.qrCanvas, qrData, { errorCorrectionLevel: 'H' }, (error) => {
+                if (error) { console.error(error); showModal("Error al generar el código QR."); } 
+                else {
+                    elements.qrSection.classList.remove('hidden');
+                    elements.generateQrBtn.classList.add('hidden');
+                    elements.cancelQrBtn.classList.remove('hidden');
+                    startQrTimer(attendanceToken);
+                    startAttendanceListener(attendanceToken);
+                }
+                hideLoading();
+            });
+        });
+
+        elements.cancelQrBtn.addEventListener('click', () => {
+            showModal("¿Deseas cancelar la sesión de QR?", true, async () => {
+                showLoading();
+                try {
+                    await supabase
+                        .from('temp_attendance')
+                        .update({ is_active: false })
+                        .eq('docente_id', userId)
+                        .eq('materia_id', appState.selectedMateria.id);
+                    
+                    if (appState.qrTimer) clearInterval(appState.qrTimer);
+                    if (appState.attendanceChannel) supabase.removeChannel(appState.attendanceChannel);
+
+                    elements.qrSection.classList.add('hidden');
+                    elements.cancelQrBtn.classList.add('hidden');
+                    elements.generateQrBtn.classList.remove('hidden');
+                    showModal("Asistencia cancelada.");
+                } catch (error) {
+                     showModal("Error al cancelar la sesión: " + error.message);
+                } finally {
+                    hideLoading();
+                }
+            });
+        });
+
+        elements.closeAttendanceBtn.addEventListener('click', async () => {
+            showModal("¿Deseas cerrar la asistencia del día y consolidar los datos?", true, async () => {
+                showLoading();
+                try {
+                    const manualAttendance = {};
+                    document.querySelectorAll('#manual-attendance-list input[type="checkbox"]').forEach(checkbox => {
+                        if (checkbox.checked) {
+                            manualAttendance[checkbox.dataset.matricula] = true;
+                        }
+                    });
+                    
+                    const qrAttendance = {}; // Aquí iría la lógica para obtener la asistencia QR
+                    const finalAttendance = { ...qrAttendance, ...manualAttendance };
+                    
+                    const attendanceData = {
+                        materia_id: appState.selectedMateria.id,
+                        unit: appState.selectedUnit,
+                        date: new Date().toISOString().split('T')[0],
+                    };
+                    
+                    const insertPromises = appState.students.map(async student => {
+                         const { error } = await supabase.from('daily_attendance').insert({
+                            materia_id: appState.selectedMateria.id,
+                            student_matricula: student.matricula,
+                            unit: appState.selectedUnit,
+                            date: attendanceData.date,
+                            present: finalAttendance[student.matricula] || false
+                         });
+                         if (error) throw error;
+                    });
+                    await Promise.all(insertPromises);
+
+                    // Llama a Edge Function REAL (simulada en el backend)
+                    await httpsCallable('writeSheetsData')({
+                        subjectId: appState.selectedMateria.id,
+                        unit: appState.selectedUnit,
+                        type: 'asistencias',
+                        sheetData: attendanceData
+                    });
+
+                    showModal('Asistencia del día cerrada y datos guardados para ponderación futura.');
+                    
+                } catch (error) {
+                    console.error("Error closing daily attendance:", error.message);
+                    showModal('Error al cerrar la asistencia del día: ' + error.message);
+                } finally {
+                    hideLoading();
+                }
+            });
+        });
+
+        function startQrTimer(token) {
+            let timeLeft = 300; 
+            const timerElement = elements.qrTimerDisplay;
+            if (appState.qrTimer) clearInterval(appState.qrTimer);
+            
+            appState.qrTimer = setInterval(async () => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                if (timeLeft <= 0) {
+                    clearInterval(appState.qrTimer);
+                    await supabase.from('temp_attendance').update({ is_active: false }).eq('token', token);
+                    if (appState.attendanceChannel) supabase.removeChannel(appState.attendanceChannel);
+                    
+                    elements.qrSection.classList.add('hidden');
+                    elements.cancelQrBtn.classList.add('hidden');
+                    elements.generateQrBtn.classList.remove('hidden');
+                    showModal("El tiempo del código QR ha expirado.");
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        function startAttendanceListener(attendanceToken) {
+            elements.attendanceList.innerHTML = '<p class="text-gray-400 text-center">Esperando registros...</p>';
+            
+            if (appState.attendanceChannel) {
+                supabase.removeChannel(appState.attendanceChannel);
+            }
+            
+            appState.attendanceChannel = supabase.channel(`attendance:${attendanceToken}`)
+                .on('postgres_changes', 
+                    { event: 'INSERT', schema: 'public', table: 'attendance_records', filter: `temp_token=eq.${attendanceToken}` },
+                    (payload) => {
+                        const student = payload.new;
+                        const entry = document.createElement('div');
+                        entry.className = 'p-2 bg-gray-600 rounded-lg mb-2 flex justify-between items-center';
+                        entry.innerHTML = `
+                            <span>Matrícula: ${student.student_matricula}</span>
+                            <span class="text-gray-400 text-sm">${new Date(student.created_at).toLocaleTimeString()}</span>
+                        `;
+                        if (elements.attendanceList.querySelector('p.text-gray-400')) {
+                             elements.attendanceList.innerHTML = '';
+                        }
+                        elements.attendanceList.prepend(entry);
+                    })
+                .subscribe();
+        }
+        
+        async function fetchStudentsForAttendance() {
+            if (!userId || !appState.selectedMateria) return;
+            elements.manualAttendanceList.innerHTML = '';
+            showLoading();
+            try {
+                const { data: studentsList, error: studentError } = await supabase
+                    .from('estudiantes')
+                    .select('*')
+                    .eq('materia_id', appState.selectedMateria.id);
+                
+                if (studentError) throw studentError;
+                appState.students = studentsList || [];
+
+                if (appState.students.length === 0) {
+                    elements.manualAttendanceList.innerHTML = '<p class="text-gray-400 text-center">No hay estudiantes para tomar asistencia.</p>';
+                    return;
+                }
+                
+                appState.students.forEach(student => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between p-2 mb-2 bg-gray-600 rounded-lg';
+                    div.innerHTML = `
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" data-matricula="${student.matricula}" class="form-checkbox h-5 w-5 text-yellow-500 rounded-full bg-gray-500 border-gray-400 focus:ring-yellow-500 transition-colors duration-200">
+                            <span class="text-white">${student.name} (${student.matricula})</span>
+                        </label>
+                    `;
+                    elements.manualAttendanceList.appendChild(div);
+                });
+            } catch (error) {
+                console.error("Error fetching students for attendance:", error.message);
+                showModal("Error al cargar la lista de estudiantes para la asistencia manual.");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- ACTIVITIES PANEL LOGIC ---
+
+        elements.addActivityForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const unit = elements.unidadSelectAct.value;
+            const name = document.getElementById('activity-name').value;
+            const url = document.getElementById('activity-url').value;
+
+            if (!appState.selectedMateria) { showModal("Selecciona una materia primero."); return; }
+            showLoading();
+            try {
+                const { error } = await supabase
+                    .from('actividades')
+                    .insert([{ materia_id: appState.selectedMateria.id, unit: unit, name, url, created_at: new Date().toISOString(), grade: null }]);
+                if (error) throw error;
+                
+                e.target.reset();
+                showModal("Actividad agregada exitosamente.");
+            } catch (error) {
+                console.error("Error adding activity:", error.message);
+                showModal("Error al agregar la actividad.");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        async function fetchActivities() {
+            if (!userId || !appState.selectedMateria) return;
+            const unit = elements.unidadSelectAct.value;
+            elements.activitiesList.innerHTML = '';
+            showLoading();
+            try {
+                const { data: activities, error } = await supabase
+                    .from('actividades')
+                    .select('*')
+                    .eq('materia_id', appState.selectedMateria.id)
+                    .eq('unit', unit)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                
+                elements.activitiesList.innerHTML = '';
+                if (activities.length === 0) {
+                    elements.activitiesList.innerHTML = '<p class="text-gray-400 text-center">No hay actividades registradas en esta unidad.</p>';
+                    return;
+                }
+                
+                activities.forEach(activity => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-600 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center';
+                    card.innerHTML = `
+                        <div class="mb-2 sm:mb-0">
+                            <h4 class="font-bold text-lg text-white">${activity.name}</h4>
+                            <p class="text-sm text-gray-400">Calificación: ${activity.grade !== null ? activity.grade : 'Pendiente'}</p>
+                            ${activity.url ? `<a href="${activity.url}" target="_blank" class="text-blue-300 hover:text-blue-200 text-sm">Ver enlace</a>` : ''}
+                            ${activity.feedback ? `<p class="text-sm text-gray-400 mt-1">Retroalimentación: ${activity.feedback}</p>` : ''}
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="individual-grade-btn p-2 bg-purple-500 rounded-lg text-white font-semibold hover:bg-purple-600 transition-colors duration-200" data-activity-id="${activity.id}">
+                                Calificar
+                            </button>
+                            <button class="edit-btn-act p-2 bg-yellow-600 rounded-lg text-white font-semibold hover:bg-yellow-700 transition-colors duration-200" data-id="${activity.id}" data-name="${activity.name}" data-url="${activity.url || ''}">
+                                Editar
+                            </button>
+                            <button class="delete-btn-act p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${activity.id}">
+                                Eliminar
+                            </button>
+                        </div>
+                    `;
+                    elements.activitiesList.appendChild(card);
+                });
+                
+                document.querySelectorAll('.individual-grade-btn').forEach(button => {
+                    button.addEventListener('click', (e) => gradeWithGemini(e.target.dataset.activityId) );
+                });
+                document.querySelectorAll('.edit-btn-act').forEach(button => {
+                    button.addEventListener('click', (e) => showEditModalGeneric('Actividad', e.target.dataset.id, e.target.dataset.name, e.target.dataset.url) );
+                });
+                document.querySelectorAll('.delete-btn-act').forEach(button => {
+                    button.addEventListener('click', (e) => deleteItem('actividades', e.target.dataset.id) );
+                });
+            } catch (error) {
+                console.error("Error fetching activities:", error.message);
+                showModal("Error al cargar las actividades.");
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        elements.unidadSelectAct.addEventListener('change', fetchActivities);
+
+        async function gradeWithGemini(activityId) {
+            showLoading();
+            const rubric = prompt('Introduce la rúbrica (criterios de calificación):');
+            const promptText = prompt('Introduce el trabajo o reporte del estudiante para calificar:');
+            if (!promptText || !rubric) { hideLoading(); return; }
+
+            try {
+                // Llama a RPC REAL (simulada en el backend)
+                const response = await httpsCallable('gradeWithGemini')({ prompt: promptText, rubric: rubric });
+                
+                if (!response.data || !response.data.success) { throw new Error(response.message || "Error al conectar con IA."); }
+
+                const { grade, feedback } = response.data;
+                
+                const score = prompt(`IA sugiere una calificación de ${grade}. ¿Quieres usarla o modificarla?`, grade);
+                if (score) {
+                    const { error } = await supabase
+                        .from('actividades')
+                        .update({ grade: parseFloat(score), feedback: feedback })
+                        .eq('id', activityId);
+
+                    if (error) throw error;
+                }
+                await fetchActivities();
+            } catch (error) {
+                console.error("Error al calificar con IA:", error.message);
+                showModal("Error al calificar la actividad con IA.");
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        elements.batchGradeBtnAct.addEventListener('click', async () => {
+            showLoading();
+            const unit = elements.unidadSelectAct.value;
+            try {
+                const { data: activities, error } = await supabase
+                    .from('actividades')
+                    .select('id, grade')
+                    .eq('materia_id', appState.selectedMateria.id)
+                    .eq('unit', unit)
+                    .is('grade', null);
+                
+                if (error) throw error;
+
+                if (activities.length === 0) { showModal("No hay actividades sin calificar en esta unidad."); hideLoading(); return; }
+                
+                const updates = activities.map(async (act) => {
+                    const simulatedGrade = Math.floor(Math.random() * (100 - 70 + 1)) + 70;
+                    return supabase
+                        .from('actividades')
+                        .update({ grade: simulatedGrade })
+                        .eq('id', act.id);
+                });
+
+                await Promise.all(updates);
+                
+                showModal("Calificación por lote completada.");
+                await fetchActivities();
+            } catch (error) {
+                console.error("Error during batch grading:", error.message);
+                showModal("Error al calificar por lote.");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // --- EVALUATIONS PANEL LOGIC ---
+
+        elements.addEvaluacionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const unit = elements.unidadSelectEval.value;
+            const name = document.getElementById('eval-name').value;
+            const urlInput = document.getElementById('eval-url').value;
+            
+            if (!appState.selectedMateria) { showModal("Selecciona una materia primero."); return; }
+            
+            showLoading();
+            try {
+                // Llama a Edge Function REAL (simulada en el backend) para crear el form
+                let formUrl = urlInput;
+                if (!formUrl) {
+                    const response = await httpsCallable('createGoogleForm')({ formTitle: name });
+                    if (!response.data || !response.data.success) { throw new Error(response.message || "Error al crear el formulario."); }
+                    formUrl = response.data.formUrl;
+                }
+
+                const { error } = await supabase
+                    .from('evaluaciones')
+                    .insert([{ materia_id: appState.selectedMateria.id, unit: unit, name, url: formUrl, created_at: new Date().toISOString() }]);
+                if (error) throw error;
+                
+                e.target.reset();
+                showModal("Evaluación creada exitosamente.");
+            } catch (error) {
+                console.error("Error adding evaluation:", error.message);
+                showModal("Error al agregar la evaluación.");
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        async function fetchEvaluaciones() {
+            if (!userId || !appState.selectedMateria) return;
+            const unit = elements.unidadSelectEval.value;
+            elements.evaluacionesList.innerHTML = '';
+            showLoading();
+            try {
+                const { data: evaluaciones, error } = await supabase
+                    .from('evaluaciones')
+                    .select('*')
+                    .eq('materia_id', appState.selectedMateria.id)
+                    .eq('unit', unit)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                
+                elements.evaluacionesList.innerHTML = '';
+                if (evaluaciones.length === 0) {
+                    elements.evaluacionesList.innerHTML = '<p class="text-gray-400 text-center">No hay evaluaciones registradas en esta unidad.</p>';
+                    return;
+                }
+                
+                evaluaciones.forEach(evaluacion => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-600 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center';
+                    card.innerHTML = `
+                        <div class="mb-2 sm:mb-0">
+                            <h4 class="font-bold text-lg text-white">${evaluacion.name}</h4>
+                            <p class="text-sm text-gray-400">Calificación: ${evaluacion.grade !== null ? evaluacion.grade : 'Pendiente'}</p>
+                            ${evaluacion.url ? `<a href="${evaluacion.url}" target="_blank" class="text-blue-300 hover:text-blue-200 text-sm">Ver enlace</a>` : ''}
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="grade-report-btn p-2 bg-red-500 rounded-lg text-white font-semibold hover:bg-red-600 transition-colors duration-200" data-eval-id="${evaluacion.id}">
+                                Calificar
+                            </button>
+                            <button class="edit-btn-eval p-2 bg-yellow-600 rounded-lg text-white font-semibold hover:bg-yellow-700 transition-colors duration-200" data-id="${evaluacion.id}" data-name="${evaluacion.name}" data-url="${evaluacion.url || ''}">
+                                Editar
+                            </button>
+                            <button class="delete-btn-eval p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${evaluacion.id}">
+                                Eliminar
+                            </button>
+                        </div>
+                    `;
+                    elements.evaluacionesList.appendChild(card);
+                });
+                
+                document.querySelectorAll('.grade-report-btn').forEach(button => {
+                    button.addEventListener('click', (e) => gradeReport(e.target.dataset.evalId) );
+                });
+                document.querySelectorAll('.edit-btn-eval').forEach(button => {
+                    button.addEventListener('click', (e) => showEditModalGeneric('Evaluación', e.target.dataset.id, e.target.dataset.name, e.target.dataset.url) );
+                });
+                document.querySelectorAll('.delete-btn-eval').forEach(button => {
+                    button.addEventListener('click', (e) => deleteItem('evaluaciones', e.target.dataset.id) );
+                });
+            } catch (error) {
+                console.error("Error fetching evaluations:", error.message);
+                showModal("Error al cargar las evaluaciones.");
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        elements.unidadSelectEval.addEventListener('change', fetchEvaluaciones);
+
+        async function gradeReport(evalId) {
+            showLoading();
+            const simulatedGrade = Math.floor(Math.random() * (100 - 70 + 1)) + 70;
+            
+            try {
+                const unit = elements.unidadSelectEval.value;
+                const { error } = await supabase
+                    .from('evaluaciones')
+                    .update({ grade: simulatedGrade })
+                    .eq('id', evalId);
+
+                if (error) throw error;
+
+                // Llama a Edge Function REAL (simulada en el backend) para escribir en Sheets
+                await httpsCallable('writeSheetsData')({
+                    subjectId: appState.selectedMateria.id,
+                    unit: unit,
+                    type: 'evaluaciones',
+                    sheetData: { id: evalId, grade: simulatedGrade }
+                });
+
+                showModal(`Reporte calificado con: ${simulatedGrade}`);
+                await fetchEvaluaciones();
+            } catch (error) {
+                console.error("Error grading report:", error.message);
+                showModal("Error al calificar el reporte.");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- MATERIAL PANEL LOGIC ---
+
+        elements.addMaterialForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const unit = elements.unidadSelectMat.value;
+            const name = document.getElementById('material-name').value;
+            const url = document.getElementById('material-url').value;
+
+            if (!appState.selectedMateria) { showModal("Selecciona una materia primero."); return; }
+            showLoading();
+            try {
+                const { error } = await supabase
+                    .from('material')
+                    .insert([{ materia_id: appState.selectedMateria.id, unit: unit, name, url, created_at: new Date().toISOString() }]);
+                if (error) throw error;
+                
+                e.target.reset();
+                showModal("Material agregado exitosamente.");
+            } catch (error) {
+                console.error("Error adding material:", error.message);
+                showModal("Error al agregar el material.");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        async function fetchMaterial() {
+            if (!userId || !appState.selectedMateria) return;
+            const unit = elements.unidadSelectMat.value;
+            elements.materialList.innerHTML = '';
+            showLoading();
+            try {
+                const { data: material, error } = await supabase
+                    .from('material')
+                    .select('*')
+                    .eq('materia_id', appState.selectedMateria.id)
+                    .eq('unit', unit)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                elements.materialList.innerHTML = '';
+                if (material.length === 0) {
+                    elements.materialList.innerHTML = '<p class="text-gray-400 text-center">No hay material didáctico registrado en esta unidad.</p>';
+                    return;
+                }
+                
+                material.forEach(mat => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-600 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center';
+                    card.innerHTML = `
+                        <div class="mb-2 sm:mb-0">
+                            <h4 class="font-bold text-lg text-white">${mat.name}</h4>
+                            <a href="${mat.url}" target="_blank" class="text-blue-300 hover:text-blue-200 text-sm">Ver archivo</a>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="edit-btn-mat p-2 bg-yellow-600 rounded-lg text-white font-semibold hover:bg-yellow-700 transition-colors duration-200" data-id="${mat.id}" data-name="${mat.name}" data-url="${mat.url || ''}">
+                                Editar
+                            </button>
+                            <button class="delete-btn-mat p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${mat.id}">
+                                Eliminar
+                            </button>
+                        </div>
+                    `;
+                    elements.materialList.appendChild(card);
+                });
+                
+                document.querySelectorAll('.edit-btn-mat').forEach(button => {
+                    button.addEventListener('click', (e) => showEditModalGeneric('Material', e.target.dataset.id, e.target.dataset.name, e.target.dataset.url) );
+                });
+                document.querySelectorAll('.delete-btn-mat').forEach(button => {
+                    button.addEventListener('click', (e) => deleteItem('material', e.target.dataset.id) );
+                });
+            } catch (error) {
+                console.error("Error fetching material:", error.message);
+                showModal("Error al cargar el material.");
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        elements.unidadSelectMat.addEventListener('change', fetchMaterial);
+        
+        // --- STUDENT MANAGEMENT LOGIC ---
+
+        elements.addStudentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const matricula = document.getElementById('student-matricula-input').value;
+            const name = document.getElementById('student-name-input').value;
+
+            if (!appState.selectedMateria) { showModal("Selecciona una materia primero."); return; }
+
+            showLoading();
+            try {
+                const { error } = await supabase
+                    .from('estudiantes')
+                    .insert([{ materia_id: appState.selectedMateria.id, matricula, name, created_at: new Date().toISOString() }]);
+                if (error) throw error;
+                
+                e.target.reset();
+                showModal("Estudiante agregado exitosamente.");
+            } catch (error) {
+                console.error("Error adding student:", error.message);
+                // Error 23505 es por UNIQUE violation (Matrícula duplicada)
+                if (error.code === '23505') {
+                    showModal("Error: La matrícula ya existe o hay un problema de duplicidad.");
+                } else {
+                    showModal("Error al agregar el estudiante.");
+                }
+            } finally {
+                hideLoading();
+            }
+        });
+
+        async function fetchStudents() {
+            if (!userId || !appState.selectedMateria) return;
+            elements.studentsList.innerHTML = '';
+            showLoading();
+            try {
+                const { data: students, error } = await supabase
+                    .from('estudiantes')
+                    .select('*')
+                    .eq('materia_id', appState.selectedMateria.id)
+                    .order('name', { ascending: true });
+
+                if (error) throw error;
+                
+                elements.studentsList.innerHTML = '';
+                appState.students = students || [];
+                if (appState.students.length === 0) {
+                    elements.studentsList.innerHTML = '<p class="text-gray-400 text-center">No hay estudiantes registrados en esta materia.</p>';
+                    return;
+                }
+                
+                appState.students.forEach(student => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-600 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center';
+                    card.innerHTML = `
+                        <div class="mb-2 sm:mb-0">
+                            <h4 class="font-bold text-lg text-white">${student.name}</h4>
+                            <p class="text-sm text-gray-400">Matrícula: ${student.matricula}</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="edit-btn-student p-2 bg-yellow-600 rounded-lg text-white font-semibold hover:bg-yellow-700 transition-colors duration-200" data-id="${student.id}" data-name="${student.name}" data-matricula="${student.matricula}">
+                                Editar
+                            </button>
+                            <button class="delete-btn-student p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${student.id}">
+                                Eliminar
+                            </button>
+                        </div>
+                    `;
+                    elements.studentsList.appendChild(card);
+                });
+                
+                document.querySelectorAll('.edit-btn-student').forEach(button => {
+                    button.addEventListener('click', (e) => showEditModalGeneric('Estudiante', e.target.dataset.id, e.target.dataset.name, e.target.dataset.matricula) );
+                });
+                document.querySelectorAll('.delete-btn-student').forEach(button => {
+                    button.addEventListener('click', (e) => deleteItem('estudiantes', e.target.dataset.id) );
+                });
+            } catch (error) {
+                console.error("Error fetching students:", error.message);
+                showModal("Error al cargar la lista de estudiantes.");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- STUDENT ATTENDANCE PAGE LOGIC ---
+        elements.returnToLogin.addEventListener('click', () => { showPage('login-page'); });
+
+        elements.studentAttendanceForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const qrDataString = document.getElementById('student-qr-data').value;
+            const studentMatricula = document.getElementById('student-matricula').value;
+            const messageElement = elements.studentAttendanceMessage;
+            
+            messageElement.classList.add('hidden');
+            showLoading();
+
+            try {
+                const qrData = JSON.parse(qrDataString);
+                if (!qrData || !qrData.token) { messageElement.textContent = "Datos de QR inválidos."; messageElement.classList.remove('hidden'); return; }
+
+                // 1. Verificar si la sesión de QR está activa (usa la política RLS 'is_active = true')
+                const { data: tempSession, error: sessionError } = await supabase
+                    .from('temp_attendance')
+                    .select('is_active')
+                    .eq('token', qrData.token)
+                    .single();
+                
+                if (sessionError || !tempSession || !tempSession.is_active) {
+                    messageElement.textContent = "La sesión de asistencia ha expirado o no es válida.";
+                    messageElement.classList.remove('hidden');
+                    return;
+                }
+                
+                // 2. Registrar asistencia del estudiante (usa la política RLS de INSERT condicional)
+                const { error: recordError } = await supabase
+                    .from('attendance_records')
+                    .insert([{ temp_token: qrData.token, student_matricula: studentMatricula }]);
+
+                if (recordError && recordError.code === '23505') { 
+                    messageElement.textContent = "Ya has registrado tu asistencia.";
+                } else if (recordError) {
+                    throw recordError;
+                } else {
+                    messageElement.textContent = "¡Asistencia registrada con éxito!";
+                }
+
+                messageElement.classList.remove('hidden');
+                e.target.reset();
+
+            } catch (error) {
+                console.error("Error registering student attendance:", error.message);
+                messageElement.textContent = "Error al registrar la asistencia. Revisa los datos o contacta al docente.";
+                messageElement.classList.remove('hidden');
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        // --- GENERIC EDIT AND DELETE LOGIC ---
+
+        let currentCollection = '';
+        let currentUnit = 1;
+
+        elements.unidadSelectAct.addEventListener('change', (e) => { currentUnit = e.target.value; fetchActivities(); });
+        elements.unidadSelectEval.addEventListener('change', (e) => { currentUnit = e.target.value; fetchEvaluaciones(); });
+        elements.unidadSelectMat.addEventListener('change', (e) => { currentUnit = e.target.value; fetchMaterial(); });
+        
+        function showEditModalGeneric(type, id, name, secondaryValue) {
+            elements.editModalTitle.textContent = `Editar ${type}`;
+            elements.editGenericId.value = id;
+            elements.editGenericName.value = name;
+            elements.editGenericUrl.value = secondaryValue;
+            
+            if (type === 'Estudiante') {
+                elements.editGenericUrl.type = 'text';
+                elements.editGenericUrl.placeholder = 'Ej: A01234567';
+                document.getElementById('edit-generic-url-label').textContent = 'Matrícula';
+                currentCollection = 'estudiantes';
+            } else {
+                elements.editGenericUrl.type = 'url';
+                elements.editGenericUrl.placeholder = 'Ej: https://docs.google.com/...';
+                document.getElementById('edit-generic-url-label').textContent = 'Enlace (Opcional)';
+                currentCollection = type === 'Actividad' ? 'actividades' : (type === 'Evaluación' ? 'evaluaciones' : 'material');
+            }
+            
+            elements.editModalGeneric.classList.remove('hidden');
+        }
+
+        elements.cancelEditGenericBtn.addEventListener('click', () => { elements.editModalGeneric.classList.add('hidden'); });
+
+        elements.editFormGeneric.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = elements.editGenericId.value;
+            const name = elements.editGenericName.value;
+            const secondaryValue = elements.editGenericUrl.value;
+        
+            showLoading();
+            try {
+                let updateData = {};
+                let table = currentCollection;
+                
+                if (currentCollection === 'estudiantes') {
+                    updateData = { name: name, matricula: secondaryValue };
+                } else {
+                    updateData = { name, url: secondaryValue };
+                }
+
+                const { error } = await supabase
+                    .from(table)
+                    .update(updateData)
+                    .eq('id', id);
+        
+                if (error) throw error;
+
+                elements.editModalGeneric.classList.add('hidden');
+                showModal('Cambios guardados exitosamente.');
+                
+                if (currentCollection === 'actividades') fetchActivities();
+                else if (currentCollection === 'evaluaciones') fetchEvaluaciones();
+                else if (currentCollection === 'material') fetchMaterial();
+                else if (currentCollection === 'estudiantes') fetchStudents();
+
+            } catch (error) {
+                console.error("Error al guardar los cambios en generic modal:", error.message);
+                showModal("Error al guardar los cambios.");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        async function deleteItem(collectionName, id) {
+            showModal("¿Estás seguro de que quieres eliminar este elemento?", true, async () => {
+                showLoading();
+                try {
+                    const { error } = await supabase
+                        .from(collectionName) 
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    
+                    showModal('Elemento eliminado exitosamente.');
+                    
+                    if (collectionName === 'actividades') fetchActivities();
+                    else if (collectionName === 'evaluaciones') fetchEvaluaciones();
+                    else if (collectionName === 'material') fetchMaterial();
+                    else if (collectionName === 'estudiantes') fetchStudents();
+
+                } catch (error) {
+                    console.error("Error deleting item:", error.message);
+                    showModal("Error al eliminar el elemento.");
+                } finally {
+                    hideLoading();
+                }
+            });
+        }
+        
+        // --- Initial setup ---
+        document.addEventListener('DOMContentLoaded', initSupabaseAndAuth);
+    </script>
+</body>
+</html>
