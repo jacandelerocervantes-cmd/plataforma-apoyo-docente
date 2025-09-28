@@ -1133,6 +1133,9 @@
             if (!appState.selectedMateria) { showModal("Por favor, selecciona una materia primero."); return; }
             showLoading();
             const attendanceToken = crypto.randomUUID();
+            const PLATFORM_URL = 'https://plataforma-apoyo-docente.onrender.com/'; // Usar la base de tu dominio Render o Supabase
+            const REDIRECTION_URL = `${PLATFORM_DOMAIN}/#student-page?token=${attendanceToken}`;
+
             const qrData = JSON.stringify({ materiaId: appState.selectedMateria.id, userId, token: attendanceToken });
 
             try {
@@ -1147,7 +1150,7 @@
                 return;
             }
 
-            QRCode.toCanvas(elements.qrCanvas, qrData, { errorCorrectionLevel: 'H' }, (error) => {
+            QRCode.toCanvas(elements.qrCanvas, REDIRECTION_URL, { errorCorrectionLevel: 'H' }, (error) => {
                 if (error) { console.error(error); showModal("Error al generar el código QR."); } 
                 else {
                     elements.qrSection.classList.remove('hidden');
@@ -1156,6 +1159,8 @@
                     startQrTimer(attendanceToken);
                     startAttendanceListener(attendanceToken);
                 }
+                 console.log("URL QR generado:", REDIRECTION_URL); 
+                    startAttendanceListener(attendanceToken);
                 hideLoading();
             });
         });
@@ -1765,55 +1770,75 @@
         elements.returnToLogin.addEventListener('click', () => { showPage('login-page'); });
 
         elements.studentAttendanceForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const qrDataString = document.getElementById('student-qr-data').value;
-            const studentMatricula = document.getElementById('student-matricula').value;
-            const messageElement = elements.studentAttendanceMessage;
-            
-            messageElement.classList.add('hidden');
-            showLoading();
+    e.preventDefault();
+    
+    // 1. Obtener la Matrícula del alumno
+    const studentMatricula = document.getElementById('student-matricula').value.trim();
+    const messageElement = elements.studentAttendanceMessage;
+    
+    // 🚨 CAMBIO CLAVE 1: OBTENER EL TOKEN DE LA URL 🚨
+    // La información del token viaja después del hash (#student-page) como parámetro de consulta.
+    const hashPart = window.location.hash.substring(1); // Obtiene 'student-page?token=...'
+    
+    // Usamos URLSearchParams para obtener el valor del token.
+    const urlParams = new URLSearchParams(hashPart.substring(hashPart.indexOf('?')));
+    const token = urlParams.get('token'); 
+    
+    // 2. Validaciones
+    if (!studentMatricula) {
+        messageElement.textContent = "Por favor, ingresa tu matrícula.";
+        messageElement.classList.remove('hidden');
+        return;
+    }
 
-            try {
-                const qrData = JSON.parse(qrDataString);
-                if (!qrData || !qrData.token) { messageElement.textContent = "Datos de QR inválidos."; messageElement.classList.remove('hidden'); return; }
+    if (!token) {
+        // Esto solo ocurriría si el docente compartió la URL incorrecta.
+        messageElement.textContent = "Error: Token de asistencia no encontrado en la URL. Contacta al docente.";
+        messageElement.classList.remove('hidden');
+        return;
+    }
+    
+    messageElement.classList.add('hidden');
+    showLoading();
 
-                // 1. Verificar si la sesión de QR está activa (usa la política RLS 'is_active = true')
-                const { data: tempSession, error: sessionError } = await supabaseClient
-                    .from('temp_attendance')
-                    .select('is_active')
-                    .eq('token', qrData.token)
-                    .single();
-                
-                if (sessionError || !tempSession || !tempSession.is_active) {
-                    messageElement.textContent = "La sesión de asistencia ha expirado o no es válida.";
-                    messageElement.classList.remove('hidden');
-                    return;
-                }
-                
-                // 2. Registrar asistencia del estudiante (usa la política RLS de INSERT condicional)
-                const { error: recordError } = await supabaseClient
-                    .from('attendance_records')
-                    .insert([{ temp_token: qrData.token, student_matricula: studentMatricula }]);
+    try {
+        // 3. Verificar si la sesión de QR está activa (usa la política RLS 'is_active = true')
+        const { data: tempSession, error: sessionError } = await supabaseClient
+            .from('temp_attendance')
+            .select('is_active')
+            .eq('token', token) // Usamos el token de la URL
+            .single();
+        
+        if (sessionError || !tempSession || !tempSession.is_active) {
+            messageElement.textContent = "La sesión de asistencia ha expirado o no es válida.";
+            messageElement.classList.remove('hidden');
+            return;
+        }
+        
+        // 4. Registrar asistencia del estudiante 
+        const { error: recordError } = await supabaseClient
+            .from('attendance_records')
+            .insert([{ temp_token: token, student_matricula: studentMatricula }]); // Usamos el token de la URL
 
-                if (recordError && error.code === '23505') { 
-                    messageElement.textContent = "Ya has registrado tu asistencia.";
-                } else if (recordError) {
-                    throw recordError;
-                } else {
-                    messageElement.textContent = "¡Asistencia registrada con éxito!";
-                }
+        if (recordError && recordError.code === '23505') { 
+            messageElement.textContent = "Ya has registrado tu asistencia.";
+        } else if (recordError) {
+            throw recordError;
+        } else {
+            messageElement.textContent = "¡Asistencia registrada con éxito!";
+        }
 
-                messageElement.classList.remove('hidden');
-                e.target.reset();
-
-            } catch (error) {
-                console.error("Error registering student attendance:", error.message);
-                messageElement.textContent = "Error al registrar la asistencia. Revisa los datos o contacta al docente.";
-                messageElement.classList.remove('hidden');
-            } finally {
-                hideLoading();
-            }
-        });
+        messageElement.classList.remove('hidden');
+        document.getElementById('student-matricula').value = ''; // Limpiamos solo la matrícula
+        
+    } catch (error) {
+        console.error("Error registering student attendance:", error.message);
+        messageElement.textContent = "Error al registrar la asistencia. Revisa los datos o contacta al docente.";
+        messageElement.classList.remove('hidden');
+    } finally {
+        hideLoading();
+    }
+});
         
         // --- FIN DEL CÓDIGO COMPLETO ---
         document.addEventListener('DOMContentLoaded', initSupabaseAndAuth);
