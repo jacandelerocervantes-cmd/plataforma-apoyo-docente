@@ -723,10 +723,10 @@
             await fetchMaterias();
         } else {
             // Determinar qué página mostrar si el usuario no está autenticado
-            if(window.location.hash === '#student-query-page') {
+           if(window.location.hash.startsWith('#student-page')) {
+            showPage('student-page');
+           } else if(window.location.hash === '#student-query-page') {
                 showPage('student-query-page');
-            } else if(window.location.hash === '#student-page') {
-                showPage('student-page');
             } else {
                 showPage('login-page');
             }
