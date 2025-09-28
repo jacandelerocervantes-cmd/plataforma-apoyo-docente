@@ -6,32 +6,30 @@ import { SignJWT, JWTPayload } from 'https://deno.land/x/jose@v4.14.4/index.ts';
 // Lee las claves desde Supabase Secrets
 const GOOGLE_CLIENT_EMAIL = Deno.env.get("GOOGLE_CLIENT_EMAIL");
 const GOOGLE_PRIVATE_KEY = Deno.env.get("GOOGLE_PRIVATE_KEY")?.replace(/\\n/g, '\n');
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY"); 
 const GOOGLE_SHEETS_API_URL = "https://sheets.googleapis.com/v4/spreadsheets";
 const GOOGLE_FORMS_API_URL = "https://forms.googleapis.com/v1/forms";
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY"); 
 const GEMINI_MODEL = "gemini-2.5-flash"; 
 
 // Función REAL para obtener un Token JWT de Google Service Account
 async function getGoogleToken() {
     if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY) {
-        throw new Error("Credenciales de Google Service Account (email/key) no configuradas en Supabase Secrets.");
+        throw new Error("Credenciales de Google Service Account (email/key) no configuradas.");
     }
 
     const now = Math.floor(Date.now() / 1000);
     const expirationTime = now + 3600; // 1 hora
     
-    // Scopes de acceso necesarios para la plataforma (Sheets, Forms, Drive)
+    // Scopes de acceso necesarios para la creación
     const SCOPES = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/forms",
-        "https://www.googleapis.com/auth/drive.file"
+        "https://www.googleapis.com/auth/spreadsheets", // Lectura/Escritura en Sheets
+        "https://www.googleapis.com/auth/forms",       // Creación de Forms
+        "https://www.googleapis.com/auth/drive.file"   // Creación de archivos en Drive
     ].join(' ');
 
     // 1. Procesar y convertir la clave PEM a un objeto CryptoKey
     const pkcs8Key = GOOGLE_PRIVATE_KEY
-        .replace(/-----BEGIN PRIVATE KEY-----/g, '')
-        .replace(/-----END PRIVATE KEY-----/g, '')
-        .replace(/\s/g, '');
+        .replace(/-----BEGIN PRIVATE KEY-----/g, '').replace(/-----END PRIVATE KEY-----/g, '').replace(/\s/g, '');
     
     const pkcs8Der = Uint8Array.from(atob(pkcs8Key), c => c.charCodeAt(0));
 
@@ -94,7 +92,7 @@ serve(async (req) => {
         // ----------------------------------------------------------------------
         if (action === 'createSubjectFolders') {
             const { subjectName, semester, materiaId } = payload;
-
+            
             // 1. LLAMADA REAL PARA CREAR HOJA DE CÁLCULO
             const sheetResponse = await fetch(GOOGLE_SHEETS_API_URL, {
                 method: 'POST',
@@ -106,6 +104,8 @@ serve(async (req) => {
                     properties: {
                         title: `${subjectName} - ${semester} - Reportes Docente`,
                     }
+                    // NOTA: Para crear en una carpeta específica de Drive, necesitarías enviar el 'folderId' 
+                    // en el body del request a la API de Drive, no la de Sheets. Aquí asumimos la creación en el Drive de la S.A.
                 }),
             });
 
@@ -157,6 +157,7 @@ serve(async (req) => {
             }
 
             const formJson = await formResponse.json();
+            // La URL para el estudiante es 'responderUri' en la respuesta de la API
             const formUrl = formJson.responderUri || `https://docs.google.com/forms/d/e/${formJson.formId}/viewform`;
             
             return new Response(
@@ -175,7 +176,7 @@ serve(async (req) => {
                  throw new Error("GEMINI_API_KEY no configurada. No se puede conectar al modelo de IA.");
             }
             
-            const systemPrompt = `You are a teacher grading assistant. Evaluate the student's work ('prompt') based on the 'rubric' and assign a single numeric grade from 0 to 100. Your response MUST be strict JSON with the fields: { "grade": number (integer), "feedback": "text based on the rubric" }. DO NOT include any text outside the JSON object.`;
+            const systemPrompt = `You are a teacher grading assistant. Evaluate the student's work based on the 'rubric' and assign a single numeric grade from 0 to 100. Your response MUST be strict JSON with the fields: { "grade": number (integer), "feedback": "text based on the rubric" }. DO NOT include any text outside the JSON object.`;
             
             const userPrompt = `RÚBRICA: ${rubric}\n\nTRABAJO DEL ESTUDIANTE: ${prompt}`;
 
@@ -214,7 +215,7 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: "Action not recognized." }), { status: 400 });
         
     } catch (error) {
-        // Manejo de errores centralizado
+        // En caso de error, devuelve el mensaje de error al frontend
         return new Response(JSON.stringify({ error: `Fallo al procesar la solicitud de Google API: ${(error as Error).message}` }), { status: 500 });
     }
 });

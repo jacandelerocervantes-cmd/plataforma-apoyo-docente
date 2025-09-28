@@ -1770,74 +1770,495 @@
 
         elements.studentAttendanceForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    // 1. Obtener la Matrícula del alumno
-    const studentMatricula = document.getElementById('student-matricula').value.trim();
-    const messageElement = elements.studentAttendanceMessage;
-    
-    // 🚨 CAMBIO CLAVE 1: OBTENER EL TOKEN DE LA URL 🚨
-    // La información del token viaja después del hash (#student-page) como parámetro de consulta.
-    const hashPart = window.location.hash.substring(1); // Obtiene 'student-page?token=...'
-    
-    // Usamos URLSearchParams para obtener el valor del token.
-    const urlParams = new URLSearchParams(hashPart.substring(hashPart.indexOf('?')));
-    const token = urlParams.get('token'); 
-    
-    // 2. Validaciones
-    if (!studentMatricula) {
-        messageElement.textContent = "Por favor, ingresa tu matrícula.";
-        messageElement.classList.remove('hidden');
-        return;
-    }
+    // --- RENDERIZADO DEL PANEL DEL ESTUDIANTE (LÓGICA) ---
 
-    if (!token) {
-        // Esto solo ocurriría si el docente compartió la URL incorrecta.
-        messageElement.textContent = "Error: Token de asistencia no encontrado en la URL. Contacta al docente.";
-        messageElement.classList.remove('hidden');
-        return;
-    }
-    
-    messageElement.classList.add('hidden');
-    showLoading();
+        async function fetchStudentDataAndRender(matricula) {
+            elements.querySections.innerHTML = '';
+            elements.studentInfoDisplay.classList.add('hidden');
+            elements.queryMessage.classList.remove('hidden');
+            elements.queryMessage.textContent = 'Buscando datos...';
+            
+            showLoading();
 
-    try {
-        // 3. Verificar si la sesión de QR está activa (usa la política RLS 'is_active = true')
-        const { data: tempSession, error: sessionError } = await supabaseClient
-            .from('temp_attendance')
-            .select('is_active')
-            .eq('token', token) // Usamos el token de la URL
-            .single();
-        
-        if (sessionError || !tempSession || !tempSession.is_active) {
-            messageElement.textContent = "La sesión de asistencia ha expirado o no es válida.";
-            messageElement.classList.remove('hidden');
-            return;
+            try {
+                // 1. Encontrar al estudiante y la materia
+                const { data: studentMatch, error: matchError } = await supabaseClient
+                    .from('estudiantes')
+                    .select('*, materias!inner(id, nombre, google_sheet_id)') 
+                    .eq('matricula', matricula)
+                    .limit(1)
+                    .single();
+
+                if (matchError || !studentMatch || !studentMatch.materias) {
+                    elements.queryMessage.textContent = 'Matrícula no encontrada o sin materias asignadas.';
+                    return;
+                }
+
+                const materiaId = studentMatch.materia_id;
+
+                // 2. Obtener los ítems visibles (solo si is_visible = true)
+                // Nota: RLS debe permitir SELECT si is_visible = true.
+                const [
+                    { data: actividades },
+                    { data: evaluaciones },
+                    { data: material }
+                ] = await Promise.all([
+                    supabaseClient.from('actividades').select('*').eq('materia_id', materiaId).eq('is_visible', true).order('unit'),
+                    supabaseClient.from('evaluaciones').select('*').eq('materia_id', materiaId).eq('is_visible', true).order('unit'),
+                    supabaseClient.from('material').select('*').eq('materia_id', materiaId).eq('is_visible', true).order('unit')
+                ]);
+                
+                // 3. Obtener datos de ponderación (utilizando Edge Function - Mock Funcional)
+                const gradesDataResponse = await httpsCallable('readSheetsData')({ 
+                    subjectId: materiaId, 
+                    type: 'all' 
+                });
+                
+                // Datos mock funcionales (Asume que el Edge Function devuelve un objeto con estas propiedades)
+                const finalGrade = gradesDataResponse.data?.finalGrade || "N/A (Cálculo Pendiente)";
+                const attendanceRate = gradesDataResponse.data?.attendanceRate || "N/A";
+
+
+                // 4. Renderizar Información General
+                elements.queryMessage.classList.add('hidden');
+                elements.studentInfoDisplay.classList.remove('hidden');
+                document.getElementById('student-name-display').textContent = studentMatch.name;
+                document.getElementById('materia-name-display').textContent = studentMatch.materias.nombre;
+
+
+                // 5. Renderizar Secciones
+                const renderSection = (title, items, type) => {
+                    if (!items || items.length === 0) return '';
+                    
+                    let html = `<div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                        <h4 class="text-lg font-bold text-indigo-600 mb-3">${title}</h4>
+                        <ul class="space-y-2">`;
+                    
+                    items.forEach(item => {
+                        // Determina si el botón es de descarga o solo de enlace
+                        const actionButton = item.allow_download 
+                            ? `<a href="${item.url}" target="_blank" download class="text-emerald-600 hover:text-emerald-800 text-sm font-semibold ml-auto">Descargar</a>`
+                            : `<a href="${item.url}" target="_blank" class="text-indigo-600 hover:underline text-sm font-semibold ml-auto">Consultar</a>`;
+                        
+                        const gradeInfo = type !== 'material' 
+                            ? `<p class="text-sm text-gray-500">Calificación: ${item.grade || 'Pendiente'}</p>` 
+                            : '';
+
+                        html += `<li class="flex items-center justify-between p-2 border-b">
+                            <div>
+                                <span class="font-medium">${item.name}</span>
+                                ${gradeInfo}
+                            </div>
+                            ${actionButton}
+                        </li>`;
+                    });
+
+                    html += '</ul></div>';
+                    return html;
+                };
+                
+                // Renderizar el resumen primero
+                let output = `<div class="bg-indigo-50 p-4 rounded-lg shadow-md border-l-4 border-indigo-600 mb-6 flex justify-between items-center">
+                    <div>
+                        <h4 class="text-lg font-bold text-indigo-800">Calificación Final Ponderada</h4>
+                        <p class="text-4xl font-extrabold text-accent">${finalGrade}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-indigo-800">Asistencia</h4>
+                        <p class="text-2xl font-semibold text-accent">${attendanceRate}%</p>
+                    </div>
+                </div>`;
+
+                output += renderSection('Actividades Visibles', actividades, 'actividades');
+                output += renderSection('Evaluaciones Visibles', evaluaciones, 'evaluaciones');
+                output += renderSection('Material Didáctico', material, 'material');
+
+                elements.querySections.innerHTML = output;
+
+            } catch (error) {
+                console.error("Error fetching student data:", error.message);
+                elements.queryMessage.textContent = 'Ocurrió un error al consultar los datos. Intenta más tarde.';
+                elements.studentInfoDisplay.classList.add('hidden');
+                elements.queryMessage.classList.remove('hidden');
+            } finally {
+                hideLoading();
+            }
         }
         
-        // 4. Registrar asistencia del estudiante 
-        const { error: recordError } = await supabaseClient
-            .from('attendance_records')
-            .insert([{ temp_token: token, student_matricula: studentMatricula }]); // Usamos el token de la URL
+        elements.studentQueryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const matricula = document.getElementById('query-matricula').value.trim();
+            if (matricula) {
+                fetchStudentDataAndRender(matricula);
+            }
+        });
+        
+        // --- FIN LÓGICA PANEL DE CONSULTA ---
+        
+        
+        // FUNCIONES DE MÓDULO (FETCH Y RENDER)
+        
+        async function fetchActivities() {
+            if (!userId || !appState.selectedMateria) return;
+            const unit = elements.unidadSelectAct.value;
+            elements.activitiesList.innerHTML = '';
+            showLoading();
+            try {
+                const { data: activities, error } = await supabaseClient
+                    .from('actividades')
+                    .select('*')
+                    .eq('materia_id', appState.selectedMateria.id)
+                    .eq('unit', unit)
+                    .order('created_at', { ascending: false });
 
-        if (recordError && recordError.code === '23505') { 
-            messageElement.textContent = "Ya has registrado tu asistencia.";
-        } else if (recordError) {
-            throw recordError;
-        } else {
-            messageElement.textContent = "¡Asistencia registrada con éxito!";
+                if (error) throw error;
+                
+                elements.activitiesList.innerHTML = '';
+                if (activities.length === 0) {
+                    elements.activitiesList.innerHTML = '<p class="text-gray-600 text-center">No hay actividades registradas en esta unidad.</p>';
+                    return;
+                }
+                
+                activities.forEach(activity => {
+                    const visibilityClass = activity.is_visible ? 'bg-emerald-100' : 'bg-red-100';
+                    const visibilityText = activity.is_visible ? 'Visible' : 'Oculta';
+                    const card = document.createElement('div');
+                    card.className = `bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center ${visibilityClass}`;
+                    card.innerHTML = `
+                        <div class="mb-2 sm:mb-0">
+                            <h4 class="font-bold text-lg text-gray-900">${activity.name}</h4>
+                            <p class="text-sm text-gray-700">Calificación: ${activity.grade !== null ? activity.grade : 'Pendiente'}</p>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${visibilityClass}">${visibilityText}</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="individual-grade-btn p-2 bg-purple-600 rounded-lg text-white font-semibold hover:bg-purple-700 transition-colors duration-200" data-activity-id="${activity.id}">
+                                Calificar
+                            </button>
+                            <button class="edit-btn-act p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" 
+                                data-id="${activity.id}" 
+                                data-name="${activity.name}" 
+                                data-url="${activity.url || ''}"
+                                data-visible="${activity.is_visible}"
+                                data-download="${activity.allow_download}">
+                                Editar
+                            </button>
+                            <button class="delete-btn-act p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${activity.id}">
+                                Eliminar
+                            </button>
+                        </div>
+                    `;
+                    elements.activitiesList.appendChild(card);
+                });
+                
+                document.querySelectorAll('.individual-grade-btn').forEach(button => {
+                    button.addEventListener('click', (e) => gradeWithGemini(e.target.dataset.activityId) );
+                });
+                document.querySelectorAll('.edit-btn-act').forEach(button => {
+                    const item = {
+                        id: e.target.dataset.id,
+                        name: e.target.dataset.name,
+                        url: e.target.dataset.url,
+                        is_visible: e.target.dataset.visible === 'true',
+                        allow_download: e.target.dataset.download === 'true',
+                    };
+                    button.addEventListener('click', () => showEditModalGeneric('Actividad', item.id, item.name, item.url, item.is_visible, item.allow_download));
+                });
+                document.querySelectorAll('.delete-btn-act').forEach(button => {
+                    button.addEventListener('click', (e) => deleteItem('actividades', e.target.dataset.id) );
+                });
+            } catch (error) {
+                console.error("Error fetching activities:", error.message);
+                showModal("Error al cargar las actividades.");
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function fetchEvaluaciones() {
+            if (!userId || !appState.selectedMateria) return;
+            const unit = elements.unidadSelectEval.value;
+            elements.evaluacionesList.innerHTML = '';
+            showLoading();
+            try {
+                const { data: evaluaciones, error } = await supabaseClient
+                    .from('evaluaciones')
+                    .select('*')
+                    .eq('materia_id', appState.selectedMateria.id)
+                    .eq('unit', unit)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                
+                elements.evaluacionesList.innerHTML = '';
+                if (evaluaciones.length === 0) {
+                    elements.evaluacionesList.innerHTML = '<p class="text-gray-600 text-center">No hay evaluaciones registradas en esta unidad.</p>';
+                    return;
+                }
+                
+                evaluaciones.forEach(evaluacion => {
+                    const visibilityClass = evaluacion.is_visible ? 'bg-emerald-100' : 'bg-red-100';
+                    const visibilityText = evaluacion.is_visible ? 'Visible' : 'Oculta';
+                    const card = document.createElement('div');
+                    card.className = `bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center ${visibilityClass}`;
+                    card.innerHTML = `
+                        <div class="mb-2 sm:mb-0">
+                            <h4 class="font-bold text-lg text-gray-900">${evaluacion.name}</h4>
+                            <p class="text-sm text-gray-700">Calificación: ${evaluacion.grade !== null ? evaluacion.grade : 'Pendiente'}</p>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${visibilityClass}">${visibilityText}</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="grade-report-btn p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-eval-id="${evaluacion.id}">
+                                Calificar
+                            </button>
+                            <button class="edit-btn-eval p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" 
+                                data-id="${evaluacion.id}" 
+                                data-name="${evaluacion.name}" 
+                                data-url="${evaluacion.url || ''}"
+                                data-visible="${evaluacion.is_visible}"
+                                data-download="${evaluacion.allow_download}">
+                                Editar
+                            </button>
+                            <button class="delete-btn-eval p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${evaluacion.id}">
+                                Eliminar
+                            </button>
+                        </div>
+                    `;
+                    elements.evaluacionesList.appendChild(card);
+                });
+                
+                document.querySelectorAll('.grade-report-btn').forEach(button => {
+                    button.addEventListener('click', (e) => gradeReport(e.target.dataset.evalId) );
+                });
+                document.querySelectorAll('.edit-btn-eval').forEach(button => {
+                    const item = {
+                        id: e.target.dataset.id,
+                        name: e.target.dataset.name,
+                        url: e.target.dataset.url,
+                        is_visible: e.target.dataset.visible === 'true',
+                        allow_download: e.target.dataset.download === 'true',
+                    };
+                    button.addEventListener('click', () => showEditModalGeneric('Evaluación', item.id, item.name, item.url, item.is_visible, item.allow_download));
+                });
+                document.querySelectorAll('.delete-btn-eval').forEach(button => {
+                    button.addEventListener('click', (e) => deleteItem('evaluaciones', e.target.dataset.id) );
+                });
+            } catch (error) {
+                console.error("Error fetching evaluations:", error.message);
+                showModal("Error al cargar las evaluaciones.");
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function fetchMaterial() {
+            if (!userId || !appState.selectedMateria) return;
+            const unit = elements.unidadSelectMat.value;
+            elements.materialList.innerHTML = '';
+            showLoading();
+            try {
+                const { data: material, error } = await supabaseClient
+                    .from('material')
+                    .select('*')
+                    .eq('materia_id', appState.selectedMateria.id)
+                    .eq('unit', unit)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                elements.materialList.innerHTML = '';
+                if (material.length === 0) {
+                    elements.materialList.innerHTML = '<p class="text-gray-600 text-center">No hay material didáctico registrado en esta unidad.</p>';
+                    return;
+                }
+                
+                material.forEach(mat => {
+                    const visibilityClass = mat.is_visible ? 'bg-emerald-100' : 'bg-red-100';
+                    const visibilityText = mat.is_visible ? 'Visible' : 'Oculto';
+                    const card = document.createElement('div');
+                    card.className = `bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center ${visibilityClass}`;
+                    card.innerHTML = `
+                        <div class="mb-2 sm:mb-0">
+                            <h4 class="font-bold text-lg text-gray-900">${mat.name}</h4>
+                            <a href="${mat.url}" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm">Ver archivo</a>
+                             <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${visibilityClass}">${visibilityText}</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="edit-btn-mat p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" 
+                                data-id="${mat.id}" 
+                                data-name="${mat.name}" 
+                                data-url="${mat.url || ''}"
+                                data-visible="${mat.is_visible}"
+                                data-download="${mat.allow_download}">
+                                Editar
+                            </button>
+                            <button class="delete-btn-mat p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${mat.id}">
+                                Eliminar
+                            </button>
+                        </div>
+                    `;
+                    elements.materialList.appendChild(card);
+                });
+                
+                document.querySelectorAll('.edit-btn-mat').forEach(button => {
+                    const item = {
+                        id: e.target.dataset.id,
+                        name: e.target.dataset.name,
+                        url: e.target.dataset.url,
+                        is_visible: e.target.dataset.visible === 'true',
+                        allow_download: e.target.dataset.download === 'true',
+                    };
+                    button.addEventListener('click', () => showEditModalGeneric('Material', item.id, item.name, item.url, item.is_visible, item.allow_download));
+                });
+                document.querySelectorAll('.delete-btn-mat').forEach(button => {
+                    button.addEventListener('click', (e) => deleteItem('material', e.target.dataset.id) );
+                });
+            } catch (error) {
+                console.error("Error fetching material:", error.message);
+                showModal("Error al cargar el material.");
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        elements.unidadSelectMat.addEventListener('change', fetchMaterial);
+        
+        // --- STUDENT MANAGEMENT LOGIC ---
+
+        elements.addStudentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const matricula = document.getElementById('student-matricula-input').value;
+            const name = document.getElementById('student-name-input').value;
+
+            if (!appState.selectedMateria) { showModal("Selecciona una materia primero."); return; }
+
+            showLoading();
+            try {
+                const { error } = await supabaseClient
+                    .from('estudiantes')
+                    .insert([{ materia_id: appState.selectedMateria.id, matricula, name, created_at: new Date().toISOString() }]);
+                if (error) throw error;
+                
+                e.target.reset();
+                showModal("Estudiante agregado exitosamente.");
+            } catch (error) {
+                console.error("Error adding student:", error.message);
+                if (error.code === '23505') {
+                    showModal("Error: La matrícula ya existe o hay un problema de duplicidad.");
+                } else {
+                    showModal("Error al agregar el estudiante.");
+                }
+            } finally {
+                hideLoading();
+            }
+        });
+
+        async function fetchStudents() {
+            if (!userId || !appState.selectedMateria) return;
+            elements.studentsList.innerHTML = '';
+            showLoading();
+            try {
+                const { data: students, error } = await supabaseClient
+                    .from('estudiantes')
+                    .select('*')
+                    .eq('materia_id', appState.selectedMateria.id)
+                    .order('name', { ascending: true });
+
+                if (error) throw error;
+                
+                elements.studentsList.innerHTML = '';
+                appState.students = students || [];
+                if (appState.students.length === 0) {
+                    elements.studentsList.innerHTML = '<p class="text-gray-600 text-center">No hay estudiantes registrados en esta materia.</p>';
+                    return;
+                }
+                
+                appState.students.forEach(student => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center';
+                    card.innerHTML = `
+                        <div class="mb-2 sm:mb-0">
+                            <h4 class="font-bold text-lg text-gray-900">${student.name}</h4>
+                            <p class="text-sm text-gray-700">Matrícula: ${student.matricula}</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="edit-btn-student p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" data-id="${student.id}" data-name="${student.name}" data-matricula="${student.matricula}">
+                                Editar
+                            </button>
+                            <button class="delete-btn-student p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${student.id}">
+                                Eliminar
+                            </button>
+                        </div>
+                    `;
+                    elements.studentsList.appendChild(card);
+                });
+                
+                document.querySelectorAll('.edit-btn-student').forEach(button => {
+                    button.addEventListener('click', (e) => showEditModalGeneric('Estudiante', e.target.dataset.id, e.target.dataset.name, e.target.dataset.matricula) );
+                });
+                document.querySelectorAll('.delete-btn-student').forEach(button => {
+                    button.addEventListener('click', (e) => deleteItem('estudiantes', e.target.dataset.id) );
+                });
+            } catch (error) {
+                console.error("Error fetching students:", error.message);
+                showModal("Error al cargar la lista de estudiantes.");
+            } finally {
+                hideLoading();
+            }
         }
 
-        messageElement.classList.remove('hidden');
-        document.getElementById('student-matricula').value = ''; // Limpiamos solo la matrícula
-        
-    } catch (error) {
-        console.error("Error registering student attendance:", error.message);
-        messageElement.textContent = "Error al registrar la asistencia. Revisa los datos o contacta al docente.";
-        messageElement.classList.remove('hidden');
-    } finally {
-        hideLoading();
-    }
-});
+        // --- STUDENT ATTENDANCE PAGE LOGIC ---
+        elements.returnToLogin.addEventListener('click', () => { showPage('login-page'); });
+
+        elements.studentAttendanceForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const qrDataString = document.getElementById('student-qr-data').value;
+            const studentMatricula = document.getElementById('student-matricula').value;
+            const messageElement = elements.studentAttendanceMessage;
+            
+            messageElement.classList.add('hidden');
+            showLoading();
+
+            try {
+                const qrData = JSON.parse(qrDataString);
+                if (!qrData || !qrData.token) { messageElement.textContent = "Datos de QR inválidos."; messageElement.classList.remove('hidden'); return; }
+
+                // 1. Verificar si la sesión de QR está activa (usa la política RLS 'is_active = true')
+                const { data: tempSession, error: sessionError } = await supabaseClient
+                    .from('temp_attendance')
+                    .select('is_active')
+                    .eq('token', qrData.token)
+                    .single();
+                
+                if (sessionError || !tempSession || !tempSession.is_active) {
+                    messageElement.textContent = "La sesión de asistencia ha expirado o no es válida.";
+                    messageElement.classList.remove('hidden');
+                    return;
+                }
+                
+                // 2. Registrar asistencia del estudiante (usa la política RLS de INSERT condicional)
+                const { error: recordError } = await supabaseClient
+                    .from('attendance_records')
+                    .insert([{ temp_token: qrData.token, student_matricula: studentMatricula }]);
+
+                if (recordError && error.code === '23505') { 
+                    messageElement.textContent = "Ya has registrado tu asistencia.";
+                } else if (recordError) {
+                    throw recordError;
+                } else {
+                    messageElement.textContent = "¡Asistencia registrada con éxito!";
+                }
+
+                messageElement.classList.remove('hidden');
+                e.target.reset();
+
+            } catch (error) {
+                console.error("Error registering student attendance:", error.message);
+                messageElement.textContent = "Error al registrar la asistencia. Revisa los datos o contacta al docente.";
+                messageElement.classList.remove('hidden');
+            } finally {
+                hideLoading();
+            }
+        });
         
         // --- FIN DEL CÓDIGO COMPLETO ---
         document.addEventListener('DOMContentLoaded', initSupabaseAndAuth);
