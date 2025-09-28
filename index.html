@@ -2261,7 +2261,40 @@
         });
         
         // --- FIN DEL CÓDIGO COMPLETO ---
-        document.addEventListener('DOMContentLoaded', initSupabaseAndAuth);
+    // BUSCAR ESTE BLOQUE AL FINAL DEL SCRIPT
+// ----------------------------------------------------
+// document.addEventListener('DOMContentLoaded', initSupabaseAndAuth);
+
+// REEMPLAZAR CON ESTO:
+
+// 🚨 LÓGICA DE ARRANQUE FINAL 🚨
+
+const initialHash = window.location.hash;
+const isStudentFlow = initialHash.startsWith('#student-page') || initialHash.startsWith('#student-query-page');
+
+if (isStudentFlow) {
+    // Si estamos en una página de alumno, la abrimos inmediatamente
+    // sin esperar ni ejecutar el login de docente.
+    showPage(initialHash.substring(1).split('?')[0]); // Abre 'student-page' o 'student-query-page'
+    
+    // Y registramos el listener para manejo futuro
+    window.addEventListener('hashchange', () => {
+        const hash = window.location.hash;
+        if (hash.startsWith('#student-page')) {
+            showPage('student-page');
+        } else if (hash.startsWith('#student-query-page')) {
+            showPage('student-query-page');
+        } else {
+            // Si sale del flujo de alumno, recargamos la lógica de docente
+            initSupabaseAndAuth(); 
+        }
+    });
+
+} else {
+    // Si no es un flujo de alumno, iniciamos la autenticación de docente normalmente.
+    document.addEventListener('DOMContentLoaded', initSupabaseAndAuth);
+}
+
     </script>
 </body>
 </html>
