@@ -371,7 +371,5 @@ entrypoint = "./functions/batchGradeActivities/index.ts"
 # static_files = [ "./functions/batchGradeActivities/*.html" ]
 
 [functions]
-# Lista de orígenes permitidos para todas tus Edge Functions
-allowed_cors_origins = [
-  "https://plataforma-docente-live.onrender.com
+allowed_cors_origins = ["https://plataforma-docente-live.onrender.com]
   
