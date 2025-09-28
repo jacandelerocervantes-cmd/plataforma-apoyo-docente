@@ -513,7 +513,7 @@
         // 1. Define Credenciales (REEMPLAZAR)
         const SUPABASE_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
-        
+        const PLATFORM_DOMAIN = 'https://plataforma-apoyo-docente.onrender.com';
         // 2. Inicializa la instancia del cliente con un nombre que no choca con el global 'supabase'
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const EDGE_FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1/`;
@@ -1133,7 +1133,6 @@
             if (!appState.selectedMateria) { showModal("Por favor, selecciona una materia primero."); return; }
             showLoading();
             const attendanceToken = crypto.randomUUID();
-            const PLATFORM_URL = 'https://plataforma-apoyo-docente.onrender.com/'; // Usar la base de tu dominio Render o Supabase
             const REDIRECTION_URL = `${PLATFORM_DOMAIN}/#student-page?token=${attendanceToken}`;
 
             const qrData = JSON.stringify({ materiaId: appState.selectedMateria.id, userId, token: attendanceToken });
