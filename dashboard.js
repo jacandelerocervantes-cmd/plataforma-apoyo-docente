@@ -4,20 +4,21 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 const SETUP_DRIVE_FUNCTION_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co/functions/v1/setup-drive-folder';
 
-// --- ELEMENTOS DEL DOM (SIN CAMBIOS) ---
+// --- ESTADO GLOBAL Y ELEMENTOS DEL DOM ---
 const logoutButton = document.getElementById('logout-button');
 const createMateriaForm = document.getElementById('create-materia-form');
 const materiasGrid = document.getElementById('materias-grid');
 const teacherNameElement = document.getElementById('teacher-name');
 
-// --- FUNCIONES AUXILIARES DE DRIVE (SIN CAMBIOS) ---
+let isDashboardInitialized = false; // Bandera para evitar doble inicialización
+
+// --- FUNCIONES AUXILIARES DE DRIVE ---
 
 /**
  * Llama a la Edge Function para crear la carpeta raíz en Google Drive.
  * @param {Object} session - El objeto de sesión de Supabase.
  */
 async function setupUserDrive(session) {
-    // ... (El cuerpo de la función setupUserDrive permanece igual)
     const googleAccessToken = session.provider_token;
     console.log("Intento de configuración de Drive. Token de Google (provider_token) presente:", !!googleAccessToken); 
 
@@ -49,19 +50,22 @@ async function setupUserDrive(session) {
 }
 
 
-// --- MANEJO DE LA SESIÓN (CORRECCIÓN FINAL: USANDO LISTENER) ---
+// --- MANEJO DE LA SESIÓN: FUNCIÓN DE INICIALIZACIÓN ---
 
 function initializeDashboard(session) {
+    if (isDashboardInitialized) return; // Salir si ya está inicializado
+    
     const user = session.user;
     const displayName = user.user_metadata?.full_name || user.email;
     teacherNameElement.textContent = displayName;
 
     // Lógica para configurar Drive
     const isGoogleUser = user.app_metadata.provider === 'google';
-    const hasProviderToken = session.provider_token; // Solo está presente en el login inicial
+    const hasProviderToken = session.provider_token; 
     
     console.log(`Debug de sesión: esGoogleUser=${isGoogleUser}, tieneProviderToken=${!!hasProviderToken}`);
 
+    // Solo llamar a la función si el token de Google está presente (fresco del OAuth)
     if (isGoogleUser && hasProviderToken) {
         console.log("Detectado inicio de sesión de Google. Configurando Drive...");
         setupUserDrive(session);
@@ -70,46 +74,53 @@ function initializeDashboard(session) {
     }
 
     loadMaterias();
+    isDashboardInitialized = true; // Establecer la bandera
 }
 
-// Escucha los cambios de estado de autenticación (evento clave después de OAuth)
+
+// --- MANEJO DE LA SESIÓN: LISTENER CRÍTICO ---
+
 supabaseClient.auth.onAuthStateChange((event, session) => {
-    console.log(`Evento de Auth: ${event}`);
-    
+    console.log(`Evento de Auth: ${event}, Sesión: ${!!session}`);
+
     if (session) {
-        // Ejecuta la inicialización solo en los estados clave de inicio de sesión
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-            initializeDashboard(session);
-        }
+        // La sesión es válida (SIGNED_IN o INITIAL_SESSION)
+        initializeDashboard(session);
     } else {
-        // Si el evento es SIGNED_OUT, redirigir al login
-        window.location.href = '/index.html';
+        // No hay sesión (SIGNED_OUT o no se encontró sesión)
+        // Redirigir si no estamos ya en la página de inicio
+        if (window.location.pathname.toLowerCase().includes('dashboard.html')) {
+             window.location.href = '/index.html';
+        }
     }
 });
 
 
-// --- Listeners y Funciones Auxiliares (Permanecen fuera del listener) ---
+// --- LÓGICA DE EVENTOS DEL DOM ---
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // El código aquí solo establece los listeners del DOM, la inicialización
-    // se hace en onAuthStateChange para evitar la carrera.
     
-    // Este código es solo para usuarios que ya tienen sesión activa en Local Storage
+    // 1. Iniciar la verificación de sesión
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
+        // Para los usuarios que regresan (sesión en localStorage), inicializar inmediatamente
         initializeDashboard(session);
+    } else {
+        // Si no hay sesión, el listener onAuthStateChange se encargará de redirigir.
     }
     
+    // 2. Setup Listeners
     logoutButton.addEventListener('click', async () => {
         const { error } = await supabaseClient.auth.signOut();
         if (error) {
             console.error("Error al cerrar sesión:", error);
-        } // La redirección se maneja en onAuthStateChange
+        } 
+        // La redirección es manejada por onAuthStateChange
     });
 
     createMateriaForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        // ... (Tu lógica de creación de materia)
+
         const name = document.getElementById('name').value;
         const semester = document.getElementById('semester').value;
         const year = document.getElementById('year').value;
@@ -135,9 +146,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// --- LÓGICA DE MATERIAS (SIN CAMBIOS) ---
+// --- LÓGICA DE MATERIAS ---
 
 async function loadMaterias() {
+    // ... (Tu lógica de carga de materias existente)
     const { data: materias, error } = await supabaseClient
         .from('materias')
         .select('*')
