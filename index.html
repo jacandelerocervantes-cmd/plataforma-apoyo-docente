@@ -52,15 +52,6 @@
         </div>
     </main>
     
-    <script>
-        // Si la URL de la página de inicio contiene un hash (ej. #access_token=...), 
-        // significa que Supabase ha redirigido aquí después del login OAuth.
-        if (window.location.hash && window.location.hash.includes('access_token')) {
-            // Forzamos la redirección a Dashboard.html, pasando el hash completo.
-            // Esto permite que el JS de Dashboard.html (y Supabase) recoja la sesión.
-            window.location.href = '/Dashboard.html' + window.location.hash;
-        }
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 
