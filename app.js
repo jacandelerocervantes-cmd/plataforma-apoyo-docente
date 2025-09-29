@@ -105,6 +105,6 @@ googleLoginButton.addEventListener('click', async () => {
 // Chequeo de sesión para prevenir que el usuario ya logueado vea el login
 supabaseClient.auth.getSession().then(({ data: { session } }) => {
     if (session) {
-        window.location.href = '/Dashboard.html';
+        window.location.href = '/dashboard.html';
     }
 });
