@@ -20,6 +20,7 @@
         }
         .btn-primary { background-color: #4f46e5; }
         .btn-primary:hover { background-color: #4338ca; }
+        /* Clave de la corrección: Por defecto, todas las páginas están ocultas */
         .page { display: none; }
         .page-active { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -45,8 +46,8 @@
             <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div><div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">O continúa con tu correo</span></div></div>
 
             <form id="login-form">
-                <div class="mb-4"><label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label><input type="email" id="email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required></div>
-                <div class="mb-6"><label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label><input type="password" id="password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required></div>
+                <div class="mb-4"><label for="email" class="block text-sm font-medium text-gray-700">Correo</label><input type="email" id="email" class="mt-1 block w-full px-3 py-2 border rounded-md" required></div>
+                <div class="mb-6"><label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label><input type="password" id="password" class="mt-1 block w-full px-3 py-2 border rounded-md" required></div>
                 <button type="submit" class="w-full btn-primary text-white font-bold py-2 px-4 rounded-md">Entrar con Correo</button>
             </form>
         </div>
@@ -127,8 +128,6 @@
         // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
         const SUPABASE_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
-        
-        // CORRECCIÓN: Se renombra la variable a 'supabaseClient' para evitar conflictos.
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let userId = null;
@@ -168,18 +167,30 @@
         const showLoading = () => elements.loading.classList.remove('hidden');
         const hideLoading = () => elements.loading.classList.add('hidden');
         function showModal(message) { elements.notificationText.textContent = message; elements.notificationModal.classList.remove('hidden'); }
-        function showPage(pageId) { elements.pages.forEach(p => p.classList.remove('page-active')); document.getElementById(pageId)?.classList.add('page-active'); }
-        
-        // --- AUTENTICACIÓN Y CARGA INICIAL ---
-        async function checkSession() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session?.user) {
-                userId = session.user.id;
-                elements.userEmail.textContent = session.user.email;
-                showPage('dashboard-page');
-                await loadMaterias();
-            } else { showPage('login-page'); }
+        function showPage(pageId) {
+            elements.pages.forEach(p => p.classList.remove('page-active'));
+            const page = document.getElementById(pageId);
+            if (page) {
+                page.classList.add('page-active');
+            } else {
+                console.error(`Error: Page with id '${pageId}' not found.`);
+            }
         }
+        
+        // --- LÓGICA DE NAVEGACIÓN Y VISUALIZACIÓN ---
+        async function showDashboard(user) {
+            userId = user.id;
+            elements.userEmail.textContent = user.email;
+            await loadMaterias();
+            showPage('dashboard-page');
+        }
+
+        function showLoginPage() {
+            userId = null;
+            showPage('login-page');
+        }
+
+        // --- CARGA DE DATOS ---
         async function loadMaterias() {
             showLoading();
             const { data, error } = await supabaseClient.from('materias').select('*').eq('docente_id', userId);
@@ -199,8 +210,6 @@
                 elements.materiasGrid.appendChild(card);
             });
         }
-
-        // --- GESTIÓN DE ESTUDIANTES ---
         async function loadStudents() {
             if (!appState.selectedMateria) return;
             showLoading();
@@ -219,8 +228,6 @@
                 });
             }
         }
-        
-        // --- GESTIÓN DE ACTIVIDADES ---
         async function loadActivities() {
             if (!appState.selectedMateria) return;
             showLoading();
@@ -239,8 +246,6 @@
                 });
             }
         }
-
-        // --- GESTIÓN DE EVALUACIONES ---
         async function loadEvaluations() {
             if (!appState.selectedMateria) return;
             showLoading();
@@ -300,152 +305,163 @@
         }
         function showStudentMessage(message, isError) { elements.studentFormContainer.innerHTML = `<h1 class="text-3xl font-bold ${isError ? 'text-red-600' : 'text-green-600'}">${isError ? 'Error' : 'Éxito'}</h1><p class="mt-4 text-lg">${message}</p>`; }
         
-        // --- TODOS LOS EVENT LISTENERS ---
-
-        // Autenticación
-        elements.googleLoginBtn.addEventListener('click', async () => {
-            showLoading();
-            const { error } = await supabaseClient.auth.signInWithOAuth({
-                provider: 'google',
-                options: { scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets' }
+        // --- EVENT LISTENERS ---
+        function setupEventListeners() {
+            elements.googleLoginBtn.addEventListener('click', async () => {
+                showLoading();
+                const { error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets' }
+                });
+                hideLoading();
+                if (error) { showModal(`Error con Google: ${error.message}`); }
             });
-            hideLoading();
-            if (error) { showModal(`Error al iniciar sesión con Google: ${error.message}`); }
-        });
-        elements.loginForm.addEventListener('submit', async (e) => { e.preventDefault(); showLoading(); const { error } = await supabaseClient.auth.signInWithPassword({ email: e.target.email.value, password: e.target.password.value }); hideLoading(); if (error) showModal(`Error: ${error.message}`); else location.reload(); });
-        elements.logoutButton.addEventListener('click', async () => { await supabaseClient.auth.signOut(); location.reload(); });
-        
-        // Modales
-        elements.addMateriaBtn.addEventListener('click', () => elements.addMateriaModal.classList.remove('hidden'));
-        elements.closeModalBtn.addEventListener('click', () => elements.addMateriaModal.classList.add('hidden'));
-        elements.closeNotificationModalBtn.addEventListener('click', () => elements.notificationModal.classList.add('hidden'));
 
-        // Navegación
-        elements.backToDashboardBtn.addEventListener('click', () => showPage('dashboard-page'));
-        elements.backToMateriaBtns.forEach(btn => btn.addEventListener('click', () => showPage('materia-page')));
-        elements.gestionEstudiantesModule.addEventListener('click', () => { showPage('gestion-estudiantes-page'); loadStudents(); });
-        elements.asistenciaModule.addEventListener('click', () => { showPage('asistencia-page'); elements.presentStudentsList.innerHTML = '<p id="no-attendance-placeholder" class="col-span-full">Aún no hay registros.</p>'; elements.presentCount.textContent = '0'; fetchStudentsForAttendance(); });
-        elements.actividadesModule.addEventListener('click', () => { showPage('actividades-page'); loadActivities(); });
-        elements.evaluacionesModule.addEventListener('click', () => { showPage('evaluaciones-page'); loadEvaluations(); });
-        elements.materialDidacticoModule.addEventListener('click', () => showPage('material-didactico-page'));
-
-        // --- FORMULARIOS Y ACCIONES ---
-        
-        // Crear Materia
-        elements.addMateriaForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); showLoading();
-            const name = document.getElementById('new-materia-name').value;
-            const semester = document.getElementById('new-materia-semester').value;
-            const { data, error } = await supabaseClient.from('materias').insert([{ name, semester, docente_id: userId }]).select().single();
-            if (error) { hideLoading(); return showModal(`Error: ${error.message}`); }
-            await supabaseClient.functions.invoke('google-api-handler', { body: { action: 'createSubjectFolders', subjectName: name, semester, materiaId: data.id } });
-            hideLoading(); elements.addMateriaModal.classList.add('hidden'); showModal('Materia creada.'); await loadMaterias();
-        });
-
-        // Añadir Estudiante
-        elements.addStudentForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); showLoading();
-            const name = document.getElementById('student-name').value;
-            const matricula = document.getElementById('student-new-matricula').value;
-            const { error } = await supabaseClient.from('estudiantes').insert([{ name, matricula, materia_id: appState.selectedMateria.id, docente_id: userId }]);
-            hideLoading();
-            if (error) { showModal(`Error: ${error.message}`); } else { showModal('Estudiante añadido.'); e.target.reset(); await loadStudents(); }
-        });
-
-        // Eliminar Estudiante
-        elements.studentsTableBody.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('delete-student-btn')) {
-                if (!confirm('¿Eliminar estudiante?')) return;
-                showLoading();
-                const { error } = await supabaseClient.from('estudiantes').delete().eq('id', e.target.dataset.id);
+            elements.loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); showLoading();
+                const { error } = await supabaseClient.auth.signInWithPassword({ email: e.target.email.value, password: e.target.password.value });
                 hideLoading();
-                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Estudiante eliminado.'); await loadStudents(); }
-            }
-        });
+                if (error) showModal(`Error: ${error.message}`);
+            });
 
-        // Crear Actividad
-        elements.addActivityForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); showLoading();
-            const { error } = await supabaseClient.from('actividades').insert([{ title: document.getElementById('activity-title').value, description: document.getElementById('activity-description').value, due_date: document.getElementById('activity-due-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
-            hideLoading();
-            if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad creada.'); e.target.reset(); await loadActivities(); }
-        });
+            elements.logoutButton.addEventListener('click', async () => { await supabaseClient.auth.signOut(); });
+            
+            elements.addMateriaBtn.addEventListener('click', () => elements.addMateriaModal.classList.remove('hidden'));
+            elements.closeModalBtn.addEventListener('click', () => elements.addMateriaModal.classList.add('hidden'));
+            elements.closeNotificationModalBtn.addEventListener('click', () => elements.notificationModal.classList.add('hidden'));
 
-        // Eliminar Actividad
-        elements.activitiesList.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('delete-activity-btn')) {
-                if (!confirm('¿Eliminar actividad?')) return;
-                showLoading();
-                const { error } = await supabaseClient.from('actividades').delete().eq('id', e.target.dataset.id);
-                hideLoading();
-                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad eliminada.'); await loadActivities(); }
-            }
-        });
-        
-        // Crear Evaluación
-        elements.addEvaluationForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); showLoading();
-            const { error } = await supabaseClient.from('evaluaciones').insert([{ title: document.getElementById('evaluation-title').value, description: document.getElementById('evaluation-description').value, evaluation_date: document.getElementById('evaluation-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
-            hideLoading();
-            if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación creada.'); e.target.reset(); await loadEvaluations(); }
-        });
+            elements.backToDashboardBtn.addEventListener('click', () => showPage('dashboard-page'));
+            elements.backToMateriaBtns.forEach(btn => btn.addEventListener('click', () => showPage('materia-page')));
+            
+            elements.gestionEstudiantesModule.addEventListener('click', () => { showPage('gestion-estudiantes-page'); loadStudents(); });
+            elements.asistenciaModule.addEventListener('click', () => { showPage('asistencia-page'); elements.presentStudentsList.innerHTML = '<p id="no-attendance-placeholder" class="col-span-full">Aún no hay registros.</p>'; elements.presentCount.textContent = '0'; fetchStudentsForAttendance(); });
+            elements.actividadesModule.addEventListener('click', () => { showPage('actividades-page'); loadActivities(); });
+            elements.evaluacionesModule.addEventListener('click', () => { showPage('evaluaciones-page'); loadEvaluations(); });
+            elements.materialDidacticoModule.addEventListener('click', () => showPage('material-didactico-page'));
 
-        // Eliminar Evaluación
-        elements.evaluationsList.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('delete-evaluation-btn')) {
-                if (!confirm('¿Eliminar evaluación?')) return;
-                showLoading();
-                const { error } = await supabaseClient.from('evaluaciones').delete().eq('id', e.target.dataset.id);
-                hideLoading();
-                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación eliminada.'); await loadEvaluations(); }
-            }
-        });
-
-        // Generar Material Didáctico
-        elements.generateMaterialForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const topic = document.getElementById('material-topic').value;
-            showLoading();
-            elements.generatedMaterialContent.innerHTML = `<p class="text-gray-500">Generando, por favor espera...</p>`;
-            try {
-                const { data, error } = await supabaseClient.functions.invoke('generate-material', { body: { topic: topic } });
-                if (error) throw error;
-                elements.generatedMaterialContent.innerHTML = data.content || 'No se pudo generar el contenido.';
-            } catch (error) {
-                elements.generatedMaterialContent.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
-            } finally {
-                hideLoading();
-            }
-        });
-
-        // Acciones de Asistencia
-        elements.generateQrBtn.addEventListener('click', async () => { showLoading(); const token = crypto.randomUUID(); const url = `${location.origin}${location.pathname}#student-page?token=${token}`; const { error } = await supabaseClient.from('temp_attendance').insert([{ token, materia_id: appState.selectedMateria.id, docente_id: userId, is_active: true }]); hideLoading(); if (error) return showModal(`Error: ${error.message}`); QRCode.toCanvas(elements.qrCanvas, url, { errorCorrectionLevel: 'H' }, err => { if (err) return showModal("Error al generar QR."); elements.qrSection.classList.remove('hidden'); elements.generateQrBtn.classList.add('hidden'); elements.cancelQrBtn.classList.remove('hidden'); startQrTimer(token); startAttendanceListener(token); }); });
-        elements.cancelQrBtn.addEventListener('click', async () => { const { data } = await supabaseClient.from('temp_attendance').select('token').eq('docente_id', userId).eq('is_active', true).single(); if (data?.token) await deactivateQr(data.token); });
-        elements.saveManualAttendanceBtn.addEventListener('click', async () => {
-            const checkedBoxes = elements.manualAttendanceList.querySelectorAll('input:checked');
-            if (checkedBoxes.length === 0) return showModal("Selecciona al menos un estudiante.");
-            showLoading();
-            const records = [];
-            for (const box of checkedBoxes) {
-                const matricula = box.dataset.matricula;
-                if (!document.querySelector(`#present-students-list [data-matricula="${matricula}"]`)) {
-                    records.push({ materia_id: appState.selectedMateria.id, student_matricula: matricula, student_name: box.dataset.name, docente_id: userId });
-                }
-            }
-            if (records.length > 0) {
-                const { error } = await supabaseClient.from('asistencias').insert(records);
+            elements.addMateriaForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); showLoading();
+                const name = document.getElementById('new-materia-name').value;
+                const semester = document.getElementById('new-materia-semester').value;
+                const { data, error } = await supabaseClient.from('materias').insert([{ name, semester, docente_id: userId }]).select().single();
                 if (error) { hideLoading(); return showModal(`Error: ${error.message}`); }
+                await supabaseClient.functions.invoke('google-api-handler', { body: { action: 'createSubjectFolders', subjectName: name, semester, materiaId: data.id } });
+                hideLoading(); elements.addMateriaModal.classList.add('hidden'); showModal('Materia creada.'); await loadMaterias();
+            });
+
+            elements.addStudentForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); showLoading();
+                const name = document.getElementById('student-name').value;
+                const matricula = document.getElementById('student-new-matricula').value;
+                const { error } = await supabaseClient.from('estudiantes').insert([{ name, matricula, materia_id: appState.selectedMateria.id, docente_id: userId }]);
+                hideLoading();
+                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Estudiante añadido.'); e.target.reset(); await loadStudents(); }
+            });
+
+            elements.studentsTableBody.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-student-btn')) {
+                    if (!confirm('¿Eliminar estudiante?')) return;
+                    showLoading();
+                    const { error } = await supabaseClient.from('estudiantes').delete().eq('id', e.target.dataset.id);
+                    hideLoading();
+                    if (error) { showModal(`Error: ${error.message}`); } else { showModal('Estudiante eliminado.'); await loadStudents(); }
+                }
+            });
+
+            elements.addActivityForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); showLoading();
+                const { error } = await supabaseClient.from('actividades').insert([{ title: document.getElementById('activity-title').value, description: document.getElementById('activity-description').value, due_date: document.getElementById('activity-due-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
+                hideLoading();
+                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad creada.'); e.target.reset(); await loadActivities(); }
+            });
+
+            elements.activitiesList.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-activity-btn')) {
+                    if (!confirm('¿Eliminar actividad?')) return;
+                    showLoading();
+                    const { error } = await supabaseClient.from('actividades').delete().eq('id', e.target.dataset.id);
+                    hideLoading();
+                    if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad eliminada.'); await loadActivities(); }
+                }
+            });
+            
+            elements.addEvaluationForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); showLoading();
+                const { error } = await supabaseClient.from('evaluaciones').insert([{ title: document.getElementById('evaluation-title').value, description: document.getElementById('evaluation-description').value, evaluation_date: document.getElementById('evaluation-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
+                hideLoading();
+                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación creada.'); e.target.reset(); await loadEvaluations(); }
+            });
+
+            elements.evaluationsList.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-evaluation-btn')) {
+                    if (!confirm('¿Eliminar evaluación?')) return;
+                    showLoading();
+                    const { error } = await supabaseClient.from('evaluaciones').delete().eq('id', e.target.dataset.id);
+                    hideLoading();
+                    if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación eliminada.'); await loadEvaluations(); }
+                }
+            });
+
+            elements.generateMaterialForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const topic = document.getElementById('material-topic').value;
+                showLoading();
+                elements.generatedMaterialContent.innerHTML = `<p class="text-gray-500">Generando, por favor espera...</p>`;
+                try {
+                    const { data, error } = await supabaseClient.functions.invoke('generate-material', { body: { topic: topic } });
+                    if (error) throw error;
+                    elements.generatedMaterialContent.innerHTML = data.content || 'No se pudo generar el contenido.';
+                } catch (error) {
+                    elements.generatedMaterialContent.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+                } finally {
+                    hideLoading();
+                }
+            });
+
+            elements.generateQrBtn.addEventListener('click', async () => { showLoading(); const token = crypto.randomUUID(); const url = `${location.origin}${location.pathname}#student-page?token=${token}`; const { error } = await supabaseClient.from('temp_attendance').insert([{ token, materia_id: appState.selectedMateria.id, docente_id: userId, is_active: true }]); hideLoading(); if (error) return showModal(`Error: ${error.message}`); QRCode.toCanvas(elements.qrCanvas, url, { errorCorrectionLevel: 'H' }, err => { if (err) return showModal("Error al generar QR."); elements.qrSection.classList.remove('hidden'); elements.generateQrBtn.classList.add('hidden'); elements.cancelQrBtn.classList.remove('hidden'); startQrTimer(token); startAttendanceListener(token); }); });
+            elements.cancelQrBtn.addEventListener('click', async () => { const { data } = await supabaseClient.from('temp_attendance').select('token').eq('docente_id', userId).eq('is_active', true).single(); if (data?.token) await deactivateQr(data.token); });
+            elements.saveManualAttendanceBtn.addEventListener('click', async () => {
+                const checkedBoxes = elements.manualAttendanceList.querySelectorAll('input:checked');
+                if (checkedBoxes.length === 0) return showModal("Selecciona al menos un estudiante.");
+                showLoading();
+                const records = [];
+                for (const box of checkedBoxes) {
+                    const matricula = box.dataset.matricula;
+                    if (!document.querySelector(`#present-students-list [data-matricula="${matricula}"]`)) {
+                        records.push({ materia_id: appState.selectedMateria.id, student_matricula: matricula, student_name: box.dataset.name, docente_id: userId });
+                    }
+                }
+                if (records.length > 0) {
+                    const { error } = await supabaseClient.from('asistencias').insert(records);
+                    if (error) { hideLoading(); return showModal(`Error: ${error.message}`); }
+                }
+                hideLoading();
+                records.forEach(r => addPresentStudent(r.student_name, r.student_matricula));
+                showModal(`Asistencia guardada para ${records.length} estudiante(s).`);
+            });
+        }
+
+        // --- ARRANQUE DE LA APP ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Primero, configurar todos los listeners
+            setupEventListeners();
+
+            // Segundo, manejar la ruta de estudiante si existe
+            if (window.location.hash.startsWith('#student-page')) {
+                showPage('student-page');
+                handleStudentAttendance();
+                return; // Detener la ejecución para no interferir con la autenticación
             }
-            hideLoading();
-            records.forEach(r => addPresentStudent(r.student_name, r.student_matricula));
-            showModal(`Asistencia guardada para ${records.length} estudiante(s).`);
+
+            // Tercero, usar onAuthStateChange para manejar el estado de autenticación
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (session && session.user) {
+                    showDashboard(session.user);
+                } else {
+                    showLoginPage();
+                }
+            });
         });
-
-        // --- RUTEO Y ARRANQUE DE LA APP ---
-        function handleRouting() { if (window.location.hash.startsWith('#student-page')) { showPage('student-page'); handleStudentAttendance(); } else if (!userId) { checkSession(); } }
-        window.addEventListener('hashchange', handleRouting);
-        document.addEventListener('DOMContentLoaded', handleRouting);
-
     </script>
 </body>
 </html>
