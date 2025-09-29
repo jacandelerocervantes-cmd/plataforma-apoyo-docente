@@ -2,7 +2,7 @@
 const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co'; // Reemplaza con tu URL
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';     // Reemplaza con tu Anon Key
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-const SETUP_DRIVE_FUNCTION_URL = 'https://supabase.com/dashboard/project/pyurfviezihdfnxfgnxw/functions';
+const SETUP_DRIVE_FUNCTION_URL = 'https://pyurfviezihdfnxfgnxw/functions';
 
 // --- ELEMENTOS DEL DOM ---
 const loginForm = document.getElementById('login-form');
