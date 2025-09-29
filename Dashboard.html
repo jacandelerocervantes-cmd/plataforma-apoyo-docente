@@ -97,6 +97,6 @@ googleLoginButton.addEventListener('click', async () => {
 supabaseClient.auth.getSession().then(({ data: { session } }) => {
     if (session) {
         // ✅ USANDO MAYÚSCULAS
-        window.location.href = '/Dashboard.html'; 
+        window.location.href = '/dashboard.html'; 
     }
 });
