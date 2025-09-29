@@ -34,11 +34,20 @@
     
     <div id="login-page" class="page flex items-center justify-center min-h-screen">
         <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 w-full max-w-md">
-            <h1 class="text-3xl font-bold text-center text-gray-900 mb-6">Iniciar Sesión</h1>
+            <h1 class="text-3xl font-bold text-center text-gray-900 mb-2">Plataforma Docente</h1>
+            <p class="text-center text-gray-500 mb-6">Inicia sesión para continuar</p>
+
+            <button id="google-login-btn" class="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 mb-4">
+                <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.522-3.44-11.127-8.161l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C44.433,36.33,48,29.82,48,24C48,22.659,47.862,21.35,47.611,20.083z"></path></svg>
+                <span>Iniciar Sesión con Google</span>
+            </button>
+
+            <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div><div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">O continúa con tu correo</span></div></div>
+
             <form id="login-form">
-                <div class="mb-4"><label for="email" class="block text-sm font-medium">Correo</label><input type="email" id="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
-                <div class="mb-6"><label for="password" class="block text-sm font-medium">Contraseña</label><input type="password" id="password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
-                <button type="submit" class="w-full btn-primary text-white font-bold py-2 px-4 rounded-md">Entrar</button>
+                <div class="mb-4"><label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label><input type="email" id="email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required></div>
+                <div class="mb-6"><label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label><input type="password" id="password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required></div>
+                <button type="submit" class="w-full btn-primary text-white font-bold py-2 px-4 rounded-md">Entrar con Correo</button>
             </form>
         </div>
     </div>
@@ -129,6 +138,7 @@
         const elements = {
             pages: document.querySelectorAll('.page'), loading: document.getElementById('loading'),
             loginForm: document.getElementById('login-form'), userEmail: document.getElementById('user-email'),
+            googleLoginBtn: document.getElementById('google-login-btn'),
             logoutButton: document.getElementById('logout-button'), materiasGrid: document.getElementById('materias-grid'),
             addMateriaBtn: document.getElementById('add-materia-btn'), materiaNameHeader: document.getElementById('materia-name-header'),
             gestionEstudiantesModule: document.getElementById('gestion-estudiantes-module'),
@@ -180,7 +190,7 @@
                 card.innerHTML = `<h3 class="text-xl font-bold">${materia.name}</h3><p class="text-gray-600">${materia.semester}</p>`;
                 card.addEventListener('click', () => {
                     appState.selectedMateria = materia;
-                    appState.studentCache = []; // Limpiar caché al cambiar de materia
+                    appState.studentCache = [];
                     elements.materiaNameHeader.textContent = materia.name;
                     showPage('materia-page');
                 });
@@ -291,6 +301,15 @@
         // --- TODOS LOS EVENT LISTENERS ---
 
         // Autenticación
+        elements.googleLoginBtn.addEventListener('click', async () => {
+            showLoading();
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets' }
+            });
+            hideLoading();
+            if (error) { showModal(`Error al iniciar sesión con Google: ${error.message}`); }
+        });
         elements.loginForm.addEventListener('submit', async (e) => { e.preventDefault(); showLoading(); const { error } = await supabase.auth.signInWithPassword({ email: e.target.email.value, password: e.target.password.value }); hideLoading(); if (error) showModal(`Error: ${error.message}`); else location.reload(); });
         elements.logoutButton.addEventListener('click', async () => { await supabase.auth.signOut(); location.reload(); });
         
@@ -345,13 +364,7 @@
         // Crear Actividad
         elements.addActivityForm.addEventListener('submit', async (e) => {
             e.preventDefault(); showLoading();
-            const { error } = await supabase.from('actividades').insert([{
-                title: document.getElementById('activity-title').value,
-                description: document.getElementById('activity-description').value,
-                due_date: document.getElementById('activity-due-date').value,
-                materia_id: appState.selectedMateria.id,
-                docente_id: userId
-            }]);
+            const { error } = await supabase.from('actividades').insert([{ title: document.getElementById('activity-title').value, description: document.getElementById('activity-description').value, due_date: document.getElementById('activity-due-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
             hideLoading();
             if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad creada.'); e.target.reset(); await loadActivities(); }
         });
@@ -370,13 +383,7 @@
         // Crear Evaluación
         elements.addEvaluationForm.addEventListener('submit', async (e) => {
             e.preventDefault(); showLoading();
-            const { error } = await supabase.from('evaluaciones').insert([{
-                title: document.getElementById('evaluation-title').value,
-                description: document.getElementById('evaluation-description').value,
-                evaluation_date: document.getElementById('evaluation-date').value,
-                materia_id: appState.selectedMateria.id,
-                docente_id: userId
-            }]);
+            const { error } = await supabase.from('evaluaciones').insert([{ title: document.getElementById('evaluation-title').value, description: document.getElementById('evaluation-description').value, evaluation_date: document.getElementById('evaluation-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
             hideLoading();
             if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación creada.'); e.target.reset(); await loadEvaluations(); }
         });
@@ -399,15 +406,11 @@
             showLoading();
             elements.generatedMaterialContent.innerHTML = `<p class="text-gray-500">Generando, por favor espera...</p>`;
             try {
-                const { data, error } = await supabase.functions.invoke('generate-material', {
-                    body: { topic: topic },
-                });
+                const { data, error } = await supabase.functions.invoke('generate-material', { body: { topic: topic } });
                 if (error) throw error;
-                // Asumimos que la función retorna un objeto con una propiedad 'content'
                 elements.generatedMaterialContent.innerHTML = data.content || 'No se pudo generar el contenido.';
             } catch (error) {
-                elements.generatedMaterialContent.innerHTML = `<p class="text-red-500">Error al invocar la función: ${error.message}</p>`;
-                showModal('Error al generar el material.');
+                elements.generatedMaterialContent.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
             } finally {
                 hideLoading();
             }
