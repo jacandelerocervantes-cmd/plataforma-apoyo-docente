@@ -91,7 +91,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     } else {
         // Solo redirige cuando el evento es explícitamente SIGNED_OUT
         if (event === 'SIGNED_OUT') {
-             // ✅ USANDO MAYÚSCULAS
+             // ✅ USANDO MINÚSCULAS
              window.location.href = '/index.html'; 
         }
     }
@@ -161,7 +161,6 @@ async function loadMaterias() {
 
     materias.forEach(materia => {
         const cardLink = document.createElement('a');
-        // ✅ USANDO MAYÚSCULAS
         cardLink.href = `materia.html?id=${materia.id}`; 
         cardLink.classList.add('materia-card-link');
         
