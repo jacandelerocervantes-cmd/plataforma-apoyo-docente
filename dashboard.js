@@ -1,15 +1,17 @@
 // --- CONFIGURACIÓN DE SUPABASE ---
 const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co'; // Reemplaza con tu URL
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnd4dyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjg4NzI0NTc0LCJleHAiOjE5MDQyODQ1NzR9.Dl8jv1kYk3jX1KXoX1m8n2rQZ2p6kU1iU5rXH3b7m0';     // Reemplaza con tu Anon Key
-const SETUP_DRIVE_FUNCTION_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co/functions/v1/setup-drive-folder';
+// ✅ KEY ACTUALIZADA
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c'; 
 
 // FORZAR LA PERSISTENCIA DE SESIÓN
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
     auth: {
         persistSession: true,
-        storage: window.localStorage, // Forzar el uso de localStorage
+        storage: window.localStorage, 
     }
 });
+
+const SETUP_DRIVE_FUNCTION_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co/functions/v1/setup-drive-folder'; 
 
 // --- ESTADO GLOBAL Y ELEMENTOS DEL DOM ---
 const logoutButton = document.getElementById('logout-button');
@@ -79,18 +81,17 @@ function initializeDashboard(session) {
 }
 
 
-// --- MANEJO DE LA SESIÓN: LISTENER ÚNICO (Más robusto contra la condición de carrera) ---
+// --- MANEJO DE LA SESIÓN: LISTENER CRÍTICO CORREGIDO ---
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
     console.log(`Evento de Auth: ${event}, Sesión: ${!!session}`);
 
     if (session) {
         // La sesión es válida (SIGNED_IN o INITIAL_SESSION)
-        // Usamos un pequeño retraso para garantizar que el DOM se cargue.
         setTimeout(() => initializeDashboard(session), 100); 
     } else {
-        // Si no hay sesión (SIGNED_OUT)
-        if (window.location.pathname.toLowerCase().includes('dashboard.html')) {
+        // Solo redirige cuando el evento es explícitamente SIGNED_OUT
+        if (event === 'SIGNED_OUT') {
              window.location.href = '/index.html';
         }
     }
