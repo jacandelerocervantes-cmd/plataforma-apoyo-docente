@@ -108,3 +108,39 @@ h2 {
 }
 .btn-secondary { background-color: #6c757d; color: white; }
 .btn-secondary:hover { background-color: #5a6268; }
+/* EN dashboard.css, AÑADE ESTO AL FINAL */
+
+.materia-card-link {
+    display: block;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+.materia-card-link:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-5px);
+}
+
+.materia-card-link h3 {
+    margin-top: 0;
+    color: #004a99;
+}
+
+.materia-card-link p {
+    color: #666;
+    margin: 0.5rem 0;
+}
+
+.materia-card-link.suspended {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+}
+
+.materia-card-link.suspended h3 {
+    text-decoration: line-through;
+}

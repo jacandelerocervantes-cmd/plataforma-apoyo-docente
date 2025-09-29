@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Asistencia</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        /* Estilos adicionales para centrar el contenido */
+        body {
+            display: grid;
+            place-content: center;
+            min-height: 100vh;
+        }
+        .attendance-card {
+            width: 100%;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <div class="form-card attendance-card">
+            <h2 id="materia-name">Cargando información...</h2>
+            <p>Por favor, ingresa tu matrícula para registrar tu asistencia.</p>
+
+            <form id="attendance-form">
+                <div class="input-group">
+                    <label for="student-matricula">Matrícula</label>
+                    <input type="text" id="student-matricula" required placeholder="Tu matrícula aquí">
+                </div>
+                <button type="submit" id="submit-btn" class="btn btn-primary">Registrar Asistencia</button>
+            </form>
+            
+            <div id="message-container" style="margin-top: 1rem; font-weight: 500;"></div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="student_attendance.js"></script>
+
+</body>
+</html>
