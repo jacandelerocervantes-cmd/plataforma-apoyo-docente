@@ -17,6 +17,7 @@ const teacherNameElement = document.getElementById('teacher-name');
  */
 async function setupUserDrive(session) {
     const googleAccessToken = session.provider_token;
+    console.log("Intento de configuración de Drive. Token de Google (provider_token) presente:", !!googleAccessToken); // MUESTRA SI HAY TOKEN
 
     if (!googleAccessToken) {
         console.warn("No se encontró el token de acceso de Google. No se puede configurar Drive.");
@@ -35,33 +36,26 @@ async function setupUserDrive(session) {
         const data = await response.json();
 
         if (!response.ok) {
+            // Esto se enviará a la consola del navegador si la función falla
             throw new Error(data.error || `Error del servidor: ${response.status}`);
         }
 
-        console.log("Respuesta de la función setupDrive:", data);
+        console.log("✅ RESPUESTA EXITOSA DE LA FUNCIÓN setupDrive:", data);
         
     } catch (error) {
-        console.error("Error al llamar a la función setupDrive:", error.message);
+        console.error("❌ ERROR AL LLAMAR A LA FUNCIÓN setupDrive:", error.message);
     }
 }
 
 
-// --- MANEJO DE LA SESIÓN (CORREGIDO) ---
+// --- MANEJO DE LA SESIÓN ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Verificar si hay un resultado de redirección (p. ej., después de un login con Google)
-    // ESTA ES LA LÍNEA CLAVE PARA CORREGIR LA CONDICIÓN DE CARRERA:
-    const { data: { session: redirectSession }, error: redirectError } = await supabaseClient.auth.getRedirectResult();
+    // Obtenemos la sesión.
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    let currentSession = session;
 
-    // 2. Determinar la sesión actual (o la recién creada por el redirect)
-    let currentSession;
-    if (redirectSession) {
-        currentSession = redirectSession;
-    } else {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        currentSession = session;
-    }
-
-    // 3. Verificar si hay una sesión válida
+    // Verificar si hay una sesión válida
     if (!currentSession) {
         window.location.href = '/index.html';
         return; 
@@ -76,9 +70,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isGoogleUser = user.app_metadata.provider === 'google';
     const hasProviderToken = currentSession.provider_token; 
     
+    console.log(`Debug de sesión: esGoogleUser=${isGoogleUser}, tieneProviderToken=${!!hasProviderToken}`);
+
+    // Solo llamar a la función si el token de Google está presente (fresco)
     if (isGoogleUser && hasProviderToken) {
         console.log("Detectado inicio de sesión de Google. Configurando Drive...");
         await setupUserDrive(currentSession);
+    } else {
+        console.warn("No se llama a setupDrive. (Token de Drive no presente en la sesión)");
     }
 
     loadMaterias();
@@ -147,8 +146,15 @@ createMateriaForm.addEventListener('submit', async (event) => {
 
     if (error) {
         console.error("Error al crear materia:", error);
+        alert(`Error al crear la materia: ${error.message || 'Verifica la consola para más detalles.'}`);
     } else {
         createMateriaForm.reset();
         loadMaterias();
     }
 });
+
+
+
+
+
+
