@@ -1,0 +1,10 @@
+{
+  // 1. Habilita Deno para este espacio de trabajo
+  "deno.enable": true,
+  
+  // 2. Establece el modo de lenguaje Deno (para que el editor sepa cómo manejar TypeScript)
+  "deno.lint": true,
+  
+  // 3. Opcional: Esto a veces ayuda a resolver módulos remotos
+  "deno.unstable": false 
+}

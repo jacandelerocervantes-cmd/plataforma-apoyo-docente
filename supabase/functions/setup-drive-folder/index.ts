@@ -10,7 +10,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+// ✅ Corrección: Se añade la anotación de tipo 'Request' al parámetro 'req'
+serve(async (req: Request) => { 
   // Manejar la solicitud OPTIONS pre-vuelo de CORS.
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -65,11 +66,14 @@ serve(async (req) => {
       });
     }
   } catch (error) {
-    console.error('Error en la función setup-drive-folder:', error.message);
-    const data = { error: error.message || 'Internal Server Error.' };
+    // ✅ Corrección: Se maneja el error como 'unknown' y se extrae el mensaje de forma segura
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+
+    console.error('Error en la función setup-drive-folder:', errorMessage);
+    const data = { error: errorMessage || 'Internal Server Error.' };
     
     // Devolver un error más específico si el token es inválido
-    if (error.message.includes('Unauthorized')) {
+    if (errorMessage.includes('Unauthorized')) {
        return new Response(JSON.stringify({ error: 'Invalid or expired access token.' }), {
          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
          status: 401,
