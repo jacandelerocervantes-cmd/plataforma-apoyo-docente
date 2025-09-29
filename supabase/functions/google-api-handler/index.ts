@@ -6,10 +6,9 @@ import { SignJWT, JWTPayload } from 'https://deno.land/x/jose@v4.14.4/index.ts';
 // Lee las claves desde Supabase Secrets
 const GOOGLE_CLIENT_EMAIL = Deno.env.get("GOOGLE_CLIENT_EMAIL");
 const GOOGLE_PRIVATE_KEY = Deno.env.get("GOOGLE_PRIVATE_KEY")?.replace(/\\n/g, '\n');
-const GOOGLE_SHEETS_API_URL = "https://sheets.googleapis.com/v4/spreadsheets";
-const GOOGLE_FORMS_API_URL = "https://forms.googleapis.com/v1/forms";
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY"); 
-const GEMINI_MODEL = "gemini-2.5-flash"; 
+const GOOGLE_API_BASE_URL = "https://www.googleapis.com";
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+const GEMINI_MODEL = "gemini-1.5-flash";
 
 // Función REAL para obtener un Token JWT de Google Service Account
 async function getGoogleToken() {
@@ -24,10 +23,9 @@ async function getGoogleToken() {
     const SCOPES = [
         "https://www.googleapis.com/auth/spreadsheets", // Lectura/Escritura en Sheets
         "https://www.googleapis.com/auth/forms",       // Creación de Forms
-        "https://www.googleapis.com/auth/drive.file"   // Creación de archivos en Drive
+        "https://www.googleapis.com/auth/drive"        // Acceso completo a Drive para crear carpetas y archivos
     ].join(' ');
 
-    // 1. Procesar y convertir la clave PEM a un objeto CryptoKey
     const pkcs8Key = GOOGLE_PRIVATE_KEY
         .replace(/-----BEGIN PRIVATE KEY-----/g, '').replace(/-----END PRIVATE KEY-----/g, '').replace(/\s/g, '');
     
@@ -41,19 +39,11 @@ async function getGoogleToken() {
         ["sign"]
     );
 
-    // 2. Crear y firmar el JWT (Assertion)
-    const assertion = await new SignJWT({
-        scope: SCOPES,
-    } as JWTPayload)
+    const assertion = await new SignJWT({ scope: SCOPES } as JWTPayload)
     .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
-    .setIssuedAt(now)
-    .setExpirationTime(expirationTime)
-    .setIssuer(GOOGLE_CLIENT_EMAIL)
-    .setSubject(GOOGLE_CLIENT_EMAIL)
-    .setAudience("https://oauth2.googleapis.com/token")
-    .sign(privateKey);
+    .setIssuedAt(now).setExpirationTime(expirationTime).setIssuer(GOOGLE_CLIENT_EMAIL)
+    .setSubject(GOOGLE_CLIENT_EMAIL).setAudience("https://oauth2.googleapis.com/token").sign(privateKey);
 
-    // 3. Intercambiar el JWT por el Token de Acceso
     const params = new URLSearchParams({
         grant_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
         assertion: assertion,
@@ -70,8 +60,6 @@ async function getGoogleToken() {
     
     return data.access_token;
 }
-// ----------------------------------------------------------------------
-
 
 serve(async (req) => {
     try {
@@ -87,52 +75,64 @@ serve(async (req) => {
 
         const googleToken = await getGoogleToken();
 
-        // ----------------------------------------------------------------------
-        // ACCIÓN 1: CREAR MATERIA (HOJA DE CÁLCULO)
-        // ----------------------------------------------------------------------
         if (action === 'createSubjectFolders') {
             const { subjectName, semester, materiaId } = payload;
-            
-            // 1. LLAMADA REAL PARA CREAR HOJA DE CÁLCULO
-            const sheetResponse = await fetch(GOOGLE_SHEETS_API_URL, {
+
+            // 1. Crear la carpeta principal en Google Drive
+            const folderResponse = await fetch(`${GOOGLE_API_BASE_URL}/drive/v3/files`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${googleToken}`, 
+                    'Authorization': `Bearer ${googleToken}`,
                 },
                 body: JSON.stringify({
-                    properties: {
-                        title: `${subjectName} - ${semester} - Reportes Docente`,
-                    }
-                    // NOTA: Para crear en una carpeta específica de Drive, necesitarías enviar el 'folderId' 
-                    // en el body del request a la API de Drive, no la de Sheets. Aquí asumimos la creación en el Drive de la S.A.
+                    name: `${subjectName} - ${semester}`,
+                    mimeType: 'application/vnd.google-apps.folder'
+                }),
+            });
+
+            if (!folderResponse.ok) {
+                const errorBody = await folderResponse.json();
+                throw new Error(`Google Drive API Error (Folder): ${folderResponse.status} - ${JSON.stringify(errorBody)}`);
+            }
+
+            const folderJson = await folderResponse.json();
+            const folderId = folderJson.id;
+
+            // 2. Crear el Google Sheet dentro de la carpeta creada
+            const sheetResponse = await fetch(`${GOOGLE_API_BASE_URL}/v4/spreadsheets`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${googleToken}`,
+                },
+                body: JSON.stringify({
+                    properties: { title: `${subjectName} - Reportes Docente` },
+                    parents: [folderId] // Especifica la carpeta padre
                 }),
             });
 
             if (!sheetResponse.ok) {
                 const errorBody = await sheetResponse.json();
-                throw new Error(`Google Sheet API Error: ${sheetResponse.status} - ${JSON.stringify(errorBody)}`);
+                throw new Error(`Google Sheets API Error: ${sheetResponse.status} - ${JSON.stringify(errorBody)}`);
             }
             
             const sheetJson = await sheetResponse.json();
-            const sheetId = sheetJson.spreadsheetId; 
-            
-            if (!sheetId) throw new Error("Could not retrieve Sheet ID after creation.");
-            
-            // 2. GUARDAR EL SHEET ID EN SUPABASE
+            const sheetId = sheetJson.spreadsheetId;
+
+            // 3. Guardar IDs en Supabase
             const { error } = await supabaseClient
                 .from('materias')
-                .update({ google_sheet_id: sheetId })
+                .update({ google_sheet_id: sheetId, drive_folder_id: folderId })
                 .eq('id', materiaId);
 
             if (error) throw error;
 
             return new Response(
-                JSON.stringify({ data: { success: true, sheetId: sheetId } }),
+                JSON.stringify({ data: { success: true, sheetId, folderId } }),
                 { headers: { 'Content-Type': 'application/json' }, status: 200 },
             );
         }
-
         // ----------------------------------------------------------------------
         // ACCIÓN 2: CREAR FORMULARIO DE EVALUACIÓN (Google Forms)
         // ----------------------------------------------------------------------

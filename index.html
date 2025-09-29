@@ -4,2313 +4,443 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plataforma de Apoyo Docente | TecNM</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        /* BASE STYLES: Tema Claro y Profesional (Agronomía/Biología) */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f9fafb; /* bg-gray-50 */
-            color: #1f2937; /* text-gray-800 */
-        }
-        .page {
-            display: none;
-        }
-        /* ESTILO DEL BANNER: Diseño TecNM */
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; color: #1f2937; }
         #main-header {
             height: 100px;
             background-color: #ffffff;
-            /* REEMPLAZAR CON LA URL DE TU IMAGEN REAL */
             background-image: url('https://pyurfviezihdfnxfgnxw.supabase.co/storage/v1/object/public/cabecera/Cabecera.jpg'); 
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            border-bottom: 3px solid #004d40; /* Verde oscuro/Teal institucional */
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+            border-bottom: 3px solid #004d40;
         }
-        /* COLORES DE ACENTO: Índigo (Institucional) y Emerald (Naturaleza/Agro) */
-        .btn-primary { background-color: #4f46e5; } /* bg-indigo-600 */
-        .btn-primary:hover { background-color: #4338ca; } /* bg-indigo-700 */
-        .text-accent { color: #004d40; } /* Acento verde oscuro para el texto */
-
-        /* Clases de utilidad para el nuevo Panel Estudiantil */
-        .student-item-card {
-            transition: all 0.2s ease-in-out;
-            opacity: 0.5;
-        }
-        .student-item-card.visible {
-            opacity: 1;
-        }
+        .btn-primary { background-color: #4f46e5; }
+        .btn-primary:hover { background-color: #4338ca; }
+        .page { display: none; }
+        .page-active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="p-8">
 
     <header id="main-header" class="mb-8 shadow-md"></header>
-    
     <div id="loading" class="fixed inset-0 bg-gray-50 bg-opacity-75 flex items-center justify-center z-50 hidden">
         <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
     </div>
     
     <div id="login-page" class="page flex items-center justify-center min-h-screen">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200">
-            <h1 class="text-4xl font-extrabold mb-6 text-center text-gray-900">Plataforma de Apoyo Docente</h1>
-            <h2 class="text-2xl font-bold mb-6 text-center text-gray-700">Iniciar Sesión</h2>
-            
+        <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 w-full max-w-md">
+            <h1 class="text-3xl font-bold text-center text-gray-900 mb-6">Iniciar Sesión</h1>
             <form id="login-form">
-                <div class="mb-4">
-                    <label for="username" class="block text-gray-600 mb-2 font-semibold">Usuario (Email)</label>
-                    <input type="email" id="username" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="usuario@docente.com" required>
-                </div>
-                <div class="mb-6">
-                    <label for="password" class="block text-gray-600 mb-2 font-semibold">Contraseña</label>
-                    <input type="password" id="password" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="**********" required>
-                </div>
-                <button type="submit" class="w-full p-3 btn-primary rounded-xl text-white font-bold text-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md">
-                    Iniciar Sesión
-                </button>
-            </form>
-            <div class="relative flex py-5 items-center">
-                <div class="flex-grow border-t border-gray-300"></div>
-                <span class="flex-shrink mx-4 text-gray-500">o</span>
-                <div class="flex-grow border-t border-gray-300"></div>
-            </div>
-            <button id="google-login-btn" class="w-full p-3 bg-red-600 rounded-xl text-white font-bold text-lg hover:bg-red-700 transition-colors duration-200 shadow-md">
-                <img src="https://img.icons8.com/color/24/000000/google-logo.png" class="mr-3" alt="Google icon"/>
-                Iniciar Sesión con Google
-            </button>
-            
-            <div class="mt-8 text-center">
-                <a href="#student-query-page" id="open-student-query-btn" class="text-indigo-600 hover:text-indigo-800 hover:underline">
-                    Acceder al Panel de Consulta Estudiantil
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div id="dashboard-page" class="page container mx-auto p-4 hidden">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-4xl font-extrabold text-gray-900">Panel Docente</h1>
-            <div class="flex items-center space-x-4">
-                <span id="user-id" class="text-gray-600 text-sm"></span>
-                <button id="logout-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-colors duration-200 shadow-md">
-                    Cerrar Sesión
-                </button>
-            </div>
-        </div>
-        
-        <div class="bg-white p-6 rounded-2xl shadow-xl mb-6 border border-gray-200">
-            <h2 class="text-2xl font-bold mb-4 text-gray-800">Crear Materia</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="bg-gray-100 p-6 rounded-xl shadow-inner">
-                    <h3 class="font-bold text-xl mb-2 text-gray-900">Creación Manual</h3>
-                    <form id="create-manual-form">
-                        <input type="text" id="materia-nombre" class="w-full p-3 mb-3 rounded-xl bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nombre de la Materia" required>
-                        <textarea id="materia-descripcion" class="w-full p-3 mb-3 rounded-xl bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Descripción de la materia"></textarea>
-                        <button type="submit" class="w-full p-3 btn-primary rounded-xl text-white font-bold hover:bg-indigo-700 transition-colors duration-200 shadow-md">
-                            Crear Manualmente
-                        </button>
-                    </form>
-                </div>
-                <div class="bg-gray-100 p-6 rounded-xl shadow-inner">
-                    <h3 class="font-bold text-xl mb-2 text-gray-900">Creación con IA</h3>
-                    <form id="create-ai-form">
-                        <textarea type="text" id="ai-plan" class="w-full p-3 mb-3 rounded-xl bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Describe el plan de estudios para la IA..." required></textarea>
-                        <button type="submit" class="w-full p-3 bg-emerald-600 rounded-xl text-white font-bold hover:bg-emerald-700 transition-colors duration-200 shadow-md">
-                            Crear con IA
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-            <h2 class="text-2xl font-bold mb-4 text-gray-800">Mis Materias</h2>
-            <div id="materias-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                </div>
-        </div>
-    </div>
-    
-    <div id="materia-page" class="page container mx-auto p-4 hidden">
-        <button id="back-to-dashboard" class="mb-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-colors duration-200 shadow-md">
-            &larr; Volver al Panel
-        </button>
-        <h1 id="materia-title" class="text-4xl font-extrabold text-gray-900 mb-6"></h1>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
-            <button id="btn-asistencia" class="p-6 btn-primary text-white rounded-xl font-bold text-xl hover:bg-indigo-700 transition-colors duration-200 shadow-md">
-                Asistencia
-            </button>
-            <button id="btn-actividades" class="p-6 bg-purple-600 text-white rounded-xl font-bold text-xl hover:bg-purple-700 transition-colors duration-200 shadow-md">
-                Actividades
-            </button>
-            <button id="btn-evaluaciones" class="p-6 bg-red-600 text-white rounded-xl font-bold text-xl hover:bg-red-700 transition-colors duration-200 shadow-md">
-                Evaluaciones
-            </button>
-            <button id="btn-material" class="p-6 bg-emerald-600 text-white rounded-xl font-bold text-xl hover:bg-emerald-700 transition-colors duration-200 shadow-md">
-                Material Didáctico
-            </button>
-            <button id="btn-estudiantes" class="p-6 bg-amber-600 text-white rounded-xl font-bold text-xl hover:bg-amber-700 transition-colors duration-200 shadow-md">
-                Gestión de Estudiantes
-            </button>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Ponderación Final por Estudiante</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-300">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Matrícula
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Asistencia
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Actividades
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Evaluaciones
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Calificación Final
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="final-grades-table-body" class="bg-white divide-y divide-gray-200 text-gray-900">
-                        <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-gray-600">Cargando datos...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="asistencia-page" class="page container mx-auto p-4 hidden">
-        <button id="back-from-asistencia" class="mb-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-colors duration-200 shadow-md">
-            &larr; Volver a la Materia
-        </button>
-        <h2 class="text-3xl font-bold text-gray-900 mb-6">Panel de Asistencia</h2>
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-            <div class="flex flex-col md:flex-row items-center justify-between mb-6">
-                <div class="text-center md:text-left mb-4 md:mb-0">
-                    <p class="text-xl font-semibold text-gray-800">Unidad: <span id="asistencia-unidad" class="text-indigo-600">1</span></p>
-                    <p class="text-gray-600">Selecciona la unidad y genera un código QR para que los estudiantes se registren.</p>
-                </div>
-                <div class="flex space-x-4">
-                    <button id="generate-qr-btn" class="p-3 btn-primary rounded-xl text-white font-bold hover:bg-indigo-700 transition-colors duration-200 shadow-md">
-                        Generar QR
-                    </button>
-                    <button id="cancel-qr-btn" class="p-3 bg-red-600 rounded-xl text-white font-bold hover:bg-red-700 transition-colors duration-200 shadow-md hidden">
-                        Cancelar QR
-                    </button>
-                </div>
-            </div>
-
-            <div id="qr-section" class="flex flex-col items-center mb-6 hidden">
-                <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-300">
-                    <canvas id="qr-canvas" class="w-48 h-48"></canvas>
-                </div>
-                <div class="text-center mt-4">
-                    <p class="text-2xl font-bold text-gray-800">QR Activo por: <span id="qr-timer" class="text-indigo-600"></span></p>
-                </div>
-            </div>
-
-            <div class="mb-6">
-                <h3 class="text-xl font-semibold text-gray-800 mb-4">Registro en Tiempo Real</h3>
-                <div id="attendance-list" class="bg-gray-100 p-4 rounded-xl shadow-inner h-64 overflow-y-auto">
-                    <p class="text-gray-600 text-center">Esperando registros...</p>
-                </div>
-            </div>
-
-            <div class="bg-gray-100 p-6 rounded-xl shadow-inner mb-6">
-                <h3 class="font-bold text-xl mb-2 text-gray-900">Asistencia Manual</h3>
-                <div id="manual-attendance-list">
-                    <p class="text-gray-600 text-center">Cargando lista de estudiantes...</p>
-                </div>
-            </div>
-
-            <button id="close-attendance-btn" class="w-full p-3 bg-emerald-600 rounded-xl text-white font-bold text-lg hover:bg-emerald-700 transition-colors duration-200 shadow-md">
-                Cerrar Asistencia del Día
-            </button>
-        </div>
-    </div>
-    
-    <div id="actividades-page" class="page container mx-auto p-4 hidden">
-        <button id="back-from-actividades" class="mb-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-colors duration-200 shadow-md">
-            &larr; Volver a la Materia
-        </button>
-        <h2 class="text-3xl font-bold text-gray-900 mb-6">Panel de Actividades</h2>
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200 mb-6">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Agregar Actividad</h3>
-            <form id="add-activity-form">
-                <div class="mb-3">
-                    <label for="unidad-select-act" class="block text-gray-600 mb-2">Unidad</label>
-                    <select id="unidad-select-act" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="1">Unidad 1</option>
-                        <option value="2">Unidad 2</option>
-                        <option value="3">Unidad 3</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="activity-name" class="block text-gray-600 mb-2">Nombre de la Actividad</label>
-                    <input type="text" id="activity-name" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <div class="mb-3">
-                    <label for="activity-url" class="block text-gray-600 mb-2">Enlace de la Actividad</label>
-                    <input type="url" id="activity-url" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ej: https://docs.google.com/document/d/..." >
-                </div>
-                <button type="submit" class="w-full p-3 btn-primary rounded-xl text-white font-bold hover:bg-indigo-700 transition-colors duration-200 shadow-md">
-                    Agregar Actividad
-                </button>
-            </form>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Lista de Actividades</h3>
-            <div class="flex space-x-4 mb-4">
-                <button id="batch-grade-btn-act" class="p-3 bg-purple-600 rounded-xl text-white font-bold hover:bg-purple-700 transition-colors duration-200 shadow-md">
-                    Calificar por Lote
-                </button>
-            </div>
-            <div id="activities-list" class="bg-gray-100 p-4 rounded-xl shadow-inner min-h-32">
-                <p class="text-gray-600 text-center">No hay actividades registradas en esta unidad.</p>
-            </div>
-        </div>
-    </div>
-    
-    <div id="evaluaciones-page" class="page container mx-auto p-4 hidden">
-        <button id="back-from-evaluaciones" class="mb-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-colors duration-200 shadow-md">
-            &larr; Volver a la Materia
-        </button>
-        <h2 class="text-3xl font-bold text-gray-900 mb-6">Panel de Evaluaciones</h2>
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200 mb-6">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Crear Examen o Reporte</h3>
-            <form id="add-evaluacion-form">
-                <div class="mb-3">
-                    <label for="unidad-select-eval" class="block text-gray-600 mb-2">Unidad</label>
-                    <select id="unidad-select-eval" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="1">Unidad 1</option>
-                        <option value="2">Unidad 2</option>
-                        <option value="3">Unidad 3</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="eval-name" class="block text-gray-600 mb-2">Nombre de la Evaluación</label>
-                    <input type="text" id="eval-name" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <button type="submit" class="w-full p-3 bg-red-600 rounded-xl text-white font-bold hover:bg-red-700 transition-colors duration-200 shadow-md">
-                    Crear Evaluación
-                </button>
-            </form>
-        </div>
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Lista de Evaluaciones</h3>
-            <div id="evaluaciones-list" class="bg-gray-100 p-4 rounded-xl shadow-inner min-h-32">
-                <p class="text-gray-600 text-center">No hay evaluaciones registradas en esta unidad.</p>
-            </div>
-        </div>
-    </div>
-    
-    <div id="material-page" class="page container mx-auto p-4 hidden">
-        <button id="back-from-material" class="mb-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-colors duration-200 shadow-md">
-            &larr; Volver a la Materia
-        </button>
-        <h2 class="text-3xl font-bold text-gray-900 mb-6">Panel de Material Didáctico</h2>
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200 mb-6">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Agregar Nuevo Material</h3>
-            <form id="add-material-form">
-                <div class="mb-3">
-                    <label for="unidad-select-mat" class="block text-gray-600 mb-2">Unidad</label>
-                    <select id="unidad-select-mat" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="1">Unidad 1</option>
-                        <option value="2">Unidad 2</option>
-                        <option value="3">Unidad 3</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="material-name" class="block text-gray-600 mb-2">Nombre del Archivo</label>
-                    <input type="text" id="material-name" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <div class="mb-3">
-                    <label for="material-url" class="block text-gray-600 mb-2">Enlace del Archivo</label>
-                    <input type="url" id="material-url" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ej: https://docs.google.com/document/d/..." required>
-                </div>
-                <button type="submit" class="w-full p-3 bg-emerald-600 rounded-xl text-white font-bold hover:bg-emerald-700 transition-colors duration-200 shadow-md">
-                    Agregar Material
-                </button>
-            </form>
-        </div>
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Materiales de la Unidad</h3>
-            <div id="material-list" class="bg-gray-100 p-4 rounded-xl shadow-inner min-h-32">
-                <p class="text-gray-600 text-center">No hay material didáctico registrado en esta unidad.</p>
-            </div>
-        </div>
-    </div>
-    
-    <div id="estudiantes-page" class="page container mx-auto p-4 hidden">
-        <button id="back-from-estudiantes" class="mb-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-colors duration-200 shadow-md">
-            &larr; Volver a la Materia
-        </button>
-        <h2 class="text-3xl font-bold text-gray-900 mb-6">Gestión de Estudiantes</h2>
-
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200 mb-6">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Agregar Estudiante</h3>
-            <form id="add-student-form">
-                <div class="mb-3">
-                    <label for="student-matricula-input" class="block text-gray-600 mb-2">Matrícula</label>
-                    <input type="text" id="student-matricula-input" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ej: A01234567" required>
-                </div>
-                   <div class="mb-3">
-                    <label for="student-name-input" class="block text-gray-600 mb-2">Nombre</label>
-                    <input type="text" id="student-name-input" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ej: Juan Pérez" required>
-                </div>
-                <button type="submit" class="w-full p-3 bg-amber-600 rounded-xl text-white font-bold hover:bg-amber-700 transition-colors duration-200 shadow-md">
-                    Agregar Estudiante
-                </button>
-            </form>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Lista de Estudiantes</h3>
-            <div id="students-list" class="bg-gray-100 p-4 rounded-xl shadow-inner min-h-32">
-                <p class="text-gray-600 text-center">No hay estudiantes registrados en esta materia.</p>
-            </div>
-        </div>
-    </div>
-    
-    <div id="student-page" class="page flex items-center justify-center min-h-screen hidden">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200">
-            <h1 class="text-4xl font-extrabold mb-6 text-center text-gray-900">Registro de Asistencia QR</h1>
-            <div id="student-attendance-message" class="bg-gray-100 p-4 rounded-xl text-center text-gray-900 font-semibold hidden"></div>
-            <form id="student-attendance-form">
-                <div class="mb-4 mt-6">
-                    <label for="student-qr-data" class="block text-gray-600 mb-2 font-semibold">Datos del QR</label>
-                    <input type="text" id="student-qr-data" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder='Pega aquí los datos del QR' required>
-                </div>
-                <div class="mb-6">
-                    <label for="student-matricula" class="block text-gray-600 mb-2 font-semibold">Tu Matrícula</label>
-                    <input type="text" id="student-matricula" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <button type="submit" class="w-full p-3 btn-primary rounded-xl text-white font-bold text-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md">
-                    Registrar Asistencia
-                </button>
-            </form>
-            <div class="mt-6 text-center">
-                <a href="#login-page" id="return-to-login" class="text-gray-600 hover:underline">Volver a la página de inicio de sesión docente</a>
-            </div>
-        </div>
-    </div>
-
-    <div id="student-query-page" class="page container mx-auto p-4 hidden min-h-screen">
-        <button id="back-to-login-query" class="mb-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-colors duration-200 shadow-md">
-            &larr; Volver al Inicio
-        </button>
-        <h2 class="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-2">Panel de Consulta Estudiantil</h2>
-
-        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200 w-full max-w-lg mx-auto">
-            <form id="student-query-form" class="mb-6">
-                <div class="mb-4">
-                    <label for="query-matricula" class="block text-gray-600 mb-2 font-semibold">Ingresa tu Matrícula</label>
-                    <input type="text" id="query-matricula" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ej: A01234567" required>
-                </div>
-                <button type="submit" class="w-full p-3 bg-emerald-600 rounded-xl text-white font-bold text-lg hover:bg-emerald-700 transition-colors duration-200 shadow-md">
-                    Consultar Progreso
-                </button>
-            </form>
-
-            <div id="student-query-results" class="mt-8 border-t pt-4">
-                <p class="text-center text-gray-600" id="query-message">Ingresa tu matrícula para ver tu progreso.</p>
-                
-                <div id="student-info-display" class="hidden">
-                    <h3 class="text-xl font-bold mb-3 text-accent border-b pb-1">Progreso de: <span id="student-name-display"></span></h3>
-                    <p class="text-gray-700 mb-4 font-medium">Materia: <span id="materia-name-display"></span></p>
-
-                    <div id="query-sections" class="space-y-4">
-                        </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="edit-modal-subject" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200">
-            <h2 class="text-2xl font-bold mb-4 text-gray-900">Editar Materia</h2>
-            <form id="edit-form-subject">
-                <input type="hidden" id="edit-materia-id">
-                <div class="mb-4">
-                    <label for="edit-materia-nombre" class="block text-gray-600 mb-2 font-semibold">Nombre de la Materia</label>
-                    <input type="text" id="edit-materia-nombre" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <div class="mb-6">
-                    <label for="edit-materia-descripcion" class="block text-gray-600 mb-2 font-semibold">Descripción</label>
-                    <textarea id="edit-materia-descripcion" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                </div>
-                <div class="flex justify-end space-x-4">
-                    <button type="button" id="cancel-edit-subject-btn" class="px-4 py-2 bg-gray-400 rounded-xl text-gray-900 font-bold hover:bg-gray-500 transition-colors duration-200">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="px-4 py-2 btn-primary rounded-xl text-white font-bold hover:bg-indigo-700 transition-colors duration-200">
-                        Guardar Cambios
-                    </button>
-                </div>
+                <div class="mb-4"><label for="email" class="block text-sm font-medium">Correo</label><input type="email" id="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
+                <div class="mb-6"><label for="password" class="block text-sm font-medium">Contraseña</label><input type="password" id="password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
+                <button type="submit" class="w-full btn-primary text-white font-bold py-2 px-4 rounded-md">Entrar</button>
             </form>
         </div>
     </div>
-    
-    <div id="edit-modal-generic" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200">
-            <h2 id="edit-modal-title" class="text-2xl font-bold mb-4 text-gray-900"></h2>
-            <form id="edit-form-generic">
-                <input type="hidden" id="edit-generic-id">
-                <div class="mb-4">
-                    <label for="edit-generic-name" class="block text-gray-600 mb-2 font-semibold">Nombre</label>
-                    <input type="text" id="edit-generic-name" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <div class="mb-6">
-                    <label id="edit-generic-url-label" for="edit-generic-url" class="block text-gray-600 mb-2 font-semibold">Enlace (Opcional)</label>
-                    <input type="text" id="edit-generic-url" class="w-full p-3 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
 
-                <div id="visibility-controls" class="space-y-3 mb-6 border-t pt-4">
-                    <div class="flex items-center">
-                        <input type="checkbox" id="edit-generic-visible" class="form-checkbox h-5 w-5 text-emerald-600">
-                        <label for="edit-generic-visible" class="ml-3 text-gray-800">Visible para el Estudiante</label>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" id="edit-generic-download" class="form-checkbox h-5 w-5 text-emerald-600">
-                        <label for="edit-generic-download" class="ml-3 text-gray-800">Permitir Descarga de Archivo</label>
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-4">
-                    <button type="button" id="cancel-edit-generic-btn" class="px-4 py-2 bg-gray-400 rounded-xl text-gray-900 font-bold hover:bg-gray-500 transition-colors duration-200">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="px-4 py-2 btn-primary rounded-xl text-white font-bold hover:bg-indigo-700 transition-colors duration-200">
-                        Guardar Cambios
-                    </button>
-                </div>
-            </form>
+    <div id="dashboard-page" class="page container mx-auto p-4">
+        <div class="flex justify-between items-center mb-6"><h1 class="text-4xl font-bold">Mis Materias</h1><div><span id="user-email" class="mr-4"></span><button id="logout-button" class="px-4 py-2 bg-red-600 text-white rounded-xl">Cerrar Sesión</button></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="materias-grid"></div>
+        <div class="fixed bottom-8 right-8"><button id="add-materia-btn" class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-3xl shadow-lg hover:bg-indigo-700">+</button></div>
+    </div>
+    
+    <div id="materia-page" class="page container mx-auto p-4">
+        <button id="back-to-dashboard" class="mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
+        <h2 id="materia-name-header" class="text-4xl font-bold text-gray-900 mb-8"></h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div id="gestion-estudiantes-module" class="module-card bg-white p-6 rounded-2xl shadow-xl border cursor-pointer hover:shadow-2xl"><h3 class="text-2xl font-bold">Gestionar Estudiantes</h3><p class="text-gray-600">Añade, edita y elimina estudiantes.</p></div>
+            <div id="asistencia-module" class="module-card bg-white p-6 rounded-2xl shadow-xl border cursor-pointer hover:shadow-2xl"><h3 class="text-2xl font-bold">Asistencia</h3><p class="text-gray-600">Gestiona la asistencia con QR y manual.</p></div>
+            <div id="actividades-module" class="module-card bg-white p-6 rounded-2xl shadow-xl border cursor-pointer hover:shadow-2xl"><h3 class="text-2xl font-bold">Actividades</h3><p class="text-gray-600">Crea y califica actividades con IA.</p></div>
+            <div id="evaluaciones-module" class="module-card bg-white p-6 rounded-2xl shadow-xl border cursor-pointer hover:shadow-2xl"><h3 class="text-2xl font-bold">Evaluaciones</h3><p class="text-gray-600">Diseña exámenes y evalúa reportes.</p></div>
+            <div id="material-didactico-module" class="module-card bg-white p-6 rounded-2xl shadow-xl border cursor-pointer hover:shadow-2xl"><h3 class="text-2xl font-bold">Material Didáctico</h3><p class="text-gray-600">Genera recursos de aprendizaje.</p></div>
+        </div>
+    </div>
+
+    <div id="gestion-estudiantes-page" class="page container mx-auto p-4">
+        <button class="back-to-materia mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
+        <h2 class="text-3xl font-bold mb-6">Gestión de Estudiantes</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Añadir Estudiante</h3><form id="add-student-form"><div class="mb-4"><label for="student-name" class="block text-sm font-medium">Nombre</label><input type="text" id="student-name" class="mt-1 block w-full border-gray-300 rounded-md" required></div><div class="mb-4"><label for="student-new-matricula" class="block text-sm font-medium">Matrícula</label><input type="text" id="student-new-matricula" class="mt-1 block w-full border-gray-300 rounded-md" required></div><button type="submit" class="w-full btn-primary text-white font-bold py-2 rounded-md">Añadir</button></form></div>
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Lista de Estudiantes</h3><div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium uppercase">Nombre</th><th class="px-6 py-3 text-left text-xs font-medium">Matrícula</th><th class="px-6 py-3 text-right text-xs font-medium">Acciones</th></tr></thead><tbody id="students-table-body" class="bg-white divide-y"></tbody></table></div></div>
+        </div>
+    </div>
+
+    <div id="asistencia-page" class="page container mx-auto p-4">
+        <button class="back-to-materia mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
+        <h2 class="text-3xl font-bold mb-6">Panel de Asistencia</h2>
+        <div class="bg-white p-6 rounded-2xl shadow-xl border">
+            <div class="bg-gray-100 p-6 rounded-xl mb-6"><h3 class="font-bold text-xl mb-4">Asistencia por QR</h3><div id="qr-section" class="text-center hidden"><canvas id="qr-canvas" class="mx-auto border-4 rounded-lg"></canvas><p id="qr-timer" class="text-lg font-semibold text-red-600 mt-4"></p></div><div class="flex justify-center space-x-4 mt-4"><button id="generate-qr-btn" class="px-6 py-3 btn-primary text-white rounded-xl">Generar QR</button><button id="cancel-qr-btn" class="px-6 py-3 bg-red-600 text-white rounded-xl hidden">Cancelar QR</button></div></div>
+            <div class="bg-gray-100 p-6 rounded-xl mb-6"><h3 class="font-bold text-xl mb-4">Asistencia Manual</h3><div id="manual-attendance-list"></div><div class="text-right mt-4"><button id="save-manual-attendance" class="px-6 py-3 bg-green-600 text-white rounded-xl">Guardar Asistencia</button></div></div>
+            <div class="bg-gray-100 p-6 rounded-xl"><h3 class="font-bold text-xl mb-4">Alumnos Presentes (<span id="present-count">0</span>)</h3><div id="present-students-list" class="grid grid-cols-2 md:grid-cols-4 gap-4"><p id="no-attendance-placeholder" class="col-span-full">Aún no hay registros.</p></div></div>
         </div>
     </div>
     
-    <div id="message-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 text-center">
-            <p id="modal-message" class="text-xl font-semibold text-gray-900 mb-6"></p>
-            <div class="flex justify-center space-x-4">
-                <button id="modal-ok-btn" class="px-6 py-2 btn-primary rounded-xl text-white font-bold hover:bg-indigo-700 transition-colors duration-200">OK</button>
-                <button id="modal-cancel-btn" class="px-6 py-2 bg-gray-400 rounded-xl text-gray-900 font-bold hover:bg-gray-500 transition-colors duration-200 hidden">Cancelar</button>
-            </div>
+    <div id="actividades-page" class="page container mx-auto p-4">
+        <button class="back-to-materia mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
+        <h2 class="text-3xl font-bold mb-6">Gestión de Actividades</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Nueva Actividad</h3><form id="add-activity-form"><div class="mb-4"><label for="activity-title" class="block text-sm font-medium">Título</label><input type="text" id="activity-title" class="mt-1 block w-full border-gray-300 rounded-md" required></div><div class="mb-4"><label for="activity-description" class="block text-sm font-medium">Descripción</label><textarea id="activity-description" rows="4" class="mt-1 block w-full border-gray-300 rounded-md"></textarea></div><div class="mb-4"><label for="activity-due-date" class="block text-sm font-medium">Fecha de Entrega</label><input type="date" id="activity-due-date" class="mt-1 block w-full border-gray-300 rounded-md"></div><button type="submit" class="w-full btn-primary text-white font-bold py-2 rounded-md">Crear Actividad</button></form></div>
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Actividades Creadas</h3><div id="activities-list" class="space-y-4"></div></div>
         </div>
     </div>
+
+    <div id="evaluaciones-page" class="page container mx-auto p-4">
+        <button class="back-to-materia mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
+        <h2 class="text-3xl font-bold mb-6">Gestión de Evaluaciones</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Nueva Evaluación</h3><form id="add-evaluation-form"><div class="mb-4"><label for="evaluation-title" class="block text-sm font-medium">Título</label><input type="text" id="evaluation-title" class="mt-1 block w-full border-gray-300 rounded-md" required></div><div class="mb-4"><label for="evaluation-description" class="block text-sm font-medium">Instrucciones</label><textarea id="evaluation-description" rows="4" class="mt-1 block w-full border-gray-300 rounded-md"></textarea></div><div class="mb-4"><label for="evaluation-date" class="block text-sm font-medium">Fecha de Aplicación</label><input type="date" id="evaluation-date" class="mt-1 block w-full border-gray-300 rounded-md"></div><button type="submit" class="w-full btn-primary text-white font-bold py-2 rounded-md">Crear Evaluación</button></form></div>
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Evaluaciones Creadas</h3><div id="evaluations-list" class="space-y-4"></div></div>
+        </div>
+    </div>
+
+    <div id="material-didactico-page" class="page container mx-auto p-4">
+        <button class="back-to-materia mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
+        <h2 class="text-3xl font-bold mb-6">Generador de Material Didáctico</h2>
+        <div class="bg-white p-6 rounded-2xl shadow-xl border">
+            <form id="generate-material-form" class="mb-6"><label for="material-topic" class="block text-lg font-medium mb-2">Tema a desarrollar</label><textarea id="material-topic" rows="3" class="w-full border-gray-300 rounded-md" placeholder="Ej: Explica el ciclo de Krebs de forma sencilla para universitarios de primer año." required></textarea><button type="submit" class="mt-4 px-6 py-3 btn-primary text-white rounded-xl">Generar Material</button></form>
+            <div class="bg-gray-50 p-6 rounded-lg"><h3 class="font-bold text-xl mb-4">Contenido Generado</h3><div id="generated-material-content" class="prose max-w-none"><p class="text-gray-500">El material generado por la IA aparecerá aquí...</p></div></div>
+        </div>
+    </div>
+
+    <div id="student-page" class="page flex flex-col items-center justify-center min-h-screen">
+        <div id="student-form-container" class="bg-white p-8 rounded-2xl shadow-xl border w-full max-w-md text-center"><h1 class="text-3xl font-bold mb-4">Registrar Asistencia</h1><p id="student-message" class="text-gray-600 mb-6">Ingresa tu matrícula para confirmar.</p><form id="student-attendance-form"><input type="text" id="student-matricula" placeholder="Tu Matrícula" class="w-full px-4 py-3 bg-gray-100 border-2 rounded-md mb-4 text-center text-lg" required><button type="submit" class="w-full btn-primary text-white font-bold py-3 rounded-md">Registrar</button></form></div>
+    </div>
+    
+    <div id="add-materia-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden z-40 flex items-center justify-center"><div class="p-5 border w-96 shadow-lg rounded-md bg-white"><h3 class="text-lg font-medium">Nueva Materia</h3><form id="add-materia-form" class="mt-2"><input type="text" id="new-materia-name" placeholder="Nombre de la Materia" class="w-full px-3 py-2 border rounded-lg mb-4" required><input type="text" id="new-materia-semester" placeholder="Semestre (e.g., 2024-B)" class="w-full px-3 py-2 border rounded-lg" required><div class="items-center px-4 py-3 text-center"><button type="submit" class="px-4 py-2 bg-indigo-500 text-white rounded-md w-full shadow-sm hover:bg-indigo-600">Crear</button><button type="button" id="close-modal-btn" class="mt-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md w-full shadow-sm">Cancelar</button></div></form></div></div>
+    <div id="notification-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden z-50 flex items-center justify-center"><div class="p-5 border w-96 shadow-lg rounded-md bg-white text-center"><p id="notification-text" class="mb-4"></p><button id="close-notification-modal" class="px-4 py-2 bg-indigo-500 text-white rounded-md">Aceptar</button></div></div>
 
     <script type="module">
-        // 🚨🚨🚨 ZONA DE CONFIGURACIÓN Y UTILIDADES 🚨🚨🚨
-        
-        // 1. Define Credenciales (REEMPLAZAR)
+        // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
         const SUPABASE_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
-        const PLATFORM_DOMAIN = 'https://plataforma-apoyo-docente.onrender.com';
-        // 2. Inicializa la instancia del cliente con un nombre que no choca con el global 'supabase'
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const EDGE_FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1/`;
-        const appId = 'docente-plataforma-app'; 
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // 3. Variables de Estado y de Función
         let userId = null;
-        let httpsCallable; 
-
-        let appState = {
-            currentPage: 'login-page',
-            selectedMateria: null,
-            qrTimer: null,
-            selectedUnit: 1, 
-            students: [],
-            attendanceChannel: null, 
-        };
-
-        // --- ZONA DE DECLARACIÓN DE ELEMENTS ---
+        let qrTimerInterval = null;
+        let attendanceListener = null;
+        const appState = { selectedMateria: null, studentCache: [] };
+        
+        // --- SELECTORES DEL DOM ---
         const elements = {
-            loginPage: document.getElementById('login-page'),
-            dashboardPage: document.getElementById('dashboard-page'),
-            materiaPage: document.getElementById('materia-page'),
-            asistenciaPage: document.getElementById('asistencia-page'),
-            actividadesPage: document.getElementById('actividades-page'),
-            evaluacionesPage: document.getElementById('evaluaciones-page'),
-            materialPage: document.getElementById('material-page'),
-            estudiantesPage: document.getElementById('estudiantes-page'),
-            studentPage: document.getElementById('student-page'),
-            loading: document.getElementById('loading'),
-            userIdSpan: document.getElementById('user-id'),
-            loginForm: document.getElementById('login-form'),
-            googleLoginBtn: document.getElementById('google-login-btn'),
-            logoutBtn: document.getElementById('logout-btn'),
-            createManualForm: document.getElementById('create-manual-form'),
-            createAiForm: document.getElementById('create-ai-form'),
-            materiasList: document.getElementById('materias-list'),
-            materiaTitle: document.getElementById('materia-title'),
-            backToDashboardBtn: document.getElementById('back-to-dashboard'),
-            btnAsistencia: document.getElementById('btn-asistencia'),
-            btnActividades: document.getElementById('btn-actividades'),
-            btnEvaluaciones: document.getElementById('btn-evaluaciones'),
-            btnMaterial: document.getElementById('btn-material'),
-            btnEstudiantes: document.getElementById('btn-estudiantes'),
-            backFromAsistencia: document.getElementById('back-from-asistencia'),
-            backFromActividades: document.getElementById('back-from-actividades'),
-            backFromEvaluaciones: document.getElementById('back-from-evaluaciones'),
-            backFromMaterial: document.getElementById('back-from-material'),
-            backFromEstudiantes: document.getElementById('back-from-estudiantes'),
-            generateQrBtn: document.getElementById('generate-qr-btn'),
-            cancelQrBtn: document.getElementById('cancel-qr-btn'),
-            qrSection: document.getElementById('qr-section'),
-            qrCanvas: document.getElementById('qr-canvas'),
-            qrTimerDisplay: document.getElementById('qr-timer'),
-            attendanceList: document.getElementById('attendance-list'),
-            closeAttendanceBtn: document.getElementById('close-attendance-btn'),
-            unidadSelectAct: document.getElementById('unidad-select-act'),
-            addActivityForm: document.getElementById('add-activity-form'),
-            activitiesList: document.getElementById('activities-list'),
-            batchGradeBtnAct: document.getElementById('batch-grade-btn-act'),
-            unidadSelectEval: document.getElementById('unidad-select-eval'),
-            addEvaluacionForm: document.getElementById('add-evaluacion-form'),
-            evaluacionesList: document.getElementById('evaluaciones-list'),
-            unidadSelectMat: document.getElementById('unidad-select-mat'),
-            addMaterialForm: document.getElementById('add-material-form'),
-            materialList: document.getElementById('material-list'),
-            addStudentForm: document.getElementById('add-student-form'),
-            studentsList: document.getElementById('students-list'),
-            editModalSubject: document.getElementById('edit-modal-subject'),
-            editFormSubject: document.getElementById('edit-form-subject'),
-            editMateriaId: document.getElementById('edit-materia-id'),
-            editMateriaNombre: document.getElementById('edit-materia-nombre'),
-            editMateriaDescripcion: document.getElementById('edit-materia-descripcion'),
-            cancelEditSubjectBtn: document.getElementById('cancel-edit-subject-btn'),
-            editModalGeneric: document.getElementById('edit-modal-generic'),
-            editModalTitle: document.getElementById('edit-modal-title'),
-            editFormGeneric: document.getElementById('edit-form-generic'),
-            editGenericId: document.getElementById('edit-generic-id'),
-            editGenericName: document.getElementById('edit-generic-name'),
-            editGenericUrl: document.getElementById('edit-generic-url'),
-            cancelEditGenericBtn: document.getElementById('cancel-edit-generic-btn'),
-            messageModal: document.getElementById('message-modal'),
-            modalMessage: document.getElementById('modal-message'),
-            modalOkBtn: document.getElementById('modal-ok-btn'),
-            modalCancelBtn: document.getElementById('modal-cancel-btn'),
+            pages: document.querySelectorAll('.page'), loading: document.getElementById('loading'),
+            loginForm: document.getElementById('login-form'), userEmail: document.getElementById('user-email'),
+            logoutButton: document.getElementById('logout-button'), materiasGrid: document.getElementById('materias-grid'),
+            addMateriaBtn: document.getElementById('add-materia-btn'), materiaNameHeader: document.getElementById('materia-name-header'),
+            gestionEstudiantesModule: document.getElementById('gestion-estudiantes-module'),
+            asistenciaModule: document.getElementById('asistencia-module'), actividadesModule: document.getElementById('actividades-module'),
+            evaluacionesModule: document.getElementById('evaluaciones-module'), materialDidacticoModule: document.getElementById('material-didactico-module'),
+            addStudentForm: document.getElementById('add-student-form'), studentsTableBody: document.getElementById('students-table-body'),
+            generateQrBtn: document.getElementById('generate-qr-btn'), cancelQrBtn: document.getElementById('cancel-qr-btn'),
+            qrSection: document.getElementById('qr-section'), qrCanvas: document.getElementById('qr-canvas'),
+            qrTimer: document.getElementById('qr-timer'), manualAttendanceList: document.getElementById('manual-attendance-list'),
+            saveManualAttendanceBtn: document.getElementById('save-manual-attendance'),
+            presentStudentsList: document.getElementById('present-students-list'), presentCount: document.getElementById('present-count'),
+            noAttendancePlaceholder: document.getElementById('no-attendance-placeholder'),
+            backToDashboardBtn: document.getElementById('back-to-dashboard'), backToMateriaBtns: document.querySelectorAll('.back-to-materia'),
+            addMateriaModal: document.getElementById('add-materia-modal'), addMateriaForm: document.getElementById('add-materia-form'),
+            closeModalBtn: document.getElementById('close-modal-btn'), notificationModal: document.getElementById('notification-modal'),
+            notificationText: document.getElementById('notification-text'), closeNotificationModalBtn: document.getElementById('close-notification-modal'),
             studentAttendanceForm: document.getElementById('student-attendance-form'),
-            // Elementos del panel de control de visibilidad
-            editGenericVisible: document.getElementById('edit-generic-visible'),
-            editGenericDownload: document.getElementById('edit-generic-download'),
-            visibilityControls: document.getElementById('visibility-controls'),
-            // Elementos del panel de consulta
-            studentQueryPage: document.getElementById('student-query-page'),
-            studentQueryForm: document.getElementById('student-query-form'),
-            queryMessage: document.getElementById('query-message'),
-            studentInfoDisplay: document.getElementById('student-info-display'),
-            querySections: document.getElementById('query-sections'),
-            backToLoginQuery: document.getElementById('back-to-login-query'),
+            studentMatricula: document.getElementById('student-matricula'),
+            addActivityForm: document.getElementById('add-activity-form'), activitiesList: document.getElementById('activities-list'),
+            addEvaluationForm: document.getElementById('add-evaluation-form'), evaluationsList: document.getElementById('evaluations-list'),
+            generateMaterialForm: document.getElementById('generate-material-form'), generatedMaterialContent: document.getElementById('generated-material-content'),
         };
 
-        // 4. Define el Caller (Usa la instancia 'supabaseClient')
-        const functionsCaller = {
-            httpsCallable: (name) => async (params) => {
-                const user = await supabaseClient.auth.getUser();
-                const token = user.data.session?.access_token || SUPABASE_ANON_KEY;
-                
-                // Lógica para funciones que usan Edge Functions (HTTP)
-                if (name === 'readSheetsData' || name === 'writeSheetsData' || name === 'google-api-handler' || name === 'batchGradeActivities') {
-                    const functionName = (name === 'readSheetsData' || name === 'writeSheetsData' || name === 'batchGradeActivities') ? name : 'google-api-handler';
-                    
-                    const response = await fetch(EDGE_FUNCTIONS_URL + functionName, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`, 
-                        },
-                        body: JSON.stringify(params),
-                    });
-                    return await response.json(); 
-                }
-
-                // Lógica para funciones que usan RPCs de PostgreSQL
-                if (name === 'gradeWithGemini') {
-                    const { data } = await supabaseClient.rpc('grade_with_gemini', { prompt: params.prompt, rubric: params.rubric });
-                    return { data: data };
-                }
-
-                throw new Error(`RPC/Function ${name} not implemented or misconfigured.`);
-            }
-        };
+        // --- FUNCIONES DE UTILIDAD ---
+        const showLoading = () => elements.loading.classList.remove('hidden');
+        const hideLoading = () => elements.loading.classList.add('hidden');
+        function showModal(message) { elements.notificationText.textContent = message; elements.notificationModal.classList.remove('hidden'); }
+        function showPage(pageId) { elements.pages.forEach(p => p.classList.remove('page-active')); document.getElementById(pageId)?.classList.add('page-active'); }
         
-        // 5. Asigna la función a la variable global 'httpsCallable'
-        httpsCallable = functionsCaller.httpsCallable;
-
-
-        // --- UTILIDADES GLOBALES Y MANEJO DE ESTADO ---
-
-        function showLoading() { elements.loading.classList.remove('hidden'); }
-        function hideLoading() { elements.loading.classList.add('hidden'); }
-        
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
-            const page = document.getElementById(pageId);
-            if (page) {
-                page.style.display = 'block';
-                appState.currentPage = pageId;
-                
-                if (pageId !== 'asistencia-page' && appState.attendanceChannel) {
-                    supabaseClient.removeChannel(appState.attendanceChannel);
-                    appState.attendanceChannel = null;
-                    if (appState.qrTimer) {
-                        clearInterval(appState.qrTimer);
-                        appState.qrTimer = null;
-                        elements.qrSection.classList.add('hidden');
-                        elements.cancelQrBtn.classList.add('hidden');
-                        elements.generateQrBtn.classList.remove('hidden');
-                    }
-                }
-            }
+        // --- AUTENTICACIÓN Y CARGA INICIAL ---
+        async function checkSession() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                userId = session.user.id;
+                elements.userEmail.textContent = session.user.email;
+                showPage('dashboard-page');
+                await loadMaterias();
+            } else { showPage('login-page'); }
         }
-        
-        function showModal(message, isConfirmation = false, onConfirm = () => {}) {
-            elements.modalMessage.textContent = message;
-            elements.modalCancelBtn.classList.toggle('hidden', !isConfirmation);
-            elements.modalOkBtn.onclick = () => {
-                elements.messageModal.classList.add('hidden');
-                if (isConfirmation) {
-                    onConfirm();
-                }
-            };
-            if (isConfirmation) {
-                elements.modalCancelBtn.onclick = () => {
-                    elements.messageModal.classList.add('hidden');
-                };
-            }
-            elements.messageModal.classList.remove('hidden');
-        }
-
-        async function getUserId() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            return user ? user.id : null;
-        }
-
-        async function initSupabaseAndAuth() {
-            try {
-                showLoading();
-                const user = await getUserId();
-                
-                if (user) {
-                    userId = user;
-                const { data: userData, error: profileError } = await supabaseClient
-                .from('users') // Nota: Supabase guarda los perfiles en 'auth.users'. Debes tener una tabla 'public.users' 
-                               // o usar la vista 'auth.users' si RLS lo permite. Si tienes una tabla 'perfiles', úsala.
-                .select('email') // Aquí seleccionarías el campo 'name' si lo tuvieras en una tabla de perfiles.
-                .eq('id', userId)
-                .single();
-
-            let displayName = userId; // Fallback al UID
-
-            if (userData && userData.email) {
-                // Usamos el email como nombre visible si no tenemos un campo 'name' dedicado.
-                displayName = userData.email; 
-            } else if (profileError) {
-                console.warn("Could not fetch user profile from DB:", profileError.message);
-            }
-                    elements.userIdSpan.textContent = `Docente: ${displayName}`;
-            showPage('dashboard-page');
-            await fetchMaterias();
-        } else {
-            // Determinar qué página mostrar si el usuario no está autenticado
-           if(window.location.hash.startsWith('#student-page')) {
-            showPage('student-page');
-           } else if(window.location.hash === '#student-query-page') {
-                showPage('student-query-page');
-            } else {
-                showPage('login-page');
-            }
-        }
-    } catch (error) {
-        console.error("Error initializing Supabase:", error.message);
-        showModal("Error al inicializar la plataforma.");
-        showPage('login-page');
-    } finally {
-        hideLoading();
-            }
-        }
-        
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (session && session.user) {
-                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                    if (!userId || userId !== session.user.id) {
-                        userId = session.user.id;
-                        initSupabaseAndAuth();
-                    }
-                }
-            } else if (event === 'SIGNED_OUT') {
-                userId = null;
-                showPage('login-page');
-            }
-        });
-        
-        // --- AUTHENTICATION FLOW ---
-        
-        elements.loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
+        async function loadMaterias() {
             showLoading();
-            try {
-                const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-            } catch (error) {
-                console.error("Error during login:", error.message);
-                showModal("Usuario o contraseña incorrectos.");
-            } finally {
-                hideLoading();
-            }
-        });
-        
-        elements.googleLoginBtn.addEventListener('click', async () => {
-            showLoading();
-            try {
-                const { error } = await supabaseClient.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: { redirectTo: window.location.origin }
+            const { data, error } = await supabase.from('materias').select('*').eq('docente_id', userId);
+            hideLoading();
+            if (error) return showModal('Error al cargar las materias.');
+            elements.materiasGrid.innerHTML = '';
+            data.forEach(materia => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-2xl shadow-lg border cursor-pointer hover:shadow-2xl';
+                card.innerHTML = `<h3 class="text-xl font-bold">${materia.name}</h3><p class="text-gray-600">${materia.semester}</p>`;
+                card.addEventListener('click', () => {
+                    appState.selectedMateria = materia;
+                    appState.studentCache = []; // Limpiar caché al cambiar de materia
+                    elements.materiaNameHeader.textContent = materia.name;
+                    showPage('materia-page');
                 });
-                if (error) throw error;
-            } catch (error) {
-                console.error("Error during Google login:", error.message);
-                showModal("No se pudo iniciar sesión con Google.");
-            } finally {
-                hideLoading();
-            }
-        });
-
-        elements.logoutBtn.addEventListener('click', async () => {
-            await supabaseClient.auth.signOut();
-            userId = null;
-            showPage('login-page');
-            elements.userIdSpan.textContent = '';
-        });
-
-        document.getElementById('open-student-query-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            showPage('student-query-page');
-        });
-        document.getElementById('back-to-login-query').addEventListener('click', () => {
-            showPage('login-page');
-        });
-        
-        // --- SUBJECT MANAGEMENT (DASHBOARD) ---
-        
-        elements.createManualForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const nombre = document.getElementById('materia-nombre').value.trim();
-            const descripcion = document.getElementById('materia-descripcion').value.trim();
-            
-            if (nombre === '') { showModal("El nombre de la materia no puede estar vacío."); return; }
-            
-            showLoading();
-            try {
-                // 1. PRIMERO: Insertamos la materia para que Supabase le asigne un UUID
-                const { data: newMateria, error: insertError } = await supabaseClient
-                    .from('materias') 
-                    .insert([{ docente_id: userId, nombre, descripcion, created_at: new Date().toISOString() }])
-                    .select('id') 
-                    .single();
-                
-                if (insertError) throw insertError;
-                const createdMateriaId = newMateria.id;
-
-                // 2. SEGUNDO: Llamamos al Edge Function para crear el Sheet y actualizar la fila
-                const response = await httpsCallable('google-api-handler')({
-                    subjectName: nombre, 
-                    semester: '2024-2',
-                    materiaId: createdMateriaId, 
-                    action: 'createSubjectFolders' // Crea el Google Sheet
-                });
-                
-                if (!response.data || !response.data.success) { 
-                    showModal("Materia creada, pero falló la creación del Google Sheet. Revise permisos y Edge Functions.");
-                } else {
-                    showModal(`Materia creada y vinculada exitosamente. Sheet ID: ${response.data.sheetId}`);
-                }
-                
-                e.target.reset();
-                await fetchMaterias();
-            } catch (error) {
-                console.error("Error creating subject:", error.message);
-                showModal("Error al crear la materia.");
-            } finally {
-                hideLoading();
-            }
-        });
-
-        elements.createAiForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const plan = document.getElementById('ai-plan').value.trim();
-
-            showLoading();
-            try {
-                // 1. PRIMERO: Insertamos la materia para que Supabase le asigne un UUID
-                const simulatedResponse = {
-                    nombre: "Materia Generada por IA",
-                    descripcion: `Este es un plan de estudios generado por IA basado en: "${plan}"`
-                };
-                
-                const { data: newMateria, error: insertError } = await supabaseClient
-                    .from('materias')
-                    .insert([{ docente_id: userId, nombre: simulatedResponse.nombre, descripcion: simulatedResponse.descripcion, created_at: new Date().toISOString() }])
-                    .select('id') 
-                    .single();
-                
-                if (insertError) throw insertError;
-                const createdMateriaId = newMateria.id;
-
-                // 2. SEGUNDO: Llamamos al Edge Function para crear el Sheet y actualizar la fila
-                const response = await httpsCallable('google-api-handler')({
-                    subjectName: simulatedResponse.nombre, 
-                    semester: '2024-2',
-                    materiaId: createdMateriaId, 
-                    action: 'createSubjectFolders'
-                });
-
-                if (!response.data || !response.data.success) { 
-                    showModal("Materia creada, pero falló la vinculación a Google Sheet. Revise permisos.");
-                } else {
-                    showModal('Materia creada con IA y vinculada exitosamente.');
-                }
-
-                e.target.reset();
-                await fetchMaterias();
-            } catch (error) {
-                console.error("Error creating subject with AI:", error.message);
-                showModal("Error al crear la materia con IA.");
-            } finally {
-                hideLoading();
-            }
-        });
-        
-        async function fetchMaterias() {
-            if (!userId) return;
-            elements.materiasList.innerHTML = '';
-            showLoading();
-            try {
-                const { data: materias, error } = await supabaseClient
-                    .from('materias')
-                    .select('*')
-                    .eq('docente_id', userId)
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                if (!materias || materias.length === 0) {
-                    elements.materiasList.innerHTML = '<p class="text-gray-600 text-center col-span-full">No hay materias registradas. Crea una para empezar.</p>';
-                    return;
-                }
-                
-                materias.forEach(materia => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-white p-4 rounded-xl shadow-md';
-                    card.innerHTML = `
-                        <div class="cursor-pointer hover:bg-gray-100 p-2 rounded-lg" data-id="${materia.id}">
-                            <h3 class="font-bold text-lg text-gray-900 mb-1">${materia.nombre}</h3>
-                            <p class="text-gray-600 text-sm">${materia.descripcion || 'Sin descripción'}</p>
-                        </div>
-                        <div class="mt-4 flex justify-end space-x-2">
-                            <button class="edit-btn px-3 py-1 bg-amber-600 rounded-lg text-white text-sm font-semibold hover:bg-amber-700 transition-colors duration-200" data-id="${materia.id}" data-nombre="${materia.nombre}" data-descripcion="${materia.descripcion || ''}">
-                                Editar
-                            </button>
-                            <button class="delete-btn px-3 py-1 bg-red-600 rounded-lg text-white text-sm font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${materia.id}">
-                                Eliminar
-                            </button>
-                        </div>
-                    `;
-                    
-                    const selectCard = card.querySelector('div.cursor-pointer');
-                    selectCard.addEventListener('click', () => {
-                        appState.selectedMateria = materia;
-                        showMateriaPage();
-                    });
-                    
-                    const editBtn = card.querySelector('.edit-btn');
-                    editBtn.addEventListener('click', (e) => showEditModalSubject({
-                        id: e.target.dataset.id,
-                        nombre: e.target.dataset.nombre,
-                        descripcion: e.target.dataset.descripcion
-                    }));
-
-                    const deleteBtn = card.querySelector('.delete-btn');
-                    deleteBtn.addEventListener('click', (e) => deleteSubject(e.target.dataset.id));
-                    
-                    elements.materiasList.appendChild(card);
-                });
-            } catch (error) {
-                console.error("Error fetching subjects:", error.message);
-                showModal("Error al cargar las materias.");
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function showEditModalSubject(materia) {
-            elements.editMateriaId.value = materia.id;
-            elements.editMateriaNombre.value = materia.nombre;
-            elements.editMateriaDescripcion.value = materia.descripcion;
-            elements.editModalSubject.classList.remove('hidden');
-        }
-
-        elements.cancelEditSubjectBtn.addEventListener('click', () => {
-            elements.editModalSubject.classList.add('hidden');
-        });
-
-        elements.editFormSubject.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = elements.editMateriaId.value;
-            const nombre = elements.editMateriaNombre.value;
-            const descripcion = elements.editMateriaDescripcion.value;
-
-            showLoading();
-            try {
-                const { error } = await supabaseClient
-                    .from('materias')
-                    .update({ nombre, descripcion })
-                    .eq('id', id)
-                    .eq('docente_id', userId);
-
-                if (error) throw error;
-
-                elements.editModalSubject.classList.add('hidden');
-                showModal('Materia actualizada exitosamente.');
-                await fetchMaterias();
-            } catch (error) {
-                console.error("Error updating subject:", error.message);
-                showModal("Error al actualizar la materia.");
-            } finally {
-                hideLoading();
-            }
-        });
-
-        async function deleteSubject(id) {
-            showModal("¿Estás seguro de que quieres eliminar esta materia? Esta acción es irreversible.", true, async () => {
-                showLoading();
-                try {
-                    await supabaseClient
-                        .from('materias')
-                        .delete()
-                        .eq('id', id)
-                        .eq('docente_id', userId);
-
-                    showModal('Materia eliminada exitosamente.');
-                    await fetchMaterias();
-                } catch (error) {
-                    console.error("Error deleting subject:", error.message);
-                    showModal("Error al eliminar la materia.");
-                } finally {
-                    hideLoading();
-                }
+                elements.materiasGrid.appendChild(card);
             });
         }
-        
-        function showMateriaPage() {
+
+        // --- GESTIÓN DE ESTUDIANTES ---
+        async function loadStudents() {
             if (!appState.selectedMateria) return;
-            elements.materiaTitle.textContent = appState.selectedMateria.nombre;
-            showPage('materia-page');
-            fetchFinalGradesSummary();
+            showLoading();
+            const { data, error } = await supabase.from('estudiantes').select('*').eq('materia_id', appState.selectedMateria.id).order('name');
+            hideLoading();
+            if (error) return showModal('Error al cargar estudiantes.');
+            appState.studentCache = data;
+            elements.studentsTableBody.innerHTML = '';
+            if (data.length === 0) {
+                elements.studentsTableBody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">No hay estudiantes inscritos.</td></tr>`;
+            } else {
+                data.forEach(s => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td class="px-6 py-4">${s.name}</td><td class="px-6 py-4">${s.matricula}</td><td class="px-6 py-4 text-right"><button data-id="${s.id}" class="delete-student-btn text-red-600 hover:text-red-900">Eliminar</button></td>`;
+                    elements.studentsTableBody.appendChild(tr);
+                });
+            }
         }
         
-        async function fetchFinalGradesSummary() {
-            if (!userId || !appState.selectedMateria) return;
-            
-            elements.finalGradesTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-600">Cargando datos...</td></tr>';
+        // --- GESTIÓN DE ACTIVIDADES ---
+        async function loadActivities() {
+            if (!appState.selectedMateria) return;
             showLoading();
-            
-            try {
-                const { data: studentsList, error: studentError } = await supabaseClient
-                    .from('estudiantes')
-                    .select('*')
-                    .eq('materia_id', appState.selectedMateria.id);
-                
-                if (studentError) throw studentError;
-                appState.students = studentsList || [];
-
-                if (appState.students.length === 0) {
-                    elements.finalGradesTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-600">No hay estudiantes registrados.</td></tr>';
-                    hideLoading();
-                    return;
-                }
-
-                let finalGrades = appState.students.reduce((acc, student) => {
-                    acc[student.matricula] = { name: student.name, attendance: 0, activities: [], evaluations: [] };
-                    return acc;
-                }, {});
-
-                // Llama a Edge Function para leer datos (simulados o reales)
-                const attendanceSheetData = await httpsCallable('readSheetsData')({ subjectId: appState.selectedMateria.id, type: 'asistencias' });
-                
-                if (attendanceSheetData.data && attendanceSheetData.data.success) {
-                    for (const matricula of appState.students.map(s => s.matricula)) {
-                        let totalAttendance = 0;
-                        let daysCount = 0;
-                        const studentAttendance = attendanceSheetData.data.data ? attendanceSheetData.data.data[matricula] : undefined;
-                        
-                        if (Array.isArray(studentAttendance)) {
-                            studentAttendance.forEach(isPresent => {
-                                if (typeof isPresent === 'boolean') {
-                                    if (isPresent) totalAttendance++;
-                                    daysCount++;
-                                }
-                            });
-                        }
-
-                        finalGrades[matricula].attendance = daysCount > 0 ? (totalAttendance / daysCount) * 100 : 0;
-                    }
-                }
-
-                const activitiesSheetData = await httpsCallable('readSheetsData')({ subjectId: appState.selectedMateria.id, type: 'actividades' });
-                if (activitiesSheetData.data && activitiesSheetData.data.success) {
-                    for (const grade of activitiesSheetData.data.data) {
-                        if (finalGrades[grade.matricula]) {
-                           finalGrades[grade.matricula].activities.push(grade.grade);
-                        }
-                    }
-                }
-                
-                const evaluationsSheetData = await httpsCallable('readSheetsData')({ subjectId: appState.selectedMateria.id, type: 'evaluaciones' });
-                if (evaluationsSheetData.data && evaluationsSheetData.data.success) {
-                    for (const grade of evaluationsSheetData.data.data) {
-                        if (finalGrades[grade.matricula]) {
-                            finalGrades[grade.matricula].evaluations.push(grade.grade);
-                        }
-                    }
-                }
-
-                // Render the table
-                elements.finalGradesTableBody.innerHTML = '';
-                
-                for (const [matricula, data] of Object.entries(finalGrades)) {
-                    const avgActivities = data.activities.length > 0 ? data.activities.reduce((a, b) => a + b) / data.activities.length : 0;
-                    const avgEvaluations = data.evaluations.length > 0 ? data.evaluations.reduce((a, b) => a + b) / data.evaluations.length : 0;
-                    const finalGrade = (data.attendance * 0.1) + (avgActivities * 0.45) + (avgEvaluations * 0.45);
-                    
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${matricula}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${data.attendance.toFixed(2)}%</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${avgActivities.toFixed(2)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${avgEvaluations.toFixed(2)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-lg font-bold text-indigo-600">${finalGrade.toFixed(2)}</td>
-                    `;
-                    elements.finalGradesTableBody.appendChild(row);
-                }
-                
-            } catch (error) {
-                console.error("Error fetching final grades:", error.message);
-                elements.finalGradesTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-600">Error al cargar el resumen de calificaciones.</td></tr>';
-            } finally {
-                hideLoading();
+            const { data, error } = await supabase.from('actividades').select('*').eq('materia_id', appState.selectedMateria.id).order('created_at', { ascending: false });
+            hideLoading();
+            if (error) return showModal('Error al cargar actividades.');
+            elements.activitiesList.innerHTML = '';
+            if (data.length === 0) {
+                elements.activitiesList.innerHTML = `<p class="text-gray-500">No hay actividades creadas.</p>`;
+            } else {
+                data.forEach(act => {
+                    const div = document.createElement('div');
+                    div.className = 'p-4 border rounded-lg bg-gray-50';
+                    div.innerHTML = `<div class="flex justify-between items-start"><div><h4 class="font-bold">${act.title}</h4><p class="text-sm text-gray-600">${act.description || ''}</p><p class="text-xs text-gray-500 mt-2">Entrega: ${act.due_date || 'N/A'}</p></div><button data-id="${act.id}" class="delete-activity-btn text-red-500 hover:text-red-700 text-sm">Eliminar</button></div>`;
+                    elements.activitiesList.appendChild(div);
+                });
             }
         }
 
-        // --- NAVIGATION WITHIN SUBJECT ---
-        elements.backToDashboardBtn.addEventListener('click', () => showPage('dashboard-page'));
-        elements.btnAsistencia.addEventListener('click', () => { showPage('asistencia-page'); fetchStudentsForAttendance(); });
-        elements.btnActividades.addEventListener('click', async () => { showPage('actividades-page'); await fetchActivities(); });
-        elements.btnEvaluaciones.addEventListener('click', async () => { showPage('evaluaciones-page'); await fetchEvaluaciones(); });
-        elements.btnMaterial.addEventListener('click', async () => { showPage('material-page'); await fetchMaterial(); });
-        elements.btnEstudiantes.addEventListener('click', async () => { showPage('estudiantes-page'); await fetchStudents(); });
-        elements.backFromAsistencia.addEventListener('click', () => showPage('materia-page'));
-        elements.backFromActividades.addEventListener('click', () => showPage('materia-page'));
-        elements.backFromEvaluaciones.addEventListener('click', () => showPage('materia-page'));
-        elements.backFromMaterial.addEventListener('click', () => showPage('materia-page'));
-        elements.backFromEstudiantes.addEventListener('click', () => showPage('materia-page'));
-
-        // --- ATTENDANCE PANEL LOGIC ---
-        elements.generateQrBtn.addEventListener('click', async () => {
-            if (!appState.selectedMateria) { showModal("Por favor, selecciona una materia primero."); return; }
+        // --- GESTIÓN DE EVALUACIONES ---
+        async function loadEvaluations() {
+            if (!appState.selectedMateria) return;
             showLoading();
-            const attendanceToken = crypto.randomUUID();
-            const REDIRECTION_URL = `${PLATFORM_DOMAIN}/#student-page?token=${attendanceToken}`;
-
-            const qrData = JSON.stringify({ materiaId: appState.selectedMateria.id, userId, token: attendanceToken });
-
-            try {
-                const { error } = await supabaseClient
-                    .from('temp_attendance')
-                    .insert([{ token: attendanceToken, materia_id: appState.selectedMateria.id, docente_id: userId, is_active: true }]);
-                if (error) throw error;
-            } catch (error) {
-                console.error("Error creating temp attendance doc:", error.message);
-                showModal("Error al iniciar la sesión de asistencia: " + error.message);
-                hideLoading();
+            const { data, error } = await supabase.from('evaluaciones').select('*').eq('materia_id', appState.selectedMateria.id).order('created_at', { ascending: false });
+            hideLoading();
+            if (error) return showModal('Error al cargar evaluaciones.');
+            elements.evaluationsList.innerHTML = '';
+            if (data.length === 0) {
+                elements.evaluationsList.innerHTML = `<p class="text-gray-500">No hay evaluaciones creadas.</p>`;
+            } else {
+                data.forEach(ev => {
+                    const div = document.createElement('div');
+                    div.className = 'p-4 border rounded-lg bg-gray-50';
+                    div.innerHTML = `<div class="flex justify-between items-start"><div><h4 class="font-bold">${ev.title}</h4><p class="text-sm text-gray-600">${ev.description || ''}</p><p class="text-xs text-gray-500 mt-2">Fecha: ${ev.evaluation_date || 'N/A'}</p></div><button data-id="${ev.id}" class="delete-evaluation-btn text-red-500 hover:text-red-700 text-sm">Eliminar</button></div>`;
+                    elements.evaluationsList.appendChild(div);
+                });
+            }
+        }
+        
+        // --- LÓGICA DE ASISTENCIA ---
+        async function fetchStudentsForAttendance() {
+            if (appState.studentCache.length === 0) await loadStudents();
+            const students = appState.studentCache;
+            elements.manualAttendanceList.innerHTML = '';
+            if (students.length === 0) {
+                elements.manualAttendanceList.innerHTML = '<p class="text-gray-500 text-center">No hay estudiantes inscritos.</p>';
                 return;
             }
+            students.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center p-2 mb-2 bg-gray-200 rounded-lg';
+                div.innerHTML = `<label class="flex items-center space-x-3 w-full cursor-pointer"><input type="checkbox" data-name="${s.name}" data-matricula="${s.matricula}" class="h-5 w-5 rounded"><span class="font-medium">${s.name} (${s.matricula})</span></label>`;
+                elements.manualAttendanceList.appendChild(div);
+            });
+        }
+        function startQrTimer(token) { let timeLeft = 60; elements.qrTimer.textContent = `Tiempo: ${timeLeft}s`; qrTimerInterval = setInterval(async () => { timeLeft--; elements.qrTimer.textContent = `Tiempo: ${timeLeft}s`; if (timeLeft <= 0) await deactivateQr(token); }, 1000); }
+        async function deactivateQr(token) { clearInterval(qrTimerInterval); if (attendanceListener) attendanceListener.unsubscribe(); await supabase.from('temp_attendance').update({ is_active: false }).eq('token', token); elements.qrSection.classList.add('hidden'); elements.generateQrBtn.classList.remove('hidden'); elements.cancelQrBtn.classList.add('hidden'); }
+        function startAttendanceListener(token) { attendanceListener = supabase.channel(`att-${token}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'asistencias' }, p => addPresentStudent(p.new.student_name, p.new.student_matricula)).subscribe(); }
+        function addPresentStudent(name, matricula) { if (document.querySelector(`#present-students-list [data-matricula="${matricula}"]`)) return; elements.noAttendancePlaceholder.classList.add('hidden'); const card = document.createElement('div'); card.className = 'bg-green-100 text-green-800 p-2 rounded-lg text-center'; card.dataset.matricula = matricula; card.innerHTML = `<p class="font-semibold">${name}</p><p class="text-sm">${matricula}</p>`; elements.presentStudentsList.appendChild(card); elements.presentCount.textContent = document.querySelectorAll('#present-students-list > div').length; }
 
-            QRCode.toCanvas(elements.qrCanvas, REDIRECTION_URL, { errorCorrectionLevel: 'H' }, (error) => {
-                if (error) { console.error(error); showModal("Error al generar el código QR."); } 
-                else {
-                    elements.qrSection.classList.remove('hidden');
-                    elements.generateQrBtn.classList.add('hidden');
-                    elements.cancelQrBtn.classList.remove('hidden');
-                    startQrTimer(attendanceToken);
-                    startAttendanceListener(attendanceToken);
-                }
-                 console.log("URL QR generado:", REDIRECTION_URL); 
-                    startAttendanceListener(attendanceToken);
+        // --- LÓGICA DEL ESTUDIANTE (VISTA PÚBLICA) ---
+        async function handleStudentAttendance() {
+            const token = new URLSearchParams(window.location.hash.split('?')[1]).get('token');
+            if (!token) return showStudentMessage("Token no válido.", true);
+            const { data, error } = await supabase.from('temp_attendance').select('*').eq('token', token).single();
+            if (error || !data?.is_active) return showStudentMessage("QR expirado o no válido.", true);
+            elements.studentAttendanceForm.onsubmit = async (e) => {
+                e.preventDefault(); showLoading();
+                const matricula = elements.studentMatricula.value.trim();
+                const { data: student, error: studentError } = await supabase.from('estudiantes').select('name').eq('matricula', matricula).eq('materia_id', data.materia_id).single();
+                if (studentError || !student) { hideLoading(); return showModal("Matrícula no encontrada en esta materia."); }
+                const { error: insertError } = await supabase.from('asistencias').insert([{ materia_id: data.materia_id, student_matricula: matricula, student_name: student.name, docente_id: data.docente_id }]);
                 hideLoading();
-            });
-        });
-
-        elements.cancelQrBtn.addEventListener('click', () => {
-            showModal("¿Deseas cancelar la sesión de QR?", true, async () => {
-                showLoading();
-                try {
-                    await supabaseClient
-                        .from('temp_attendance')
-                        .update({ is_active: false })
-                        .eq('docente_id', userId)
-                        .eq('materia_id', appState.selectedMateria.id);
-                    
-                    if (appState.qrTimer) clearInterval(appState.qrTimer);
-                    if (appState.attendanceChannel) supabaseClient.removeChannel(appState.attendanceChannel);
-
-                    elements.qrSection.classList.add('hidden');
-                    elements.cancelQrBtn.classList.add('hidden');
-                    elements.generateQrBtn.classList.remove('hidden');
-                    showModal("Asistencia cancelada.");
-                } catch (error) {
-                     showModal("Error al cancelar la sesión: " + error.message);
-                } finally {
-                    hideLoading();
-                }
-            });
-        });
-
-        elements.closeAttendanceBtn.addEventListener('click', async () => {
-            showModal("¿Deseas cerrar la asistencia del día y consolidar los datos?", true, async () => {
-                showLoading();
-                try {
-                    const manualAttendance = {};
-                    document.querySelectorAll('#manual-attendance-list input[type="checkbox"]').forEach(checkbox => {
-                        if (checkbox.checked) {
-                            manualAttendance[checkbox.dataset.matricula] = true;
-                        }
-                    });
-                    
-                    const qrAttendance = {}; 
-                    const finalAttendance = { ...qrAttendance, ...manualAttendance };
-                    
-                    const attendanceData = {
-                        materia_id: appState.selectedMateria.id,
-                        unit: appState.selectedUnit,
-                        date: new Date().toISOString().split('T')[0],
-                    };
-                    
-                    const insertPromises = appState.students.map(async student => {
-                         const { error } = await supabaseClient.from('daily_attendance').insert({
-                            materia_id: appState.selectedMateria.id,
-                            student_matricula: student.matricula,
-                            unit: appState.selectedUnit,
-                            date: attendanceData.date,
-                            present: finalAttendance[student.matricula] || false
-                         });
-                         if (error) throw error;
-                    });
-                    await Promise.all(insertPromises);
-
-                    await httpsCallable('writeSheetsData')({
-                        subjectId: appState.selectedMateria.id,
-                        unit: appState.selectedUnit,
-                        type: 'asistencias',
-                        sheetData: attendanceData
-                    });
-
-                    showModal('Asistencia del día cerrada y datos guardados para ponderación futura.');
-                    
-                } catch (error) {
-                    console.error("Error closing daily attendance:", error.message);
-                    showModal('Error al cerrar la asistencia del día: ' + error.message);
-                } finally {
-                    hideLoading();
-                }
-            });
-        });
-
-        function startQrTimer(token) {
-            let timeLeft = 300; 
-            const timerElement = elements.qrTimerDisplay;
-            if (appState.qrTimer) clearInterval(appState.qrTimer);
-            
-            appState.qrTimer = setInterval(async () => {
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
-                timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                if (timeLeft <= 0) {
-                    clearInterval(appState.qrTimer);
-                    await supabaseClient.from('temp_attendance').update({ is_active: false }).eq('token', token);
-                    if (appState.attendanceChannel) supabaseClient.removeChannel(appState.attendanceChannel);
-                    
-                    elements.qrSection.classList.add('hidden');
-                    elements.cancelQrBtn.classList.add('hidden');
-                    elements.generateQrBtn.classList.remove('hidden');
-                    showModal("El tiempo del código QR ha expirado.");
-                }
-                timeLeft--;
-            }, 1000);
+                if (insertError) return showStudentMessage(`Error: ${insertError.message}`, true);
+                showStudentMessage(`¡Asistencia registrada, ${student.name}!`, false);
+            };
         }
-
-        function startAttendanceListener(token) {
-            elements.attendanceList.innerHTML = '<p class="text-gray-600 text-center">Esperando registros...</p>';
-            
-            if (appState.attendanceChannel) {
-                supabaseClient.removeChannel(appState.attendanceChannel);
-            }
-            
-            appState.attendanceChannel = supabaseClient.channel(`attendance:${token}`)
-                .on('postgres_changes', 
-                    { event: 'INSERT', schema: 'public', table: 'attendance_records', filter: `temp_token=eq.${token}` },
-                    (payload) => {
-                        const student = payload.new;
-                        const entry = document.createElement('div');
-                        entry.className = 'p-2 bg-gray-200 rounded-lg mb-2 flex justify-between items-center';
-                        entry.innerHTML = `
-                            <span>Matrícula: ${student.student_matricula}</span>
-                            <span class="text-gray-600 text-sm">${new Date(student.created_at).toLocaleTimeString()}</span>
-                        `;
-                        if (elements.attendanceList.querySelector('p.text-gray-600')) {
-                             elements.attendanceList.innerHTML = '';
-                        }
-                        elements.attendanceList.prepend(entry);
-                    })
-                .subscribe();
-        }
+        function showStudentMessage(message, isError) { elements.studentFormContainer.innerHTML = `<h1 class="text-3xl font-bold ${isError ? 'text-red-600' : 'text-green-600'}">${isError ? 'Error' : 'Éxito'}</h1><p class="mt-4 text-lg">${message}</p>`; }
         
-        async function fetchStudentsForAttendance() {
-            if (!userId || !appState.selectedMateria) return;
-            elements.manualAttendanceList.innerHTML = '';
-            showLoading();
-            try {
-                const { data: studentsList, error: studentError } = await supabaseClient
-                    .from('estudiantes')
-                    .select('*')
-                    .eq('materia_id', appState.selectedMateria.id);
-                
-                if (studentError) throw studentError;
-                appState.students = studentsList || [];
+        // --- TODOS LOS EVENT LISTENERS ---
 
-                if (appState.students.length === 0) {
-                    elements.manualAttendanceList.innerHTML = '<p class="text-gray-600 text-center">No hay estudiantes para tomar asistencia.</p>';
-                    return;
-                }
-                
-                appState.students.forEach(student => {
-                    const div = document.createElement('div');
-                    div.className = 'flex items-center justify-between p-2 mb-2 bg-gray-200 rounded-lg';
-                    div.innerHTML = `
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" data-matricula="${student.matricula}" class="form-checkbox h-5 w-5 text-indigo-500 rounded-full bg-gray-300 border-gray-400 focus:ring-indigo-500 transition-colors duration-200">
-                            <span class="text-gray-900">${student.name} (${student.matricula})</span>
-                        </label>
-                    `;
-                    elements.manualAttendanceList.appendChild(div);
-                });
-            } catch (error) {
-                console.error("Error fetching students for attendance:", error.message);
-                showModal("Error al cargar la lista de estudiantes para la asistencia manual.");
-            } finally {
+        // Autenticación
+        elements.loginForm.addEventListener('submit', async (e) => { e.preventDefault(); showLoading(); const { error } = await supabase.auth.signInWithPassword({ email: e.target.email.value, password: e.target.password.value }); hideLoading(); if (error) showModal(`Error: ${error.message}`); else location.reload(); });
+        elements.logoutButton.addEventListener('click', async () => { await supabase.auth.signOut(); location.reload(); });
+        
+        // Modales
+        elements.addMateriaBtn.addEventListener('click', () => elements.addMateriaModal.classList.remove('hidden'));
+        elements.closeModalBtn.addEventListener('click', () => elements.addMateriaModal.classList.add('hidden'));
+        elements.closeNotificationModalBtn.addEventListener('click', () => elements.notificationModal.classList.add('hidden'));
+
+        // Navegación
+        elements.backToDashboardBtn.addEventListener('click', () => showPage('dashboard-page'));
+        elements.backToMateriaBtns.forEach(btn => btn.addEventListener('click', () => showPage('materia-page')));
+        elements.gestionEstudiantesModule.addEventListener('click', () => { showPage('gestion-estudiantes-page'); loadStudents(); });
+        elements.asistenciaModule.addEventListener('click', () => { showPage('asistencia-page'); elements.presentStudentsList.innerHTML = '<p id="no-attendance-placeholder" class="col-span-full">Aún no hay registros.</p>'; elements.presentCount.textContent = '0'; fetchStudentsForAttendance(); });
+        elements.actividadesModule.addEventListener('click', () => { showPage('actividades-page'); loadActivities(); });
+        elements.evaluacionesModule.addEventListener('click', () => { showPage('evaluaciones-page'); loadEvaluations(); });
+        elements.materialDidacticoModule.addEventListener('click', () => showPage('material-didactico-page'));
+
+        // --- FORMULARIOS Y ACCIONES ---
+        
+        // Crear Materia
+        elements.addMateriaForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); showLoading();
+            const name = document.getElementById('new-materia-name').value;
+            const semester = document.getElementById('new-materia-semester').value;
+            const { data, error } = await supabase.from('materias').insert([{ name, semester, docente_id: userId }]).select().single();
+            if (error) { hideLoading(); return showModal(`Error: ${error.message}`); }
+            await supabase.functions.invoke('google-api-handler', { body: { action: 'createSubjectFolders', subjectName: name, semester, materiaId: data.id } });
+            hideLoading(); elements.addMateriaModal.classList.add('hidden'); showModal('Materia creada.'); await loadMaterias();
+        });
+
+        // Añadir Estudiante
+        elements.addStudentForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); showLoading();
+            const name = document.getElementById('student-name').value;
+            const matricula = document.getElementById('student-new-matricula').value;
+            const { error } = await supabase.from('estudiantes').insert([{ name, matricula, materia_id: appState.selectedMateria.id, docente_id: userId }]);
+            hideLoading();
+            if (error) { showModal(`Error: ${error.message}`); } else { showModal('Estudiante añadido.'); e.target.reset(); await loadStudents(); }
+        });
+
+        // Eliminar Estudiante
+        elements.studentsTableBody.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-student-btn')) {
+                if (!confirm('¿Eliminar estudiante?')) return;
+                showLoading();
+                const { error } = await supabase.from('estudiantes').delete().eq('id', e.target.dataset.id);
                 hideLoading();
+                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Estudiante eliminado.'); await loadStudents(); }
             }
-        }
+        });
 
-        // --- ACTIVITIES PANEL LOGIC ---
-
+        // Crear Actividad
         elements.addActivityForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const unit = elements.unidadSelectAct.value;
-            const name = document.getElementById('activity-name').value;
-            const url = document.getElementById('activity-url').value;
-
-            if (!appState.selectedMateria) { showModal("Selecciona una materia primero."); return; }
-            showLoading();
-            try {
-                // Se inicializan los nuevos campos de control
-                const { error } = await supabaseClient
-                    .from('actividades')
-                    .insert([{ materia_id: appState.selectedMateria.id, unit: unit, name, url, created_at: new Date().toISOString(), grade: null, is_visible: false, allow_download: false }]);
-                if (error) throw error;
-                
-                e.target.reset();
-                showModal("Actividad agregada exitosamente.");
-            } catch (error) {
-                console.error("Error adding activity:", error.message);
-                showModal("Error al agregar la actividad.");
-            } finally {
-                hideLoading();
-            }
+            e.preventDefault(); showLoading();
+            const { error } = await supabase.from('actividades').insert([{
+                title: document.getElementById('activity-title').value,
+                description: document.getElementById('activity-description').value,
+                due_date: document.getElementById('activity-due-date').value,
+                materia_id: appState.selectedMateria.id,
+                docente_id: userId
+            }]);
+            hideLoading();
+            if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad creada.'); e.target.reset(); await loadActivities(); }
         });
 
-        async function fetchActivities() {
-            if (!userId || !appState.selectedMateria) return;
-            const unit = elements.unidadSelectAct.value;
-            elements.activitiesList.innerHTML = '';
-            showLoading();
-            try {
-                const { data: activities, error } = await supabaseClient
-                    .from('actividades')
-                    .select('*')
-                    .eq('materia_id', appState.selectedMateria.id)
-                    .eq('unit', unit)
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-                
-                elements.activitiesList.innerHTML = '';
-                if (activities.length === 0) {
-                    elements.activitiesList.innerHTML = '<p class="text-gray-600 text-center">No hay actividades registradas en esta unidad.</p>';
-                    return;
-                }
-                
-                activities.forEach(activity => {
-                    const visibilityClass = activity.is_visible ? 'bg-emerald-100' : 'bg-red-100';
-                    const visibilityText = activity.is_visible ? 'Visible' : 'Oculta';
-                    const card = document.createElement('div');
-                    card.className = `bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center ${visibilityClass}`;
-                    card.innerHTML = `
-                        <div class="mb-2 sm:mb-0">
-                            <h4 class="font-bold text-lg text-gray-900">${activity.name}</h4>
-                            <p class="text-sm text-gray-700">Calificación: ${activity.grade !== null ? activity.grade : 'Pendiente'}</p>
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${visibilityClass}">${visibilityText}</span>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button class="individual-grade-btn p-2 bg-purple-600 rounded-lg text-white font-semibold hover:bg-purple-700 transition-colors duration-200" data-activity-id="${activity.id}">
-                                Calificar
-                            </button>
-                            <button class="edit-btn-act p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" 
-                                data-id="${activity.id}" 
-                                data-name="${activity.name}" 
-                                data-url="${activity.url || ''}"
-                                data-visible="${activity.is_visible}"
-                                data-download="${activity.allow_download}">
-                                Editar
-                            </button>
-                            <button class="delete-btn-act p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${activity.id}">
-                                Eliminar
-                            </button>
-                        </div>
-                    `;
-                    elements.activitiesList.appendChild(card);
-                });
-                
-                document.querySelectorAll('.individual-grade-btn').forEach(button => {
-                    button.addEventListener('click', (e) => gradeWithGemini(e.target.dataset.activityId) );
-                });
-                document.querySelectorAll('.edit-btn-act').forEach(button => {
-                    const item = {
-                        id: e.target.dataset.id,
-                        name: e.target.dataset.name,
-                        url: e.target.dataset.url,
-                        is_visible: e.target.dataset.visible === 'true',
-                        allow_download: e.target.dataset.download === 'true',
-                    };
-                    button.addEventListener('click', () => showEditModalGeneric('Actividad', item.id, item.name, item.url, item.is_visible, item.allow_download));
-                });
-                document.querySelectorAll('.delete-btn-act').forEach(button => {
-                    button.addEventListener('click', (e) => deleteItem('actividades', e.target.dataset.id) );
-                });
-            } catch (error) {
-                console.error("Error fetching activities:", error.message);
-                showModal("Error al cargar las actividades.");
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        elements.unidadSelectAct.addEventListener('change', fetchActivities);
-
-        async function gradeWithGemini(activityId) {
-            showLoading();
-            const rubric = prompt('Introduce la rúbrica (criterios de calificación):');
-            const promptText = prompt('Introduce el trabajo o reporte del estudiante para calificar:');
-            if (!promptText || !rubric) { hideLoading(); return; }
-
-            try {
-                // Llama al Edge Function unificado para Gemini
-                const response = await httpsCallable('google-api-handler')({ 
-                    prompt: promptText, 
-                    rubric: rubric, 
-                    action: 'gradeWithGemini'
-                });
-                
-                if (!response.data || !response.data.success) { throw new Error(response.message || "Error al conectar con IA."); }
-
-                const { grade, feedback } = response.data;
-                
-                const score = prompt(`IA sugiere una calificación de ${grade}. ¿Quieres usarla o modificarla?`, grade);
-                if (score) {
-                    const { error } = await supabaseClient
-                        .from('actividades')
-                        .update({ grade: parseFloat(score), feedback: feedback })
-                        .eq('id', activityId);
-
-                    if (error) throw error;
-                }
-                await fetchActivities();
-            } catch (error) {
-                console.error("Error al calificar con IA:", error.message);
-                showModal("Error al calificar la actividad con IA.");
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        elements.batchGradeBtnAct.addEventListener('click', async () => {
-            showModal("¿Estás seguro de que quieres calificar todas las actividades pendientes con la Inteligencia Artificial? Esto consume créditos de API.", true, async () => {
+        // Eliminar Actividad
+        elements.activitiesList.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-activity-btn')) {
+                if (!confirm('¿Eliminar actividad?')) return;
                 showLoading();
-                const materiaId = appState.selectedMateria.id;
-                const unit = elements.unidadSelectAct.value;
-                try {
-                    // Llama a la Edge Function REAL para el procesamiento por lote
-                    const response = await httpsCallable('batchGradeActivities')({
-                        materiaId: materiaId,
-                        unit: unit
-                    });
-                    
-                    if (!response.data || !response.data.success) { 
-                        throw new Error(response.data.message || "La calificación por lote falló."); 
-                    }
-                    
-                    showModal(response.data.message);
-                    await fetchActivities();
-                } catch (error) {
-                    console.error("Error during batch grading:", error.message);
-                    showModal("Error crítico en la calificación por lote: " + error.message);
-                } finally {
-                    hideLoading();
-                }
-            });
+                const { error } = await supabase.from('actividades').delete().eq('id', e.target.dataset.id);
+                hideLoading();
+                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad eliminada.'); await loadActivities(); }
+            }
+        });
+        
+        // Crear Evaluación
+        elements.addEvaluationForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); showLoading();
+            const { error } = await supabase.from('evaluaciones').insert([{
+                title: document.getElementById('evaluation-title').value,
+                description: document.getElementById('evaluation-description').value,
+                evaluation_date: document.getElementById('evaluation-date').value,
+                materia_id: appState.selectedMateria.id,
+                docente_id: userId
+            }]);
+            hideLoading();
+            if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación creada.'); e.target.reset(); await loadEvaluations(); }
         });
 
-        // --- EVALUATIONS PANEL LOGIC ---
+        // Eliminar Evaluación
+        elements.evaluationsList.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-evaluation-btn')) {
+                if (!confirm('¿Eliminar evaluación?')) return;
+                showLoading();
+                const { error } = await supabase.from('evaluaciones').delete().eq('id', e.target.dataset.id);
+                hideLoading();
+                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación eliminada.'); await loadEvaluations(); }
+            }
+        });
 
-        elements.addEvaluacionForm.addEventListener('submit', async (e) => {
+        // Generar Material Didáctico
+        elements.generateMaterialForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const unit = elements.unidadSelectEval.value;
-            const name = document.getElementById('eval-name').value;
-            
-            if (!appState.selectedMateria) { showModal("Selecciona una materia primero."); return; }
-            
+            const topic = document.getElementById('material-topic').value;
             showLoading();
+            elements.generatedMaterialContent.innerHTML = `<p class="text-gray-500">Generando, por favor espera...</p>`;
             try {
-                // Llama a Edge Function para crear el Formulario y devolver la URL
-                const response = await httpsCallable('google-api-handler')({
-                    materiaId: appState.selectedMateria.id,
-                    evaluationTitle: name,
-                    action: 'createGoogleForm'
+                const { data, error } = await supabase.functions.invoke('generate-material', {
+                    body: { topic: topic },
                 });
-
-                if (!response.data || !response.data.success) { 
-                    throw new Error(response.data.message || "Error al crear el formulario en Google."); 
-                }
-
-                const formUrl = response.data.formUrl;
-
-                // Insertamos la evaluación con la URL devuelta y el control de visibilidad
-                const { error } = await supabaseClient
-                    .from('evaluaciones')
-                    .insert([{ materia_id: appState.selectedMateria.id, unit: unit, name, url: formUrl, created_at: new Date().toISOString(), is_visible: false, allow_download: false }]);
                 if (error) throw error;
-                
-                e.target.reset();
-                showModal("Evaluación y Formulario de Google creados exitosamente.");
+                // Asumimos que la función retorna un objeto con una propiedad 'content'
+                elements.generatedMaterialContent.innerHTML = data.content || 'No se pudo generar el contenido.';
             } catch (error) {
-                console.error("Error adding evaluation:", error.message);
-                showModal("Error al agregar la evaluación. Asegúrate de que el backend de Google esté activo.");
-            } finally {
-                hideLoading();
-            }
-        });
-        
-        async function fetchEvaluaciones() {
-            if (!userId || !appState.selectedMateria) return;
-            const unit = elements.unidadSelectEval.value;
-            elements.evaluacionesList.innerHTML = '';
-            showLoading();
-            try {
-                const { data: evaluaciones, error } = await supabaseClient
-                    .from('evaluaciones')
-                    .select('*')
-                    .eq('materia_id', appState.selectedMateria.id)
-                    .eq('unit', unit)
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-                
-                elements.evaluacionesList.innerHTML = '';
-                if (evaluaciones.length === 0) {
-                    elements.evaluacionesList.innerHTML = '<p class="text-gray-600 text-center">No hay evaluaciones registradas en esta unidad.</p>';
-                    return;
-                }
-                
-                evaluaciones.forEach(evaluacion => {
-                    const visibilityClass = evaluacion.is_visible ? 'bg-emerald-100' : 'bg-red-100';
-                    const visibilityText = evaluacion.is_visible ? 'Visible' : 'Oculta';
-                    const card = document.createElement('div');
-                    card.className = `bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center ${visibilityClass}`;
-                    card.innerHTML = `
-                        <div class="mb-2 sm:mb-0">
-                            <h4 class="font-bold text-lg text-gray-900">${evaluacion.name}</h4>
-                            <p class="text-sm text-gray-700">Calificación: ${evaluacion.grade !== null ? evaluacion.grade : 'Pendiente'}</p>
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${visibilityClass}">${visibilityText}</span>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button class="grade-report-btn p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-eval-id="${evaluacion.id}">
-                                Calificar
-                            </button>
-                            <button class="edit-btn-eval p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" 
-                                data-id="${evaluacion.id}" 
-                                data-name="${evaluacion.name}" 
-                                data-url="${evaluacion.url || ''}"
-                                data-visible="${evaluacion.is_visible}"
-                                data-download="${evaluacion.allow_download}">
-                                Editar
-                            </button>
-                            <button class="delete-btn-eval p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${evaluacion.id}">
-                                Eliminar
-                            </button>
-                        </div>
-                    `;
-                    elements.evaluacionesList.appendChild(card);
-                });
-                
-                document.querySelectorAll('.grade-report-btn').forEach(button => {
-                    button.addEventListener('click', (e) => gradeReport(e.target.dataset.evalId) );
-                });
-                document.querySelectorAll('.edit-btn-eval').forEach(button => {
-                    const item = {
-                        id: e.target.dataset.id,
-                        name: e.target.dataset.name,
-                        url: e.target.dataset.url,
-                        is_visible: e.target.dataset.visible === 'true',
-                        allow_download: e.target.dataset.download === 'true',
-                    };
-                    button.addEventListener('click', () => showEditModalGeneric('Evaluación', item.id, item.name, item.url, item.is_visible, item.allow_download));
-                });
-                document.querySelectorAll('.delete-btn-eval').forEach(button => {
-                    button.addEventListener('click', (e) => deleteItem('evaluaciones', e.target.dataset.id) );
-                });
-            } catch (error) {
-                console.error("Error fetching evaluations:", error.message);
-                showModal("Error al cargar las evaluaciones.");
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        async function fetchMaterial() {
-            if (!userId || !appState.selectedMateria) return;
-            const unit = elements.unidadSelectMat.value;
-            elements.materialList.innerHTML = '';
-            showLoading();
-            try {
-                const { data: material, error } = await supabaseClient
-                    .from('material')
-                    .select('*')
-                    .eq('materia_id', appState.selectedMateria.id)
-                    .eq('unit', unit)
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                elements.materialList.innerHTML = '';
-                if (material.length === 0) {
-                    elements.materialList.innerHTML = '<p class="text-gray-600 text-center">No hay material didáctico registrado en esta unidad.</p>';
-                    return;
-                }
-                
-                material.forEach(mat => {
-                    const visibilityClass = mat.is_visible ? 'bg-emerald-100' : 'bg-red-100';
-                    const visibilityText = mat.is_visible ? 'Visible' : 'Oculto';
-                    const card = document.createElement('div');
-                    card.className = `bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center ${visibilityClass}`;
-                    card.innerHTML = `
-                        <div class="mb-2 sm:mb-0">
-                            <h4 class="font-bold text-lg text-gray-900">${mat.name}</h4>
-                            <a href="${mat.url}" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm">Ver archivo</a>
-                             <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${visibilityClass}">${visibilityText}</span>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button class="edit-btn-mat p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" 
-                                data-id="${mat.id}" 
-                                data-name="${mat.name}" 
-                                data-url="${mat.url || ''}"
-                                data-visible="${mat.is_visible}"
-                                data-download="${mat.allow_download}">
-                                Editar
-                            </button>
-                            <button class="delete-btn-mat p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${mat.id}">
-                                Eliminar
-                            </button>
-                        </div>
-                    `;
-                    elements.materialList.appendChild(card);
-                });
-                
-                document.querySelectorAll('.edit-btn-mat').forEach(button => {
-                    const item = {
-                        id: e.target.dataset.id,
-                        name: e.target.dataset.name,
-                        url: e.target.dataset.url,
-                        is_visible: e.target.dataset.visible === 'true',
-                        allow_download: e.target.dataset.download === 'true',
-                    };
-                    button.addEventListener('click', () => showEditModalGeneric('Material', item.id, item.name, item.url, item.is_visible, item.allow_download));
-                });
-                document.querySelectorAll('.delete-btn-mat').forEach(button => {
-                    button.addEventListener('click', (e) => deleteItem('material', e.target.dataset.id) );
-                });
-            } catch (error) {
-                console.error("Error fetching material:", error.message);
-                showModal("Error al cargar el material.");
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        elements.unidadSelectMat.addEventListener('change', fetchMaterial);
-        
-        // --- STUDENT MANAGEMENT LOGIC ---
-
-        elements.addStudentForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const matricula = document.getElementById('student-matricula-input').value;
-            const name = document.getElementById('student-name-input').value;
-
-            if (!appState.selectedMateria) { showModal("Selecciona una materia primero."); return; }
-
-            showLoading();
-            try {
-                const { error } = await supabaseClient
-                    .from('estudiantes')
-                    .insert([{ materia_id: appState.selectedMateria.id, matricula, name, created_at: new Date().toISOString() }]);
-                if (error) throw error;
-                
-                e.target.reset();
-                showModal("Estudiante agregado exitosamente.");
-            } catch (error) {
-                console.error("Error adding student:", error.message);
-                if (error.code === '23505') {
-                    showModal("Error: La matrícula ya existe o hay un problema de duplicidad.");
-                } else {
-                    showModal("Error al agregar el estudiante.");
-                }
+                elements.generatedMaterialContent.innerHTML = `<p class="text-red-500">Error al invocar la función: ${error.message}</p>`;
+                showModal('Error al generar el material.');
             } finally {
                 hideLoading();
             }
         });
 
-        async function fetchStudents() {
-            if (!userId || !appState.selectedMateria) return;
-            elements.studentsList.innerHTML = '';
+        // Acciones de Asistencia
+        elements.generateQrBtn.addEventListener('click', async () => { showLoading(); const token = crypto.randomUUID(); const url = `${location.origin}${location.pathname}#student-page?token=${token}`; const { error } = await supabase.from('temp_attendance').insert([{ token, materia_id: appState.selectedMateria.id, docente_id: userId, is_active: true }]); hideLoading(); if (error) return showModal(`Error: ${error.message}`); QRCode.toCanvas(elements.qrCanvas, url, { errorCorrectionLevel: 'H' }, err => { if (err) return showModal("Error al generar QR."); elements.qrSection.classList.remove('hidden'); elements.generateQrBtn.classList.add('hidden'); elements.cancelQrBtn.classList.remove('hidden'); startQrTimer(token); startAttendanceListener(token); }); });
+        elements.cancelQrBtn.addEventListener('click', async () => { const { data } = await supabase.from('temp_attendance').select('token').eq('docente_id', userId).eq('is_active', true).single(); if (data?.token) await deactivateQr(data.token); });
+        elements.saveManualAttendanceBtn.addEventListener('click', async () => {
+            const checkedBoxes = elements.manualAttendanceList.querySelectorAll('input:checked');
+            if (checkedBoxes.length === 0) return showModal("Selecciona al menos un estudiante.");
             showLoading();
-            try {
-                const { data: students, error } = await supabaseClient
-                    .from('estudiantes')
-                    .select('*')
-                    .eq('materia_id', appState.selectedMateria.id)
-                    .order('name', { ascending: true });
-
-                if (error) throw error;
-                
-                elements.studentsList.innerHTML = '';
-                appState.students = students || [];
-                if (appState.students.length === 0) {
-                    elements.studentsList.innerHTML = '<p class="text-gray-600 text-center">No hay estudiantes registrados en esta materia.</p>';
-                    return;
+            const records = [];
+            for (const box of checkedBoxes) {
+                const matricula = box.dataset.matricula;
+                if (!document.querySelector(`#present-students-list [data-matricula="${matricula}"]`)) {
+                    records.push({ materia_id: appState.selectedMateria.id, student_matricula: matricula, student_name: box.dataset.name, docente_id: userId });
                 }
-                
-                appState.students.forEach(student => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center';
-                    card.innerHTML = `
-                        <div class="mb-2 sm:mb-0">
-                            <h4 class="font-bold text-lg text-gray-900">${student.name}</h4>
-                            <p class="text-sm text-gray-700">Matrícula: ${student.matricula}</p>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button class="edit-btn-student p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" data-id="${student.id}" data-name="${student.name}" data-matricula="${student.matricula}">
-                                Editar
-                            </button>
-                            <button class="delete-btn-student p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${student.id}">
-                                Eliminar
-                            </button>
-                        </div>
-                    `;
-                    elements.studentsList.appendChild(card);
-                });
-                
-                document.querySelectorAll('.edit-btn-student').forEach(button => {
-                    button.addEventListener('click', (e) => showEditModalGeneric('Estudiante', e.target.dataset.id, e.target.dataset.name, e.target.dataset.matricula) );
-                });
-                document.querySelectorAll('.delete-btn-student').forEach(button => {
-                    button.addEventListener('click', (e) => deleteItem('estudiantes', e.target.dataset.id) );
-                });
-            } catch (error) {
-                console.error("Error fetching students:", error.message);
-                showModal("Error al cargar la lista de estudiantes.");
-            } finally {
-                hideLoading();
             }
-        }
-
-        // --- STUDENT ATTENDANCE PAGE LOGIC ---
-        elements.returnToLogin.addEventListener('click', () => { showPage('login-page'); });
-
-        elements.studentAttendanceForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    // --- RENDERIZADO DEL PANEL DEL ESTUDIANTE (LÓGICA) ---
-
-        // BUSCAR: async function fetchStudentDataAndRender(matricula) { ... }
-// Y REEMPLAZARLO COMPLETAMENTE CON ESTO:
-
-    async function fetchStudentDataAndRender(matricula) {
-    elements.querySections.innerHTML = '';
-    elements.studentInfoDisplay.classList.add('hidden');
-    elements.queryMessage.classList.remove('hidden');
-    elements.queryMessage.textContent = 'Buscando datos...';
-    
-    showLoading();
-
-    try {
-        // 🚨 CAMBIO CLAVE 1: Configurar el cliente para enviar el encabezado de Matrícula (CRÍTICO PARA RLS)
-        // Usamos .rpc para enviar headers de forma segura, luego encadenamos el .from()
-        const clientWithHeader = supabaseClient.from('estudiantes');
-        
-        // Ejecutamos la consulta. La base de datos usará el encabezado para el RLS.
-        const { data: studentMatch, error: matchError } = await clientWithHeader
-            .select('*, materias!inner(id, nombre, google_sheet_id)') 
-            .eq('matricula', matricula) 
-            .limit(1)
-            .single()
-            .then(res => {
-                // Si la consulta es exitosa, devolvemos la respuesta.
-                // Si hay un error, lo pasamos al catch.
-                if (res.error) throw res.error;
-                return res;
-            });
-
-
-        if (!studentMatch || !studentMatch.materias) {
-            elements.queryMessage.textContent = 'Matrícula no encontrada o sin materias asignadas.';
-            return;
-        }
-
-        const materiaId = studentMatch.materia_id;
-
-        // 🚨 CAMBIO CLAVE 2: Enviar el encabezado con cada consulta a las tablas de contenido 🚨
-        // Hacemos las consultas por separado para poder pasar el encabezado requerido por el RLS
-        
-        const RLS_HEADERS = { 'matricula': matricula };
-
-        const [
-            { data: actividades },
-            { data: evaluaciones },
-            { data: material }
-        ] = await Promise.all([
-            // Usando .rpc_query o .select_query para aplicar headers a las consultas REST
-            supabaseClient.from('actividades').select('*', { headers: RLS_HEADERS }).eq('materia_id', materiaId).eq('is_visible', true).order('unit'),
-            supabaseClient.from('evaluaciones').select('*', { headers: RLS_HEADERS }).eq('materia_id', materiaId).eq('is_visible', true).order('unit'),
-            supabaseClient.from('material').select('*', { headers: RLS_HEADERS }).eq('materia_id', materiaId).eq('is_visible', true).order('unit')
-        ]);
-        
-        // 3. Obtener datos de ponderación (utilizando Edge Function)
-        const gradesDataResponse = await httpsCallable('readSheetsData')({ 
-            subjectId: materiaId, 
-            type: 'all' 
-        });
-        
-        // Datos funcionales para el renderizado
-        const finalGrade = gradesDataResponse.data?.finalGrade || "N/A (Cálculo Pendiente)";
-        const attendanceRate = gradesDataResponse.data?.attendanceRate || "N/A";
-
-
-        // 4. Renderizar Información General
-        elements.queryMessage.classList.add('hidden');
-        elements.studentInfoDisplay.classList.remove('hidden');
-        document.getElementById('student-name-display').textContent = studentMatch.name;
-        document.getElementById('materia-name-display').textContent = studentMatch.materias.nombre;
-
-
-        // 5. Renderizar Secciones
-        const renderSection = (title, items, type) => {
-            if (!items || items.length === 0) return '';
-            
-            let html = `<div class="bg-gray-100 p-4 rounded-lg shadow-inner">
-                <h4 class="text-lg font-bold text-indigo-600 mb-3">${title}</h4>
-                <ul class="space-y-2">`;
-            
-            items.forEach(item => {
-                // Determina si el botón es de descarga o solo de enlace
-                const actionButton = item.allow_download 
-                    ? `<a href="${item.url}" target="_blank" download class="text-emerald-600 hover:text-emerald-800 text-sm font-semibold ml-auto">Descargar</a>`
-                    : `<a href="${item.url}" target="_blank" class="text-indigo-600 hover:underline text-sm font-semibold ml-auto">Consultar</a>`;
-                
-                const gradeInfo = type !== 'material' 
-                    ? `<p class="text-sm text-gray-500">Calificación: ${item.grade || 'Pendiente'}</p>` 
-                    : '';
-
-                html += `<li class="flex items-center justify-between p-2 border-b">
-                    <div>
-                        <span class="font-medium">${item.name}</span>
-                        ${gradeInfo}
-                    </div>
-                    ${actionButton}
-                </li>`;
-            });
-
-            html += '</ul></div>';
-            return html;
-        };
-        
-        // Renderizar el resumen primero
-        let output = `<div class="bg-indigo-50 p-4 rounded-lg shadow-md border-l-4 border-indigo-600 mb-6 flex justify-between items-center">
-            <div>
-                <h4 class="text-lg font-bold text-indigo-800">Calificación Final Ponderada</h4>
-                <p class="text-4xl font-extrabold text-accent">${finalGrade}</p>
-            </div>
-            <div>
-                <h4 class="text-lg font-bold text-indigo-800">Asistencia</h4>
-                <p class="text-2xl font-semibold text-accent">${attendanceRate}%</p>
-            </div>
-        </div>`;
-
-        output += renderSection('Actividades Visibles', actividades, 'actividades');
-        output += renderSection('Evaluaciones Visibles', evaluaciones, 'evaluaciones');
-        output += renderSection('Material Didáctico', material, 'material');
-
-        elements.querySections.innerHTML = output;
-
-    } catch (error) {
-        console.error("Error fetching student data:", error.message);
-        elements.queryMessage.textContent = 'Ocurrió un error al consultar los datos. Intenta más tarde.';
-        elements.studentInfoDisplay.classList.add('hidden');
-        elements.queryMessage.classList.remove('hidden');
-    } finally {
-        hideLoading();
-    }
-}
-        elements.studentQueryForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const matricula = document.getElementById('query-matricula').value.trim();
-            if (matricula) {
-                fetchStudentDataAndRender(matricula);
+            if (records.length > 0) {
+                const { error } = await supabase.from('asistencias').insert(records);
+                if (error) { hideLoading(); return showModal(`Error: ${error.message}`); }
             }
-        });
-        
-        // --- FIN LÓGICA PANEL DE CONSULTA ---
-        
-        
-        // FUNCIONES DE MÓDULO (FETCH Y RENDER)
-        
-        async function fetchActivities() {
-            if (!userId || !appState.selectedMateria) return;
-            const unit = elements.unidadSelectAct.value;
-            elements.activitiesList.innerHTML = '';
-            showLoading();
-            try {
-                const { data: activities, error } = await supabaseClient
-                    .from('actividades')
-                    .select('*')
-                    .eq('materia_id', appState.selectedMateria.id)
-                    .eq('unit', unit)
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-                
-                elements.activitiesList.innerHTML = '';
-                if (activities.length === 0) {
-                    elements.activitiesList.innerHTML = '<p class="text-gray-600 text-center">No hay actividades registradas en esta unidad.</p>';
-                    return;
-                }
-                
-                activities.forEach(activity => {
-                    const visibilityClass = activity.is_visible ? 'bg-emerald-100' : 'bg-red-100';
-                    const visibilityText = activity.is_visible ? 'Visible' : 'Oculta';
-                    const card = document.createElement('div');
-                    card.className = `bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center ${visibilityClass}`;
-                    card.innerHTML = `
-                        <div class="mb-2 sm:mb-0">
-                            <h4 class="font-bold text-lg text-gray-900">${activity.name}</h4>
-                            <p class="text-sm text-gray-700">Calificación: ${activity.grade !== null ? activity.grade : 'Pendiente'}</p>
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${visibilityClass}">${visibilityText}</span>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button class="individual-grade-btn p-2 bg-purple-600 rounded-lg text-white font-semibold hover:bg-purple-700 transition-colors duration-200" data-activity-id="${activity.id}">
-                                Calificar
-                            </button>
-                            <button class="edit-btn-act p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" 
-                                data-id="${activity.id}" 
-                                data-name="${activity.name}" 
-                                data-url="${activity.url || ''}"
-                                data-visible="${activity.is_visible}"
-                                data-download="${activity.allow_download}">
-                                Editar
-                            </button>
-                            <button class="delete-btn-act p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${activity.id}">
-                                Eliminar
-                            </button>
-                        </div>
-                    `;
-                    elements.activitiesList.appendChild(card);
-                });
-                
-                document.querySelectorAll('.individual-grade-btn').forEach(button => {
-                    button.addEventListener('click', (e) => gradeWithGemini(e.target.dataset.activityId) );
-                });
-                document.querySelectorAll('.edit-btn-act').forEach(button => {
-                    const item = {
-                        id: e.target.dataset.id,
-                        name: e.target.dataset.name,
-                        url: e.target.dataset.url,
-                        is_visible: e.target.dataset.visible === 'true',
-                        allow_download: e.target.dataset.download === 'true',
-                    };
-                    button.addEventListener('click', () => showEditModalGeneric('Actividad', item.id, item.name, item.url, item.is_visible, item.allow_download));
-                });
-                document.querySelectorAll('.delete-btn-act').forEach(button => {
-                    button.addEventListener('click', (e) => deleteItem('actividades', e.target.dataset.id) );
-                });
-            } catch (error) {
-                console.error("Error fetching activities:", error.message);
-                showModal("Error al cargar las actividades.");
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        async function fetchEvaluaciones() {
-            if (!userId || !appState.selectedMateria) return;
-            const unit = elements.unidadSelectEval.value;
-            elements.evaluacionesList.innerHTML = '';
-            showLoading();
-            try {
-                const { data: evaluaciones, error } = await supabaseClient
-                    .from('evaluaciones')
-                    .select('*')
-                    .eq('materia_id', appState.selectedMateria.id)
-                    .eq('unit', unit)
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-                
-                elements.evaluacionesList.innerHTML = '';
-                if (evaluaciones.length === 0) {
-                    elements.evaluacionesList.innerHTML = '<p class="text-gray-600 text-center">No hay evaluaciones registradas en esta unidad.</p>';
-                    return;
-                }
-                
-                evaluaciones.forEach(evaluacion => {
-                    const visibilityClass = evaluacion.is_visible ? 'bg-emerald-100' : 'bg-red-100';
-                    const visibilityText = evaluacion.is_visible ? 'Visible' : 'Oculta';
-                    const card = document.createElement('div');
-                    card.className = `bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center ${visibilityClass}`;
-                    card.innerHTML = `
-                        <div class="mb-2 sm:mb-0">
-                            <h4 class="font-bold text-lg text-gray-900">${evaluacion.name}</h4>
-                            <p class="text-sm text-gray-700">Calificación: ${evaluacion.grade !== null ? evaluacion.grade : 'Pendiente'}</p>
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${visibilityClass}">${visibilityText}</span>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button class="grade-report-btn p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-eval-id="${evaluacion.id}">
-                                Calificar
-                            </button>
-                            <button class="edit-btn-eval p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" 
-                                data-id="${evaluacion.id}" 
-                                data-name="${evaluacion.name}" 
-                                data-url="${evaluacion.url || ''}"
-                                data-visible="${evaluacion.is_visible}"
-                                data-download="${evaluacion.allow_download}">
-                                Editar
-                            </button>
-                            <button class="delete-btn-eval p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${evaluacion.id}">
-                                Eliminar
-                            </button>
-                        </div>
-                    `;
-                    elements.evaluacionesList.appendChild(card);
-                });
-                
-                document.querySelectorAll('.grade-report-btn').forEach(button => {
-                    button.addEventListener('click', (e) => gradeReport(e.target.dataset.evalId) );
-                });
-                document.querySelectorAll('.edit-btn-eval').forEach(button => {
-                    const item = {
-                        id: e.target.dataset.id,
-                        name: e.target.dataset.name,
-                        url: e.target.dataset.url,
-                        is_visible: e.target.dataset.visible === 'true',
-                        allow_download: e.target.dataset.download === 'true',
-                    };
-                    button.addEventListener('click', () => showEditModalGeneric('Evaluación', item.id, item.name, item.url, item.is_visible, item.allow_download));
-                });
-                document.querySelectorAll('.delete-btn-eval').forEach(button => {
-                    button.addEventListener('click', (e) => deleteItem('evaluaciones', e.target.dataset.id) );
-                });
-            } catch (error) {
-                console.error("Error fetching evaluations:", error.message);
-                showModal("Error al cargar las evaluaciones.");
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        async function fetchMaterial() {
-            if (!userId || !appState.selectedMateria) return;
-            const unit = elements.unidadSelectMat.value;
-            elements.materialList.innerHTML = '';
-            showLoading();
-            try {
-                const { data: material, error } = await supabaseClient
-                    .from('material')
-                    .select('*')
-                    .eq('materia_id', appState.selectedMateria.id)
-                    .eq('unit', unit)
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                elements.materialList.innerHTML = '';
-                if (material.length === 0) {
-                    elements.materialList.innerHTML = '<p class="text-gray-600 text-center">No hay material didáctico registrado en esta unidad.</p>';
-                    return;
-                }
-                
-                material.forEach(mat => {
-                    const visibilityClass = mat.is_visible ? 'bg-emerald-100' : 'bg-red-100';
-                    const visibilityText = mat.is_visible ? 'Visible' : 'Oculto';
-                    const card = document.createElement('div');
-                    card.className = `bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center ${visibilityClass}`;
-                    card.innerHTML = `
-                        <div class="mb-2 sm:mb-0">
-                            <h4 class="font-bold text-lg text-gray-900">${mat.name}</h4>
-                            <a href="${mat.url}" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm">Ver archivo</a>
-                             <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${visibilityClass}">${visibilityText}</span>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button class="edit-btn-mat p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" 
-                                data-id="${mat.id}" 
-                                data-name="${mat.name}" 
-                                data-url="${mat.url || ''}"
-                                data-visible="${mat.is_visible}"
-                                data-download="${mat.allow_download}">
-                                Editar
-                            </button>
-                            <button class="delete-btn-mat p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${mat.id}">
-                                Eliminar
-                            </button>
-                        </div>
-                    `;
-                    elements.materialList.appendChild(card);
-                });
-                
-                document.querySelectorAll('.edit-btn-mat').forEach(button => {
-                    const item = {
-                        id: e.target.dataset.id,
-                        name: e.target.dataset.name,
-                        url: e.target.dataset.url,
-                        is_visible: e.target.dataset.visible === 'true',
-                        allow_download: e.target.dataset.download === 'true',
-                    };
-                    button.addEventListener('click', () => showEditModalGeneric('Material', item.id, item.name, item.url, item.is_visible, item.allow_download));
-                });
-                document.querySelectorAll('.delete-btn-mat').forEach(button => {
-                    button.addEventListener('click', (e) => deleteItem('material', e.target.dataset.id) );
-                });
-            } catch (error) {
-                console.error("Error fetching material:", error.message);
-                showModal("Error al cargar el material.");
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        elements.unidadSelectMat.addEventListener('change', fetchMaterial);
-        
-        // --- STUDENT MANAGEMENT LOGIC ---
-
-        elements.addStudentForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const matricula = document.getElementById('student-matricula-input').value;
-            const name = document.getElementById('student-name-input').value;
-
-            if (!appState.selectedMateria) { showModal("Selecciona una materia primero."); return; }
-
-            showLoading();
-            try {
-                const { error } = await supabaseClient
-                    .from('estudiantes')
-                    .insert([{ materia_id: appState.selectedMateria.id, matricula, name, created_at: new Date().toISOString() }]);
-                if (error) throw error;
-                
-                e.target.reset();
-                showModal("Estudiante agregado exitosamente.");
-            } catch (error) {
-                console.error("Error adding student:", error.message);
-                if (error.code === '23505') {
-                    showModal("Error: La matrícula ya existe o hay un problema de duplicidad.");
-                } else {
-                    showModal("Error al agregar el estudiante.");
-                }
-            } finally {
-                hideLoading();
-            }
+            hideLoading();
+            records.forEach(r => addPresentStudent(r.student_name, r.student_matricula));
+            showModal(`Asistencia guardada para ${records.length} estudiante(s).`);
         });
 
-        async function fetchStudents() {
-            if (!userId || !appState.selectedMateria) return;
-            elements.studentsList.innerHTML = '';
-            showLoading();
-            try {
-                const { data: students, error } = await supabaseClient
-                    .from('estudiantes')
-                    .select('*')
-                    .eq('materia_id', appState.selectedMateria.id)
-                    .order('name', { ascending: true });
+        // --- RUTEO Y ARRANQUE DE LA APP ---
+        function handleRouting() { if (window.location.hash.startsWith('#student-page')) { showPage('student-page'); handleStudentAttendance(); } else if (!userId) { checkSession(); } }
+        window.addEventListener('hashchange', handleRouting);
+        document.addEventListener('DOMContentLoaded', handleRouting);
 
-                if (error) throw error;
-                
-                elements.studentsList.innerHTML = '';
-                appState.students = students || [];
-                if (appState.students.length === 0) {
-                    elements.studentsList.innerHTML = '<p class="text-gray-600 text-center">No hay estudiantes registrados en esta materia.</p>';
-                    return;
-                }
-                
-                appState.students.forEach(student => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-gray-100 p-4 rounded-xl shadow-inner mb-3 flex flex-col sm:flex-row justify-between items-center';
-                    card.innerHTML = `
-                        <div class="mb-2 sm:mb-0">
-                            <h4 class="font-bold text-lg text-gray-900">${student.name}</h4>
-                            <p class="text-sm text-gray-700">Matrícula: ${student.matricula}</p>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button class="edit-btn-student p-2 bg-amber-600 rounded-lg text-white font-semibold hover:bg-amber-700 transition-colors duration-200" data-id="${student.id}" data-name="${student.name}" data-matricula="${student.matricula}">
-                                Editar
-                            </button>
-                            <button class="delete-btn-student p-2 bg-red-600 rounded-lg text-white font-semibold hover:bg-red-700 transition-colors duration-200" data-id="${student.id}">
-                                Eliminar
-                            </button>
-                        </div>
-                    `;
-                    elements.studentsList.appendChild(card);
-                });
-                
-                document.querySelectorAll('.edit-btn-student').forEach(button => {
-                    button.addEventListener('click', (e) => showEditModalGeneric('Estudiante', e.target.dataset.id, e.target.dataset.name, e.target.dataset.matricula) );
-                });
-                document.querySelectorAll('.delete-btn-student').forEach(button => {
-                    button.addEventListener('click', (e) => deleteItem('estudiantes', e.target.dataset.id) );
-                });
-            } catch (error) {
-                console.error("Error fetching students:", error.message);
-                showModal("Error al cargar la lista de estudiantes.");
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // --- STUDENT ATTENDANCE PAGE LOGIC ---
-        elements.returnToLogin.addEventListener('click', () => { showPage('login-page'); });
-
-        elements.studentAttendanceForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const qrDataString = document.getElementById('student-qr-data').value;
-            const studentMatricula = document.getElementById('student-matricula').value;
-            const messageElement = elements.studentAttendanceMessage;
-            
-            messageElement.classList.add('hidden');
-            showLoading();
-
-            try {
-                const qrData = JSON.parse(qrDataString);
-                if (!qrData || !qrData.token) { messageElement.textContent = "Datos de QR inválidos."; messageElement.classList.remove('hidden'); return; }
-
-                // 1. Verificar si la sesión de QR está activa (usa la política RLS 'is_active = true')
-                const { data: tempSession, error: sessionError } = await supabaseClient
-                    .from('temp_attendance')
-                    .select('is_active')
-                    .eq('token', qrData.token)
-                    .single();
-                
-                if (sessionError || !tempSession || !tempSession.is_active) {
-                    messageElement.textContent = "La sesión de asistencia ha expirado o no es válida.";
-                    messageElement.classList.remove('hidden');
-                    return;
-                }
-                
-                // 2. Registrar asistencia del estudiante (usa la política RLS de INSERT condicional)
-                const { error: recordError } = await supabaseClient
-                    .from('attendance_records')
-                    .insert([{ temp_token: qrData.token, student_matricula: studentMatricula }]);
-
-                if (recordError && error.code === '23505') { 
-                    messageElement.textContent = "Ya has registrado tu asistencia.";
-                } else if (recordError) {
-                    throw recordError;
-                } else {
-                    messageElement.textContent = "¡Asistencia registrada con éxito!";
-                }
-
-                messageElement.classList.remove('hidden');
-                e.target.reset();
-
-            } catch (error) {
-                console.error("Error registering student attendance:", error.message);
-                messageElement.textContent = "Error al registrar la asistencia. Revisa los datos o contacta al docente.";
-                messageElement.classList.remove('hidden');
-            } finally {
-                hideLoading();
-            }
-        });
-        
-        // --- FIN DEL CÓDIGO COMPLETO ---
-    // BUSCAR ESTE BLOQUE AL FINAL DEL SCRIPT
-// ----------------------------------------------------
-// document.addEventListener('DOMContentLoaded', initSupabaseAndAuth);
-
-// REEMPLAZAR CON ESTO:
-
-// 🚨 LÓGICA DE ARRANQUE FINAL 🚨
-
-const initialHash = window.location.hash;
-const isStudentFlow = initialHash.startsWith('#student-page') || initialHash.startsWith('#student-query-page');
-
-if (isStudentFlow) {
-    // Si estamos en una página de alumno, la abrimos inmediatamente
-    // sin esperar ni ejecutar el login de docente.
-    showPage(initialHash.substring(1).split('?')[0]); // Abre 'student-page' o 'student-query-page'
-    
-    // Y registramos el listener para manejo futuro
-    window.addEventListener('hashchange', () => {
-        const hash = window.location.hash;
-        if (hash.startsWith('#student-page')) {
-            showPage('student-page');
-        } else if (hash.startsWith('#student-query-page')) {
-            showPage('student-query-page');
-        } else {
-            // Si sale del flujo de alumno, recargamos la lógica de docente
-            initSupabaseAndAuth(); 
-        }
-    });
-
-} else {
-    // Si no es un flujo de alumno, iniciamos la autenticación de docente normalmente.
-    document.addEventListener('DOMContentLoaded', initSupabaseAndAuth);
-}
-});
-</script>
+    </script>
 </body>
 </html>
