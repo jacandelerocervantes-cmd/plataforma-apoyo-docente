@@ -9,14 +9,13 @@ const createMateriaForm = document.getElementById('create-materia-form');
 const materiasGrid = document.getElementById('materias-grid');
 const teacherNameElement = document.getElementById('teacher-name');
 
-// --- FUNCIONES AUXILIARES DE DRIVE (NUEVA FUNCIÓN) ---
+// --- FUNCIONES AUXILIARES DE DRIVE ---
 
 /**
  * Llama a la Edge Function para crear la carpeta raíz en Google Drive.
  * @param {Object} session - El objeto de sesión de Supabase.
  */
 async function setupUserDrive(session) {
-    // Necesitamos el 'provider_token' que es el token de acceso de Google.
     const googleAccessToken = session.provider_token;
 
     if (!googleAccessToken) {
@@ -28,7 +27,6 @@ async function setupUserDrive(session) {
         const response = await fetch(SETUP_DRIVE_FUNCTION_URL, {
             method: 'POST',
             headers: {
-                // El token de Google se envía en el encabezado de Autorización de la función
                 'Authorization': `Bearer ${googleAccessToken}`,
                 'Content-Type': 'application/json'
             }
@@ -48,28 +46,42 @@ async function setupUserDrive(session) {
 }
 
 
-// --- MANEJO DE LA SESIÓN (MODIFICADO) ---
+// --- MANEJO DE LA SESIÓN (CORREGIDO) ---
 document.addEventListener('DOMContentLoaded', async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) {
-        window.location.href = '/index.html';
+    // 1. Verificar si hay un resultado de redirección (p. ej., después de un login con Google)
+    // ESTA ES LA LÍNEA CLAVE PARA CORREGIR LA CONDICIÓN DE CARRERA:
+    const { data: { session: redirectSession }, error: redirectError } = await supabaseClient.auth.getRedirectResult();
+
+    // 2. Determinar la sesión actual (o la recién creada por el redirect)
+    let currentSession;
+    if (redirectSession) {
+        currentSession = redirectSession;
     } else {
-        const user = session.user;
-        const displayName = user.user_metadata?.full_name || user.email;
-        teacherNameElement.textContent = displayName;
-
-        // Lógica para configurar Drive solo después de un inicio de sesión con Google
-        const isGoogleUser = user.app_metadata.provider === 'google';
-        const hasProviderToken = session.provider_token; 
-        
-        // El provider_token solo está presente inmediatamente después de un login OAuth
-        if (isGoogleUser && hasProviderToken) {
-            console.log("Detectado inicio de sesión de Google. Configurando Drive...");
-            await setupUserDrive(session);
-        }
-
-        loadMaterias();
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        currentSession = session;
     }
+
+    // 3. Verificar si hay una sesión válida
+    if (!currentSession) {
+        window.location.href = '/index.html';
+        return; 
+    }
+
+    // Si llegamos aquí, la sesión es válida
+    const user = currentSession.user;
+    const displayName = user.user_metadata?.full_name || user.email;
+    teacherNameElement.textContent = displayName;
+
+    // Lógica para configurar Drive solo si es un inicio de sesión de Google con token fresco
+    const isGoogleUser = user.app_metadata.provider === 'google';
+    const hasProviderToken = currentSession.provider_token; 
+    
+    if (isGoogleUser && hasProviderToken) {
+        console.log("Detectado inicio de sesión de Google. Configurando Drive...");
+        await setupUserDrive(currentSession);
+    }
+
+    loadMaterias();
 });
 
 logoutButton.addEventListener('click', async () => {
