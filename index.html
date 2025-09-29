@@ -3,467 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plataforma de Apoyo Docente | TecNM</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; color: #1f2937; }
-        #main-header {
-            height: 100px;
-            background-color: #ffffff;
-            background-image: url('https://pyurfviezihdfnxfgnxw.supabase.co/storage/v1/object/public/cabecera/Cabecera.jpg'); 
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-            border-bottom: 3px solid #004d40;
-        }
-        .btn-primary { background-color: #4f46e5; }
-        .btn-primary:hover { background-color: #4338ca; }
-        .page { display: none; }
-        .page-active { display: block; animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    </style>
+    <title>Inicio de Sesión | Plataforma Docente</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
-<body class="p-8">
+<body>
 
-    <header id="main-header" class="mb-8 shadow-md"></header>
-    <div id="loading" class="fixed inset-0 bg-gray-50 bg-opacity-75 flex items-center justify-center z-50">
-        <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
-    </div>
-    
-    <div id="login-page" class="page flex items-center justify-center min-h-screen">
-        <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 w-full max-w-md">
-            <h1 class="text-3xl font-bold text-center text-gray-900 mb-2">Plataforma Docente</h1>
-            <p class="text-center text-gray-500 mb-6">Inicia sesión para continuar</p>
+    <header class="main-header">
+        <img src="https://pyurfviezihdfnxfgnxw.supabase.co/storage/v1/object/public/cabecera/Cabecera.jpg" alt="Encabezado Tecnológico Nacional de México">
+    </header>
 
-            <button id="google-login-btn" class="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 mb-4">
-                <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.522-3.44-11.127-8.161l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C44.433,36.33,48,29.82,48,24C48,22.659,47.862,21.35,47.611,20.083z"></path></svg>
+    <main class="login-container">
+        <div class="login-card">
+            <h2>Plataforma de Apoyo Docente</h2>
+            <p>Por favor, inicie sesión para continuar</p>
+            
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="email">Correo Electrónico</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Ingresar</button>
+            </form>
+            
+            <div class="separator">
+                <span>O</span>
+            </div>
+            
+            <button id="google-login-btn" class="btn btn-google">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style="display: block; width: 24px; height: 24px;">
+                    <g>
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                        <path fill="none" d="M0 0h48v48H0z"></path>
+                    </g>
+                </svg>
                 <span>Iniciar Sesión con Google</span>
             </button>
-
-            <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div><div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">O continúa con tu correo</span></div></div>
-
-            <form id="login-form">
-                <div class="mb-4"><label for="email" class="block text-sm font-medium text-gray-700">Correo</label><input type="email" id="email" class="mt-1 block w-full px-3 py-2 border rounded-md" required></div>
-                <div class="mb-6"><label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label><input type="password" id="password" class="mt-1 block w-full px-3 py-2 border rounded-md" required></div>
-                <button type="submit" class="w-full btn-primary text-white font-bold py-2 px-4 rounded-md">Entrar con Correo</button>
-            </form>
+             <div id="error-message" class="error-message"></div>
         </div>
-    </div>
-
-    <div id="dashboard-page" class="page container mx-auto p-4">
-        <div class="flex justify-between items-center mb-6"><h1 class="text-4xl font-bold">Mis Materias</h1><div><span id="user-email" class="mr-4"></span><button id="logout-button" class="px-4 py-2 bg-red-600 text-white rounded-xl">Cerrar Sesión</button></div></div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="materias-grid"></div>
-        <div class="fixed bottom-8 right-8"><button id="add-materia-btn" class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-3xl shadow-lg hover:bg-indigo-700">+</button></div>
-    </div>
+    </main>
     
-    <div id="materia-page" class="page container mx-auto p-4">
-        <button id="back-to-dashboard" class="mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
-        <h2 id="materia-name-header" class="text-4xl font-bold text-gray-900 mb-8"></h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div id="gestion-estudiantes-module" class="module-card bg-white p-6 rounded-2xl shadow-xl border cursor-pointer hover:shadow-2xl"><h3 class="text-2xl font-bold">Gestionar Estudiantes</h3><p class="text-gray-600">Añade, edita y elimina estudiantes.</p></div>
-            <div id="asistencia-module" class="module-card bg-white p-6 rounded-2xl shadow-xl border cursor-pointer hover:shadow-2xl"><h3 class="text-2xl font-bold">Asistencia</h3><p class="text-gray-600">Gestiona la asistencia con QR y manual.</p></div>
-            <div id="actividades-module" class="module-card bg-white p-6 rounded-2xl shadow-xl border cursor-pointer hover:shadow-2xl"><h3 class="text-2xl font-bold">Actividades</h3><p class="text-gray-600">Crea y califica actividades con IA.</p></div>
-            <div id="evaluaciones-module" class="module-card bg-white p-6 rounded-2xl shadow-xl border cursor-pointer hover:shadow-2xl"><h3 class="text-2xl font-bold">Evaluaciones</h3><p class="text-gray-600">Diseña exámenes y evalúa reportes.</p></div>
-            <div id="material-didactico-module" class="module-card bg-white p-6 rounded-2xl shadow-xl border cursor-pointer hover:shadow-2xl"><h3 class="text-2xl font-bold">Material Didáctico</h3><p class="text-gray-600">Genera recursos de aprendizaje.</p></div>
-        </div>
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
 
-    <div id="gestion-estudiantes-page" class="page container mx-auto p-4">
-        <button class="back-to-materia mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
-        <h2 class="text-3xl font-bold mb-6">Gestión de Estudiantes</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Añadir Estudiante</h3><form id="add-student-form"><div class="mb-4"><label for="student-name" class="block text-sm font-medium">Nombre</label><input type="text" id="student-name" class="mt-1 block w-full border-gray-300 rounded-md" required></div><div class="mb-4"><label for="student-new-matricula" class="block text-sm font-medium">Matrícula</label><input type="text" id="student-new-matricula" class="mt-1 block w-full border-gray-300 rounded-md" required></div><button type="submit" class="w-full btn-primary text-white font-bold py-2 rounded-md">Añadir</button></form></div>
-            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Lista de Estudiantes</h3><div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium uppercase">Nombre</th><th class="px-6 py-3 text-left text-xs font-medium">Matrícula</th><th class="px-6 py-3 text-right text-xs font-medium">Acciones</th></tr></thead><tbody id="students-table-body" class="bg-white divide-y"></tbody></table></div></div>
-        </div>
-    </div>
-
-    <div id="asistencia-page" class="page container mx-auto p-4">
-        <button class="back-to-materia mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
-        <h2 class="text-3xl font-bold mb-6">Panel de Asistencia</h2>
-        <div class="bg-white p-6 rounded-2xl shadow-xl border">
-            <div class="bg-gray-100 p-6 rounded-xl mb-6"><h3 class="font-bold text-xl mb-4">Asistencia por QR</h3><div id="qr-section" class="text-center hidden"><canvas id="qr-canvas" class="mx-auto border-4 rounded-lg"></canvas><p id="qr-timer" class="text-lg font-semibold text-red-600 mt-4"></p></div><div class="flex justify-center space-x-4 mt-4"><button id="generate-qr-btn" class="px-6 py-3 btn-primary text-white rounded-xl">Generar QR</button><button id="cancel-qr-btn" class="px-6 py-3 bg-red-600 text-white rounded-xl hidden">Cancelar QR</button></div></div>
-            <div class="bg-gray-100 p-6 rounded-xl mb-6"><h3 class="font-bold text-xl mb-4">Asistencia Manual</h3><div id="manual-attendance-list"></div><div class="text-right mt-4"><button id="save-manual-attendance" class="px-6 py-3 bg-green-600 text-white rounded-xl">Guardar Asistencia</button></div></div>
-            <div class="bg-gray-100 p-6 rounded-xl"><h3 class="font-bold text-xl mb-4">Alumnos Presentes (<span id="present-count">0</span>)</h3><div id="present-students-list" class="grid grid-cols-2 md:grid-cols-4 gap-4"><p id="no-attendance-placeholder" class="col-span-full">Aún no hay registros.</p></div></div>
-        </div>
-    </div>
-    
-    <div id="actividades-page" class="page container mx-auto p-4">
-        <button class="back-to-materia mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
-        <h2 class="text-3xl font-bold mb-6">Gestión de Actividades</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Nueva Actividad</h3><form id="add-activity-form"><div class="mb-4"><label for="activity-title" class="block text-sm font-medium">Título</label><input type="text" id="activity-title" class="mt-1 block w-full border-gray-300 rounded-md" required></div><div class="mb-4"><label for="activity-description" class="block text-sm font-medium">Descripción</label><textarea id="activity-description" rows="4" class="mt-1 block w-full border-gray-300 rounded-md"></textarea></div><div class="mb-4"><label for="activity-due-date" class="block text-sm font-medium">Fecha de Entrega</label><input type="date" id="activity-due-date" class="mt-1 block w-full border-gray-300 rounded-md"></div><button type="submit" class="w-full btn-primary text-white font-bold py-2 rounded-md">Crear Actividad</button></form></div>
-            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Actividades Creadas</h3><div id="activities-list" class="space-y-4"></div></div>
-        </div>
-    </div>
-
-    <div id="evaluaciones-page" class="page container mx-auto p-4">
-        <button class="back-to-materia mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
-        <h2 class="text-3xl font-bold mb-6">Gestión de Evaluaciones</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Nueva Evaluación</h3><form id="add-evaluation-form"><div class="mb-4"><label for="evaluation-title" class="block text-sm font-medium">Título</label><input type="text" id="evaluation-title" class="mt-1 block w-full border-gray-300 rounded-md" required></div><div class="mb-4"><label for="evaluation-description" class="block text-sm font-medium">Instrucciones</label><textarea id="evaluation-description" rows="4" class="mt-1 block w-full border-gray-300 rounded-md"></textarea></div><div class="mb-4"><label for="evaluation-date" class="block text-sm font-medium">Fecha de Aplicación</label><input type="date" id="evaluation-date" class="mt-1 block w-full border-gray-300 rounded-md"></div><button type="submit" class="w-full btn-primary text-white font-bold py-2 rounded-md">Crear Evaluación</button></form></div>
-            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-xl border"><h3 class="font-bold text-xl mb-4">Evaluaciones Creadas</h3><div id="evaluations-list" class="space-y-4"></div></div>
-        </div>
-    </div>
-
-    <div id="material-didactico-page" class="page container mx-auto p-4">
-        <button class="back-to-materia mb-6 px-4 py-2 bg-gray-200 rounded-xl">&larr; Volver</button>
-        <h2 class="text-3xl font-bold mb-6">Generador de Material Didáctico</h2>
-        <div class="bg-white p-6 rounded-2xl shadow-xl border">
-            <form id="generate-material-form" class="mb-6"><label for="material-topic" class="block text-lg font-medium mb-2">Tema a desarrollar</label><textarea id="material-topic" rows="3" class="w-full border-gray-300 rounded-md" placeholder="Ej: Explica el ciclo de Krebs de forma sencilla para universitarios de primer año." required></textarea><button type="submit" class="mt-4 px-6 py-3 btn-primary text-white rounded-xl">Generar Material</button></form>
-            <div class="bg-gray-50 p-6 rounded-lg"><h3 class="font-bold text-xl mb-4">Contenido Generado</h3><div id="generated-material-content" class="prose max-w-none"><p class="text-gray-500">El material generado por la IA aparecerá aquí...</p></div></div>
-        </div>
-    </div>
-
-    <div id="student-page" class="page flex flex-col items-center justify-center min-h-screen">
-        <div id="student-form-container" class="bg-white p-8 rounded-2xl shadow-xl border w-full max-w-md text-center"><h1 class="text-3xl font-bold mb-4">Registrar Asistencia</h1><p id="student-message" class="text-gray-600 mb-6">Ingresa tu matrícula para confirmar.</p><form id="student-attendance-form"><input type="text" id="student-matricula" placeholder="Tu Matrícula" class="w-full px-4 py-3 bg-gray-100 border-2 rounded-md mb-4 text-center text-lg" required><button type="submit" class="w-full btn-primary text-white font-bold py-3 rounded-md">Registrar</button></form></div>
-    </div>
-    
-    <div id="add-materia-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden z-40 flex items-center justify-center"><div class="p-5 border w-96 shadow-lg rounded-md bg-white"><h3 class="text-lg font-medium">Nueva Materia</h3><form id="add-materia-form" class="mt-2"><input type="text" id="new-materia-name" placeholder="Nombre de la Materia" class="w-full px-3 py-2 border rounded-lg mb-4" required><input type="text" id="new-materia-semester" placeholder="Semestre (e.g., 2024-B)" class="w-full px-3 py-2 border rounded-lg" required><div class="items-center px-4 py-3 text-center"><button type="submit" class="px-4 py-2 bg-indigo-500 text-white rounded-md w-full shadow-sm hover:bg-indigo-600">Crear</button><button type="button" id="close-modal-btn" class="mt-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md w-full shadow-sm">Cancelar</button></div></form></div></div>
-    <div id="notification-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden z-50 flex items-center justify-center"><div class="p-5 border w-96 shadow-lg rounded-md bg-white text-center"><p id="notification-text" class="mb-4"></p><button id="close-notification-modal" class="px-4 py-2 bg-indigo-500 text-white rounded-md">Aceptar</button></div></div>
-
-    <script type="module">
-        // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
-        const SUPABASE_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let userId = null;
-        let qrTimerInterval = null;
-        let attendanceListener = null;
-        const appState = { selectedMateria: null, studentCache: [] };
-        
-        // --- SELECTORES DEL DOM ---
-        const elements = {
-            pages: document.querySelectorAll('.page'), loading: document.getElementById('loading'),
-            loginForm: document.getElementById('login-form'), userEmail: document.getElementById('user-email'),
-            googleLoginBtn: document.getElementById('google-login-btn'),
-            logoutButton: document.getElementById('logout-button'), materiasGrid: document.getElementById('materias-grid'),
-            addMateriaBtn: document.getElementById('add-materia-btn'), materiaNameHeader: document.getElementById('materia-name-header'),
-            gestionEstudiantesModule: document.getElementById('gestion-estudiantes-module'),
-            asistenciaModule: document.getElementById('asistencia-module'), actividadesModule: document.getElementById('actividades-module'),
-            evaluacionesModule: document.getElementById('evaluaciones-module'), materialDidacticoModule: document.getElementById('material-didactico-module'),
-            addStudentForm: document.getElementById('add-student-form'), studentsTableBody: document.getElementById('students-table-body'),
-            generateQrBtn: document.getElementById('generate-qr-btn'), cancelQrBtn: document.getElementById('cancel-qr-btn'),
-            qrSection: document.getElementById('qr-section'), qrCanvas: document.getElementById('qr-canvas'),
-            qrTimer: document.getElementById('qr-timer'), manualAttendanceList: document.getElementById('manual-attendance-list'),
-            saveManualAttendanceBtn: document.getElementById('save-manual-attendance'),
-            presentStudentsList: document.getElementById('present-students-list'), presentCount: document.getElementById('present-count'),
-            noAttendancePlaceholder: document.getElementById('no-attendance-placeholder'),
-            backToDashboardBtn: document.getElementById('back-to-dashboard'), backToMateriaBtns: document.querySelectorAll('.back-to-materia'),
-            addMateriaModal: document.getElementById('add-materia-modal'), addMateriaForm: document.getElementById('add-materia-form'),
-            closeModalBtn: document.getElementById('close-modal-btn'), notificationModal: document.getElementById('notification-modal'),
-            notificationText: document.getElementById('notification-text'), closeNotificationModalBtn: document.getElementById('close-notification-modal'),
-            studentAttendanceForm: document.getElementById('student-attendance-form'),
-            studentMatricula: document.getElementById('student-matricula'),
-            addActivityForm: document.getElementById('add-activity-form'), activitiesList: document.getElementById('activities-list'),
-            addEvaluationForm: document.getElementById('add-evaluation-form'), evaluationsList: document.getElementById('evaluations-list'),
-            generateMaterialForm: document.getElementById('generate-material-form'), generatedMaterialContent: document.getElementById('generated-material-content'),
-        };
-
-        // --- FUNCIONES DE UTILIDAD ---
-        const showLoading = () => elements.loading.classList.remove('hidden');
-        const hideLoading = () => elements.loading.classList.add('hidden');
-        function showModal(message) { elements.notificationText.textContent = message; elements.notificationModal.classList.remove('hidden'); }
-        function showPage(pageId) {
-            elements.pages.forEach(p => p.classList.remove('page-active'));
-            const page = document.getElementById(pageId);
-            if (page) {
-                page.classList.add('page-active');
-            }
-        }
-        
-        // --- LÓGICA DE NAVEGACIÓN Y VISUALIZACIÓN ---
-        async function showDashboard(user) {
-            userId = user.id;
-            elements.userEmail.textContent = user.email;
-            await loadMaterias();
-            showPage('dashboard-page');
-            hideLoading();
-        }
-
-        function showLoginPage() {
-            userId = null;
-            showPage('login-page');
-            hideLoading();
-        }
-
-        // --- CARGA DE DATOS ---
-        async function loadMaterias() {
-            showLoading();
-            const { data, error } = await supabaseClient.from('materias').select('*').eq('docente_id', userId);
-            hideLoading();
-            if (error) return showModal('Error al cargar las materias.');
-            elements.materiasGrid.innerHTML = '';
-            data.forEach(materia => {
-                const card = document.createElement('div');
-                card.className = 'bg-white p-6 rounded-2xl shadow-lg border cursor-pointer hover:shadow-2xl';
-                card.innerHTML = `<h3 class="text-xl font-bold">${materia.name}</h3><p class="text-gray-600">${materia.semester}</p>`;
-                card.addEventListener('click', () => {
-                    appState.selectedMateria = materia;
-                    appState.studentCache = [];
-                    elements.materiaNameHeader.textContent = materia.name;
-                    showPage('materia-page');
-                });
-                elements.materiasGrid.appendChild(card);
-            });
-        }
-        async function loadStudents() {
-            if (!appState.selectedMateria) return;
-            showLoading();
-            const { data, error } = await supabaseClient.from('estudiantes').select('*').eq('materia_id', appState.selectedMateria.id).order('name');
-            hideLoading();
-            if (error) return showModal('Error al cargar estudiantes.');
-            appState.studentCache = data;
-            elements.studentsTableBody.innerHTML = '';
-            if (data.length === 0) {
-                elements.studentsTableBody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">No hay estudiantes inscritos.</td></tr>`;
-            } else {
-                data.forEach(s => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td class="px-6 py-4">${s.name}</td><td class="px-6 py-4">${s.matricula}</td><td class="px-6 py-4 text-right"><button data-id="${s.id}" class="delete-student-btn text-red-600 hover:text-red-900">Eliminar</button></td>`;
-                    elements.studentsTableBody.appendChild(tr);
-                });
-            }
-        }
-        async function loadActivities() {
-            if (!appState.selectedMateria) return;
-            showLoading();
-            const { data, error } = await supabaseClient.from('actividades').select('*').eq('materia_id', appState.selectedMateria.id).order('created_at', { ascending: false });
-            hideLoading();
-            if (error) return showModal('Error al cargar actividades.');
-            elements.activitiesList.innerHTML = '';
-            if (data.length === 0) {
-                elements.activitiesList.innerHTML = `<p class="text-gray-500">No hay actividades creadas.</p>`;
-            } else {
-                data.forEach(act => {
-                    const div = document.createElement('div');
-                    div.className = 'p-4 border rounded-lg bg-gray-50';
-                    div.innerHTML = `<div class="flex justify-between items-start"><div><h4 class="font-bold">${act.title}</h4><p class="text-sm text-gray-600">${act.description || ''}</p><p class="text-xs text-gray-500 mt-2">Entrega: ${act.due_date || 'N/A'}</p></div><button data-id="${act.id}" class="delete-activity-btn text-red-500 hover:text-red-700 text-sm">Eliminar</button></div>`;
-                    elements.activitiesList.appendChild(div);
-                });
-            }
-        }
-        async function loadEvaluations() {
-            if (!appState.selectedMateria) return;
-            showLoading();
-            const { data, error } = await supabaseClient.from('evaluaciones').select('*').eq('materia_id', appState.selectedMateria.id).order('created_at', { ascending: false });
-            hideLoading();
-            if (error) return showModal('Error al cargar evaluaciones.');
-            elements.evaluationsList.innerHTML = '';
-            if (data.length === 0) {
-                elements.evaluationsList.innerHTML = `<p class="text-gray-500">No hay evaluaciones creadas.</p>`;
-            } else {
-                data.forEach(ev => {
-                    const div = document.createElement('div');
-                    div.className = 'p-4 border rounded-lg bg-gray-50';
-                    div.innerHTML = `<div class="flex justify-between items-start"><div><h4 class="font-bold">${ev.title}</h4><p class="text-sm text-gray-600">${ev.description || ''}</p><p class="text-xs text-gray-500 mt-2">Fecha: ${ev.evaluation_date || 'N/A'}</p></div><button data-id="${ev.id}" class="delete-evaluation-btn text-red-500 hover:text-red-700 text-sm">Eliminar</button></div>`;
-                    elements.evaluationsList.appendChild(div);
-                });
-            }
-        }
-        
-        // --- LÓGICA DE ASISTENCIA ---
-        async function fetchStudentsForAttendance() {
-            if (appState.studentCache.length === 0) await loadStudents();
-            const students = appState.studentCache;
-            elements.manualAttendanceList.innerHTML = '';
-            if (students.length === 0) {
-                elements.manualAttendanceList.innerHTML = '<p class="text-gray-500 text-center">No hay estudiantes inscritos.</p>';
-                return;
-            }
-            students.forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'flex items-center p-2 mb-2 bg-gray-200 rounded-lg';
-                div.innerHTML = `<label class="flex items-center space-x-3 w-full cursor-pointer"><input type="checkbox" data-name="${s.name}" data-matricula="${s.matricula}" class="h-5 w-5 rounded"><span class="font-medium">${s.name} (${s.matricula})</span></label>`;
-                elements.manualAttendanceList.appendChild(div);
-            });
-        }
-        function startQrTimer(token) { let timeLeft = 60; elements.qrTimer.textContent = `Tiempo: ${timeLeft}s`; qrTimerInterval = setInterval(async () => { timeLeft--; elements.qrTimer.textContent = `Tiempo: ${timeLeft}s`; if (timeLeft <= 0) await deactivateQr(token); }, 1000); }
-        async function deactivateQr(token) { clearInterval(qrTimerInterval); if (attendanceListener) attendanceListener.unsubscribe(); await supabaseClient.from('temp_attendance').update({ is_active: false }).eq('token', token); elements.qrSection.classList.add('hidden'); elements.generateQrBtn.classList.remove('hidden'); elements.cancelQrBtn.classList.add('hidden'); }
-        function startAttendanceListener(token) { attendanceListener = supabaseClient.channel(`att-${token}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'asistencias' }, p => addPresentStudent(p.new.student_name, p.new.student_matricula)).subscribe(); }
-        function addPresentStudent(name, matricula) { if (document.querySelector(`#present-students-list [data-matricula="${matricula}"]`)) return; elements.noAttendancePlaceholder.classList.add('hidden'); const card = document.createElement('div'); card.className = 'bg-green-100 text-green-800 p-2 rounded-lg text-center'; card.dataset.matricula = matricula; card.innerHTML = `<p class="font-semibold">${name}</p><p class="text-sm">${matricula}</p>`; elements.presentStudentsList.appendChild(card); elements.presentCount.textContent = document.querySelectorAll('#present-students-list > div').length; }
-
-        // --- LÓGICA DEL ESTUDIANTE (VISTA PÚBLICA) ---
-        async function handleStudentAttendance() {
-            const token = new URLSearchParams(window.location.hash.split('?')[1]).get('token');
-            if (!token) return showStudentMessage("Token no válido.", true);
-            showLoading();
-            const { data, error } = await supabaseClient.from('temp_attendance').select('*').eq('token', token).single();
-            hideLoading();
-            if (error || !data?.is_active) return showStudentMessage("QR expirado o no válido.", true);
-            elements.studentAttendanceForm.onsubmit = async (e) => {
-                e.preventDefault(); showLoading();
-                const matricula = elements.studentMatricula.value.trim();
-                const { data: student, error: studentError } = await supabaseClient.from('estudiantes').select('name').eq('matricula', matricula).eq('materia_id', data.materia_id).single();
-                if (studentError || !student) { hideLoading(); return showModal("Matrícula no encontrada en esta materia."); }
-                const { error: insertError } = await supabaseClient.from('asistencias').insert([{ materia_id: data.materia_id, student_matricula: matricula, student_name: student.name, docente_id: data.docente_id }]);
-                hideLoading();
-                if (insertError) return showStudentMessage(`Error: ${insertError.message}`, true);
-                showStudentMessage(`¡Asistencia registrada, ${student.name}!`, false);
-            };
-        }
-        function showStudentMessage(message, isError) { elements.studentFormContainer.innerHTML = `<h1 class="text-3xl font-bold ${isError ? 'text-red-600' : 'text-green-600'}">${isError ? 'Error' : 'Éxito'}</h1><p class="mt-4 text-lg">${message}</p>`; hideLoading(); }
-        
-        // --- EVENT LISTENERS ---
-        function setupEventListeners() {
-            elements.googleLoginBtn.addEventListener('click', async () => {
-                showLoading();
-                const { error } = await supabaseClient.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: { scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets' }
-                });
-                // No ocultar el loading aquí, onAuthStateChange lo manejará
-                if (error) { showModal(`Error con Google: ${error.message}`); hideLoading(); }
-            });
-
-            elements.loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); showLoading();
-                const { error } = await supabaseClient.auth.signInWithPassword({ email: e.target.email.value, password: e.target.password.value });
-                if (error) { showModal(`Error: ${error.message}`); hideLoading(); }
-            });
-
-            elements.logoutButton.addEventListener('click', async () => { showLoading(); await supabaseClient.auth.signOut(); });
-            
-            elements.addMateriaBtn.addEventListener('click', () => elements.addMateriaModal.classList.remove('hidden'));
-            elements.closeModalBtn.addEventListener('click', () => elements.addMateriaModal.classList.add('hidden'));
-            elements.closeNotificationModalBtn.addEventListener('click', () => elements.notificationModal.classList.add('hidden'));
-
-            elements.backToDashboardBtn.addEventListener('click', () => showPage('dashboard-page'));
-            elements.backToMateriaBtns.forEach(btn => btn.addEventListener('click', () => showPage('materia-page')));
-            
-            elements.gestionEstudiantesModule.addEventListener('click', () => { showPage('gestion-estudiantes-page'); loadStudents(); });
-            elements.asistenciaModule.addEventListener('click', () => { showPage('asistencia-page'); elements.presentStudentsList.innerHTML = '<p id="no-attendance-placeholder" class="col-span-full">Aún no hay registros.</p>'; elements.presentCount.textContent = '0'; fetchStudentsForAttendance(); });
-            elements.actividadesModule.addEventListener('click', () => { showPage('actividades-page'); loadActivities(); });
-            elements.evaluacionesModule.addEventListener('click', () => { showPage('evaluaciones-page'); loadEvaluations(); });
-            elements.materialDidacticoModule.addEventListener('click', () => showPage('material-didactico-page'));
-
-            elements.addMateriaForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); showLoading();
-                const name = document.getElementById('new-materia-name').value;
-                const semester = document.getElementById('new-materia-semester').value;
-                const { data, error } = await supabaseClient.from('materias').insert([{ name, semester, docente_id: userId }]).select().single();
-                if (error) { hideLoading(); return showModal(`Error: ${error.message}`); }
-                await supabaseClient.functions.invoke('google-api-handler', { body: { action: 'createSubjectFolders', subjectName: name, semester, materiaId: data.id } });
-                hideLoading(); elements.addMateriaModal.classList.add('hidden'); showModal('Materia creada.'); await loadMaterias();
-            });
-
-            elements.addStudentForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); showLoading();
-                const name = document.getElementById('student-name').value;
-                const matricula = document.getElementById('student-new-matricula').value;
-                const { error } = await supabaseClient.from('estudiantes').insert([{ name, matricula, materia_id: appState.selectedMateria.id, docente_id: userId }]);
-                hideLoading();
-                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Estudiante añadido.'); e.target.reset(); await loadStudents(); }
-            });
-
-            elements.studentsTableBody.addEventListener('click', async (e) => {
-                if (e.target.classList.contains('delete-student-btn')) {
-                    if (!confirm('¿Eliminar estudiante?')) return;
-                    showLoading();
-                    const { error } = await supabaseClient.from('estudiantes').delete().eq('id', e.target.dataset.id);
-                    hideLoading();
-                    if (error) { showModal(`Error: ${error.message}`); } else { showModal('Estudiante eliminado.'); await loadStudents(); }
-                }
-            });
-
-            elements.addActivityForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); showLoading();
-                const { error } = await supabaseClient.from('actividades').insert([{ title: document.getElementById('activity-title').value, description: document.getElementById('activity-description').value, due_date: document.getElementById('activity-due-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
-                hideLoading();
-                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad creada.'); e.target.reset(); await loadActivities(); }
-            });
-
-            elements.activitiesList.addEventListener('click', async (e) => {
-                if (e.target.classList.contains('delete-activity-btn')) {
-                    if (!confirm('¿Eliminar actividad?')) return;
-                    showLoading();
-                    const { error } = await supabaseClient.from('actividades').delete().eq('id', e.target.dataset.id);
-                    hideLoading();
-                    if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad eliminada.'); await loadActivities(); }
-                }
-            });
-            
-            elements.addEvaluationForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); showLoading();
-                const { error } = await supabaseClient.from('evaluaciones').insert([{ title: document.getElementById('evaluation-title').value, description: document.getElementById('evaluation-description').value, evaluation_date: document.getElementById('evaluation-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
-                hideLoading();
-                if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación creada.'); e.target.reset(); await loadEvaluations(); }
-            });
-
-            elements.evaluationsList.addEventListener('click', async (e) => {
-                if (e.target.classList.contains('delete-evaluation-btn')) {
-                    if (!confirm('¿Eliminar evaluación?')) return;
-                    showLoading();
-                    const { error } = await supabaseClient.from('evaluaciones').delete().eq('id', e.target.dataset.id);
-                    hideLoading();
-                    if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación eliminada.'); await loadEvaluations(); }
-                }
-            });
-
-            elements.generateMaterialForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const topic = document.getElementById('material-topic').value;
-                showLoading();
-                elements.generatedMaterialContent.innerHTML = `<p class="text-gray-500">Generando, por favor espera...</p>`;
-                try {
-                    const { data, error } = await supabaseClient.functions.invoke('generate-material', { body: { topic: topic } });
-                    if (error) throw error;
-                    elements.generatedMaterialContent.innerHTML = data.content || 'No se pudo generar el contenido.';
-                } catch (error) {
-                    elements.generatedMaterialContent.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
-                } finally {
-                    hideLoading();
-                }
-            });
-
-            elements.generateQrBtn.addEventListener('click', async () => { showLoading(); const token = crypto.randomUUID(); const url = `${location.origin}${location.pathname}#student-page?token=${token}`; const { error } = await supabaseClient.from('temp_attendance').insert([{ token, materia_id: appState.selectedMateria.id, docente_id: userId, is_active: true }]); hideLoading(); if (error) return showModal(`Error: ${error.message}`); QRCode.toCanvas(elements.qrCanvas, url, { errorCorrectionLevel: 'H' }, err => { if (err) return showModal("Error al generar QR."); elements.qrSection.classList.remove('hidden'); elements.generateQrBtn.classList.add('hidden'); elements.cancelQrBtn.classList.remove('hidden'); startQrTimer(token); startAttendanceListener(token); }); });
-            elements.cancelQrBtn.addEventListener('click', async () => { const { data } = await supabaseClient.from('temp_attendance').select('token').eq('docente_id', userId).eq('is_active', true).single(); if (data?.token) await deactivateQr(data.token); });
-            elements.saveManualAttendanceBtn.addEventListener('click', async () => {
-                const checkedBoxes = elements.manualAttendanceList.querySelectorAll('input:checked');
-                if (checkedBoxes.length === 0) return showModal("Selecciona al menos un estudiante.");
-                showLoading();
-                const records = [];
-                for (const box of checkedBoxes) {
-                    const matricula = box.dataset.matricula;
-                    if (!document.querySelector(`#present-students-list [data-matricula="${matricula}"]`)) {
-                        records.push({ materia_id: appState.selectedMateria.id, student_matricula: matricula, student_name: box.dataset.name, docente_id: userId });
-                    }
-                }
-                if (records.length > 0) {
-                    const { error } = await supabaseClient.from('asistencias').insert(records);
-                    if (error) { hideLoading(); return showModal(`Error: ${error.message}`); }
-                }
-                hideLoading();
-                records.forEach(r => addPresentStudent(r.student_name, r.student_matricula));
-                showModal(`Asistencia guardada para ${records.length} estudiante(s).`);
-            });
-        }
-
-        // --- ARRANQUE DE LA APP ---
-        document.addEventListener('DOMContentLoaded', () => {
-            setupEventListeners();
-            
-            // Si la URL es para un estudiante, manejarla de inmediato y no hacer nada más.
-            if (window.location.hash.startsWith('#student-page')) {
-                showPage('student-page');
-                handleStudentAttendance();
-                return;
-            }
-
-            // El vigilante de autenticación. Es la ÚNICA fuente de verdad para mostrar/ocultar páginas.
-            supabaseClient.auth.onAuthStateChange((_event, session) => {
-                if (session && session.user) {
-                    // Si hay sesión, mostrar el dashboard.
-                    showDashboard(session.user);
-                } else {
-                    // Si NO hay sesión, mostrar la página de login.
-                    showLoginPage();
-                }
-            });
-        });
-
-    </script>
 </body>
 </html>

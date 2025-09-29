@@ -1,6 +1,0 @@
-{
-  "imports": {
-    "djwt": "https://deno.land/x/djwt@v2.4/mod.ts",
-    "jose": "https://deno.land/x/jose@v1.16.0/index.ts"
-  }
-}
