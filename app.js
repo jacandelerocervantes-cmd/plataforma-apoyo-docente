@@ -41,7 +41,7 @@ loginForm.addEventListener('submit', async (event) => {
 googleLoginButton.addEventListener('click', async () => {
     errorMessageDiv.style.display = 'none'; // Oculta errores previos
     
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
             // Estos son los 'scopes' que solicitan los permisos para las APIs
