@@ -1,0 +1,110 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    background-color: #f4f7f9;
+}
+.main-header {
+    background-color: #003366;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.main-header h1 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+.container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.form-card, .materias-section {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+h2 {
+    margin-top: 0;
+    color: #003366;
+    border-bottom: 2px solid #f4f7f9;
+    padding-bottom: 0.5rem;
+}
+.input-group {
+    margin-bottom: 1rem;
+}
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+.input-group input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+.btn {
+    padding: 0.8rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.btn-primary { background-color: #004a99; color: white; }
+.btn-primary:hover { background-color: #003366; }
+.btn-danger { background-color: #dc3545; color: white; }
+.btn-danger:hover { background-color: #c82333; }
+.materias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+.materia-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+}
+.materia-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.materia-card h3 {
+    margin-top: 0;
+    color: #004a99;
+}
+.materia-card p {
+    color: #666;
+    margin: 0.5rem 0;
+}
+.materia-card.suspended {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+}
+.materia-card.suspended h3 {
+    text-decoration: line-through;
+}
+.card-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+}
+.card-actions button {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.8rem;
+}
+.btn-secondary { background-color: #6c757d; color: white; }
+.btn-secondary:hover { background-color: #5a6268; }
