@@ -86,12 +86,9 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     console.log(`Evento de Auth: ${event}, Sesión: ${!!session}`);
 
     if (session) {
-        // La sesión es válida (SIGNED_IN o INITIAL_SESSION)
         setTimeout(() => initializeDashboard(session), 100); 
     } else {
-        // Solo redirige cuando el evento es explícitamente SIGNED_OUT
         if (event === 'SIGNED_OUT') {
-             // ✅ USANDO MINÚSCULAS
              window.location.href = '/index.html'; 
         }
     }
@@ -102,13 +99,11 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 
 document.addEventListener('DOMContentLoaded', async () => {
     
-    // Iniciar la verificación de sesión para el caso de usuario que regresa (no OAuth)
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
         initializeDashboard(session);
     }
     
-    // Setup Listeners
     logoutButton.addEventListener('click', async () => {
         const { error } = await supabaseClient.auth.signOut();
         if (error) {
