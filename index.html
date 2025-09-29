@@ -127,7 +127,9 @@
         // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
         const SUPABASE_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // CORRECCIÓN: Se renombra la variable a 'supabaseClient' para evitar conflictos.
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let userId = null;
         let qrTimerInterval = null;
@@ -170,7 +172,7 @@
         
         // --- AUTENTICACIÓN Y CARGA INICIAL ---
         async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (session?.user) {
                 userId = session.user.id;
                 elements.userEmail.textContent = session.user.email;
@@ -180,7 +182,7 @@
         }
         async function loadMaterias() {
             showLoading();
-            const { data, error } = await supabase.from('materias').select('*').eq('docente_id', userId);
+            const { data, error } = await supabaseClient.from('materias').select('*').eq('docente_id', userId);
             hideLoading();
             if (error) return showModal('Error al cargar las materias.');
             elements.materiasGrid.innerHTML = '';
@@ -202,7 +204,7 @@
         async function loadStudents() {
             if (!appState.selectedMateria) return;
             showLoading();
-            const { data, error } = await supabase.from('estudiantes').select('*').eq('materia_id', appState.selectedMateria.id).order('name');
+            const { data, error } = await supabaseClient.from('estudiantes').select('*').eq('materia_id', appState.selectedMateria.id).order('name');
             hideLoading();
             if (error) return showModal('Error al cargar estudiantes.');
             appState.studentCache = data;
@@ -222,7 +224,7 @@
         async function loadActivities() {
             if (!appState.selectedMateria) return;
             showLoading();
-            const { data, error } = await supabase.from('actividades').select('*').eq('materia_id', appState.selectedMateria.id).order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('actividades').select('*').eq('materia_id', appState.selectedMateria.id).order('created_at', { ascending: false });
             hideLoading();
             if (error) return showModal('Error al cargar actividades.');
             elements.activitiesList.innerHTML = '';
@@ -242,7 +244,7 @@
         async function loadEvaluations() {
             if (!appState.selectedMateria) return;
             showLoading();
-            const { data, error } = await supabase.from('evaluaciones').select('*').eq('materia_id', appState.selectedMateria.id).order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('evaluaciones').select('*').eq('materia_id', appState.selectedMateria.id).order('created_at', { ascending: false });
             hideLoading();
             if (error) return showModal('Error al cargar evaluaciones.');
             elements.evaluationsList.innerHTML = '';
@@ -275,22 +277,22 @@
             });
         }
         function startQrTimer(token) { let timeLeft = 60; elements.qrTimer.textContent = `Tiempo: ${timeLeft}s`; qrTimerInterval = setInterval(async () => { timeLeft--; elements.qrTimer.textContent = `Tiempo: ${timeLeft}s`; if (timeLeft <= 0) await deactivateQr(token); }, 1000); }
-        async function deactivateQr(token) { clearInterval(qrTimerInterval); if (attendanceListener) attendanceListener.unsubscribe(); await supabase.from('temp_attendance').update({ is_active: false }).eq('token', token); elements.qrSection.classList.add('hidden'); elements.generateQrBtn.classList.remove('hidden'); elements.cancelQrBtn.classList.add('hidden'); }
-        function startAttendanceListener(token) { attendanceListener = supabase.channel(`att-${token}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'asistencias' }, p => addPresentStudent(p.new.student_name, p.new.student_matricula)).subscribe(); }
+        async function deactivateQr(token) { clearInterval(qrTimerInterval); if (attendanceListener) attendanceListener.unsubscribe(); await supabaseClient.from('temp_attendance').update({ is_active: false }).eq('token', token); elements.qrSection.classList.add('hidden'); elements.generateQrBtn.classList.remove('hidden'); elements.cancelQrBtn.classList.add('hidden'); }
+        function startAttendanceListener(token) { attendanceListener = supabaseClient.channel(`att-${token}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'asistencias' }, p => addPresentStudent(p.new.student_name, p.new.student_matricula)).subscribe(); }
         function addPresentStudent(name, matricula) { if (document.querySelector(`#present-students-list [data-matricula="${matricula}"]`)) return; elements.noAttendancePlaceholder.classList.add('hidden'); const card = document.createElement('div'); card.className = 'bg-green-100 text-green-800 p-2 rounded-lg text-center'; card.dataset.matricula = matricula; card.innerHTML = `<p class="font-semibold">${name}</p><p class="text-sm">${matricula}</p>`; elements.presentStudentsList.appendChild(card); elements.presentCount.textContent = document.querySelectorAll('#present-students-list > div').length; }
 
         // --- LÓGICA DEL ESTUDIANTE (VISTA PÚBLICA) ---
         async function handleStudentAttendance() {
             const token = new URLSearchParams(window.location.hash.split('?')[1]).get('token');
             if (!token) return showStudentMessage("Token no válido.", true);
-            const { data, error } = await supabase.from('temp_attendance').select('*').eq('token', token).single();
+            const { data, error } = await supabaseClient.from('temp_attendance').select('*').eq('token', token).single();
             if (error || !data?.is_active) return showStudentMessage("QR expirado o no válido.", true);
             elements.studentAttendanceForm.onsubmit = async (e) => {
                 e.preventDefault(); showLoading();
                 const matricula = elements.studentMatricula.value.trim();
-                const { data: student, error: studentError } = await supabase.from('estudiantes').select('name').eq('matricula', matricula).eq('materia_id', data.materia_id).single();
+                const { data: student, error: studentError } = await supabaseClient.from('estudiantes').select('name').eq('matricula', matricula).eq('materia_id', data.materia_id).single();
                 if (studentError || !student) { hideLoading(); return showModal("Matrícula no encontrada en esta materia."); }
-                const { error: insertError } = await supabase.from('asistencias').insert([{ materia_id: data.materia_id, student_matricula: matricula, student_name: student.name, docente_id: data.docente_id }]);
+                const { error: insertError } = await supabaseClient.from('asistencias').insert([{ materia_id: data.materia_id, student_matricula: matricula, student_name: student.name, docente_id: data.docente_id }]);
                 hideLoading();
                 if (insertError) return showStudentMessage(`Error: ${insertError.message}`, true);
                 showStudentMessage(`¡Asistencia registrada, ${student.name}!`, false);
@@ -303,15 +305,15 @@
         // Autenticación
         elements.googleLoginBtn.addEventListener('click', async () => {
             showLoading();
-            const { error } = await supabase.auth.signInWithOAuth({
+            const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: { scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets' }
             });
             hideLoading();
             if (error) { showModal(`Error al iniciar sesión con Google: ${error.message}`); }
         });
-        elements.loginForm.addEventListener('submit', async (e) => { e.preventDefault(); showLoading(); const { error } = await supabase.auth.signInWithPassword({ email: e.target.email.value, password: e.target.password.value }); hideLoading(); if (error) showModal(`Error: ${error.message}`); else location.reload(); });
-        elements.logoutButton.addEventListener('click', async () => { await supabase.auth.signOut(); location.reload(); });
+        elements.loginForm.addEventListener('submit', async (e) => { e.preventDefault(); showLoading(); const { error } = await supabaseClient.auth.signInWithPassword({ email: e.target.email.value, password: e.target.password.value }); hideLoading(); if (error) showModal(`Error: ${error.message}`); else location.reload(); });
+        elements.logoutButton.addEventListener('click', async () => { await supabaseClient.auth.signOut(); location.reload(); });
         
         // Modales
         elements.addMateriaBtn.addEventListener('click', () => elements.addMateriaModal.classList.remove('hidden'));
@@ -334,9 +336,9 @@
             e.preventDefault(); showLoading();
             const name = document.getElementById('new-materia-name').value;
             const semester = document.getElementById('new-materia-semester').value;
-            const { data, error } = await supabase.from('materias').insert([{ name, semester, docente_id: userId }]).select().single();
+            const { data, error } = await supabaseClient.from('materias').insert([{ name, semester, docente_id: userId }]).select().single();
             if (error) { hideLoading(); return showModal(`Error: ${error.message}`); }
-            await supabase.functions.invoke('google-api-handler', { body: { action: 'createSubjectFolders', subjectName: name, semester, materiaId: data.id } });
+            await supabaseClient.functions.invoke('google-api-handler', { body: { action: 'createSubjectFolders', subjectName: name, semester, materiaId: data.id } });
             hideLoading(); elements.addMateriaModal.classList.add('hidden'); showModal('Materia creada.'); await loadMaterias();
         });
 
@@ -345,7 +347,7 @@
             e.preventDefault(); showLoading();
             const name = document.getElementById('student-name').value;
             const matricula = document.getElementById('student-new-matricula').value;
-            const { error } = await supabase.from('estudiantes').insert([{ name, matricula, materia_id: appState.selectedMateria.id, docente_id: userId }]);
+            const { error } = await supabaseClient.from('estudiantes').insert([{ name, matricula, materia_id: appState.selectedMateria.id, docente_id: userId }]);
             hideLoading();
             if (error) { showModal(`Error: ${error.message}`); } else { showModal('Estudiante añadido.'); e.target.reset(); await loadStudents(); }
         });
@@ -355,7 +357,7 @@
             if (e.target.classList.contains('delete-student-btn')) {
                 if (!confirm('¿Eliminar estudiante?')) return;
                 showLoading();
-                const { error } = await supabase.from('estudiantes').delete().eq('id', e.target.dataset.id);
+                const { error } = await supabaseClient.from('estudiantes').delete().eq('id', e.target.dataset.id);
                 hideLoading();
                 if (error) { showModal(`Error: ${error.message}`); } else { showModal('Estudiante eliminado.'); await loadStudents(); }
             }
@@ -364,7 +366,7 @@
         // Crear Actividad
         elements.addActivityForm.addEventListener('submit', async (e) => {
             e.preventDefault(); showLoading();
-            const { error } = await supabase.from('actividades').insert([{ title: document.getElementById('activity-title').value, description: document.getElementById('activity-description').value, due_date: document.getElementById('activity-due-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
+            const { error } = await supabaseClient.from('actividades').insert([{ title: document.getElementById('activity-title').value, description: document.getElementById('activity-description').value, due_date: document.getElementById('activity-due-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
             hideLoading();
             if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad creada.'); e.target.reset(); await loadActivities(); }
         });
@@ -374,7 +376,7 @@
             if (e.target.classList.contains('delete-activity-btn')) {
                 if (!confirm('¿Eliminar actividad?')) return;
                 showLoading();
-                const { error } = await supabase.from('actividades').delete().eq('id', e.target.dataset.id);
+                const { error } = await supabaseClient.from('actividades').delete().eq('id', e.target.dataset.id);
                 hideLoading();
                 if (error) { showModal(`Error: ${error.message}`); } else { showModal('Actividad eliminada.'); await loadActivities(); }
             }
@@ -383,7 +385,7 @@
         // Crear Evaluación
         elements.addEvaluationForm.addEventListener('submit', async (e) => {
             e.preventDefault(); showLoading();
-            const { error } = await supabase.from('evaluaciones').insert([{ title: document.getElementById('evaluation-title').value, description: document.getElementById('evaluation-description').value, evaluation_date: document.getElementById('evaluation-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
+            const { error } = await supabaseClient.from('evaluaciones').insert([{ title: document.getElementById('evaluation-title').value, description: document.getElementById('evaluation-description').value, evaluation_date: document.getElementById('evaluation-date').value, materia_id: appState.selectedMateria.id, docente_id: userId }]);
             hideLoading();
             if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación creada.'); e.target.reset(); await loadEvaluations(); }
         });
@@ -393,7 +395,7 @@
             if (e.target.classList.contains('delete-evaluation-btn')) {
                 if (!confirm('¿Eliminar evaluación?')) return;
                 showLoading();
-                const { error } = await supabase.from('evaluaciones').delete().eq('id', e.target.dataset.id);
+                const { error } = await supabaseClient.from('evaluaciones').delete().eq('id', e.target.dataset.id);
                 hideLoading();
                 if (error) { showModal(`Error: ${error.message}`); } else { showModal('Evaluación eliminada.'); await loadEvaluations(); }
             }
@@ -406,7 +408,7 @@
             showLoading();
             elements.generatedMaterialContent.innerHTML = `<p class="text-gray-500">Generando, por favor espera...</p>`;
             try {
-                const { data, error } = await supabase.functions.invoke('generate-material', { body: { topic: topic } });
+                const { data, error } = await supabaseClient.functions.invoke('generate-material', { body: { topic: topic } });
                 if (error) throw error;
                 elements.generatedMaterialContent.innerHTML = data.content || 'No se pudo generar el contenido.';
             } catch (error) {
@@ -417,8 +419,8 @@
         });
 
         // Acciones de Asistencia
-        elements.generateQrBtn.addEventListener('click', async () => { showLoading(); const token = crypto.randomUUID(); const url = `${location.origin}${location.pathname}#student-page?token=${token}`; const { error } = await supabase.from('temp_attendance').insert([{ token, materia_id: appState.selectedMateria.id, docente_id: userId, is_active: true }]); hideLoading(); if (error) return showModal(`Error: ${error.message}`); QRCode.toCanvas(elements.qrCanvas, url, { errorCorrectionLevel: 'H' }, err => { if (err) return showModal("Error al generar QR."); elements.qrSection.classList.remove('hidden'); elements.generateQrBtn.classList.add('hidden'); elements.cancelQrBtn.classList.remove('hidden'); startQrTimer(token); startAttendanceListener(token); }); });
-        elements.cancelQrBtn.addEventListener('click', async () => { const { data } = await supabase.from('temp_attendance').select('token').eq('docente_id', userId).eq('is_active', true).single(); if (data?.token) await deactivateQr(data.token); });
+        elements.generateQrBtn.addEventListener('click', async () => { showLoading(); const token = crypto.randomUUID(); const url = `${location.origin}${location.pathname}#student-page?token=${token}`; const { error } = await supabaseClient.from('temp_attendance').insert([{ token, materia_id: appState.selectedMateria.id, docente_id: userId, is_active: true }]); hideLoading(); if (error) return showModal(`Error: ${error.message}`); QRCode.toCanvas(elements.qrCanvas, url, { errorCorrectionLevel: 'H' }, err => { if (err) return showModal("Error al generar QR."); elements.qrSection.classList.remove('hidden'); elements.generateQrBtn.classList.add('hidden'); elements.cancelQrBtn.classList.remove('hidden'); startQrTimer(token); startAttendanceListener(token); }); });
+        elements.cancelQrBtn.addEventListener('click', async () => { const { data } = await supabaseClient.from('temp_attendance').select('token').eq('docente_id', userId).eq('is_active', true).single(); if (data?.token) await deactivateQr(data.token); });
         elements.saveManualAttendanceBtn.addEventListener('click', async () => {
             const checkedBoxes = elements.manualAttendanceList.querySelectorAll('input:checked');
             if (checkedBoxes.length === 0) return showModal("Selecciona al menos un estudiante.");
@@ -431,7 +433,7 @@
                 }
             }
             if (records.length > 0) {
-                const { error } = await supabase.from('asistencias').insert(records);
+                const { error } = await supabaseClient.from('asistencias').insert(records);
                 if (error) { hideLoading(); return showModal(`Error: ${error.message}`); }
             }
             hideLoading();
