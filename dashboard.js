@@ -1,7 +1,6 @@
 // --- CONFIGURACIÓN DE SUPABASE ---
 const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co'; // Reemplaza con tu URL
-// ✅ KEY ACTUALIZADA
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c'; 
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';     
 
 // FORZAR LA PERSISTENCIA DE SESIÓN
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
@@ -92,7 +91,8 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     } else {
         // Solo redirige cuando el evento es explícitamente SIGNED_OUT
         if (event === 'SIGNED_OUT') {
-             window.location.href = '/index.html';
+             // ✅ USANDO MAYÚSCULAS
+             window.location.href = '/index.html'; 
         }
     }
 });
@@ -161,6 +161,7 @@ async function loadMaterias() {
 
     materias.forEach(materia => {
         const cardLink = document.createElement('a');
+        // ✅ USANDO MAYÚSCULAS
         cardLink.href = `materia.html?id=${materia.id}`; 
         cardLink.classList.add('materia-card-link');
         

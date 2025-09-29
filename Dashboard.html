@@ -1,51 +1,102 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Plataforma Docente</title>
-    <link rel="stylesheet" href="dashboard.css">
-</head>
-<body>
-    <header class="main-header">
-        <h1>Bienvenido, <span id="teacher-name"></span></h1>
-        <button id="logout-button" class="btn btn-danger">Cerrar Sesión</button>
-    </header>
+// 1. Configuración del cliente de Supabase (CON PERSISTENCIA EXPLÍCITA)
+const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co'; // Reemplaza con tu URL
+// ✅ KEY ACTUALIZADA
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';     
 
-    <main class="container">
-        <section class="form-card">
-            <h2>Crear Nueva Materia</h2>
-            <form id="create-materia-form">
-                <div class="input-group">
-                    <label for="name">Nombre de la Materia</label>
-                    <input type="text" id="name" required>
-                </div>
-                <div class="form-row">
-                    <div class="input-group">
-                        <label for="semester">Semestre</label>
-                        <input type="text" id="semester" placeholder="Ej: Enero - Junio">
-                    </div>
-                    <div class="input-group">
-                        <label for="year">Año</label>
-                        <input type="number" id="year" placeholder="Ej: 2025" min="2020">
-                    </div>
-                    <div class="input-group">
-                        <label for="units">Unidades</label>
-                        <input type="number" id="units" min="1">
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary">Crear Materia</button>
-            </form>
-        </section>
+// FORZAR LA PERSISTENCIA DE SESIÓN
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
+    auth: {
+        persistSession: true,
+        storage: window.localStorage, 
+    }
+});
 
-        <section class="materias-section">
-            <h2>Mis Materias</h2>
-            <div id="materias-grid" class="materias-grid">
-                </div>
-        </section>
-    </main>
+const SETUP_DRIVE_FUNCTION_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co/functions/v1/setup-drive-folder'; 
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="dashboard.js"></script>
-</body>
-</html>
+// --- ELEMENTOS DEL DOM ---
+const loginForm = document.getElementById('login-form');
+const googleLoginButton = document.getElementById('google-login-btn');
+const errorMessageDiv = document.getElementById('error-message');
+
+// --- LÓGICA DE LOGIN ---
+
+async function setupUserDrive(session) {
+    const googleAccessToken = session.provider_token; 
+    
+    if (!googleAccessToken) {
+        console.warn("No se encontró el token de acceso de Google para el usuario de Email/Password. Drive no se configurará automáticamente.");
+        return;
+    }
+
+    try {
+        const response = await fetch(SETUP_DRIVE_FUNCTION_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${googleAccessToken}`, 
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || `Error del servidor: ${response.status}`);
+        }
+
+        console.log("Respuesta de la función setupDrive (Email/Password):", data);
+        
+    } catch (error) {
+        console.error("Error al llamar a la función setupDrive (Email/Password):", error.message);
+    }
+}
+
+
+// Inicio de sesión con email/password
+loginForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    errorMessageDiv.style.display = 'none';
+
+    const { data: { session }, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password,
+    });
+
+    if (error) {
+        errorMessageDiv.textContent = `Error de inicio de sesión: ${error.message}`;
+        errorMessageDiv.style.display = 'block';
+    } else if (session) {
+        await setupUserDrive(session);
+        // ✅ USANDO MAYÚSCULAS
+        window.location.href = '/Dashboard.html'; 
+    }
+});
+
+// Inicio de sesión con Google (OAuth)
+googleLoginButton.addEventListener('click', async () => {
+    errorMessageDiv.style.display = 'none';
+    
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/documents',
+            // ✅ USANDO MAYÚSCULAS para la redirección de Supabase
+            redirectTo: window.location.origin + '/Dashboard.html'
+        }
+    });
+    
+    if (error) {
+        errorMessageDiv.textContent = `Error de Google OAuth: ${error.message}`;
+        errorMessageDiv.style.display = 'block';
+    }
+});
+
+// Chequeo de sesión para prevenir que el usuario ya logueado vea el login
+supabaseClient.auth.getSession().then(({ data: { session } }) => {
+    if (session) {
+        // ✅ USANDO MAYÚSCULAS
+        window.location.href = '/Dashboard.html'; 
+    }
+});
