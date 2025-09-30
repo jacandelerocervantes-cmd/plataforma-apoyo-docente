@@ -1,18 +1,3 @@
-// --- CONFIGURACIÓN DE SUPABASE ---
-const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
-
-// URL de tu Web App de Google Apps Script (GAS) para crear la carpeta de Drive
-const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbynqwAV6Uh9MUrWYPhLP9hHZoOkUnvIz2MVobRQcq1XXCSM5BAI4KhG_2DPY68hhhYJ/exec'; 
-
-// FORZAR LA PERSISTENCIA DE SESIÓN
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
-    auth: {
-        persistSession: true,
-        storage: window.localStorage,
-    }
-});
-
 // --- ESTADO GLOBAL Y ELEMENTOS DEL DOM ---
 const logoutButton = document.getElementById('logout-button');
 const createMateriaForm = document.getElementById('create-materia-form');
