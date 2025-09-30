@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle de Materia</title>
     <link rel="stylesheet" href="dashboard.css">
-    <link rel="stylesheet" href="style.css"> </head>
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
     <header class="main-header">
         <h1 id="materia-name-header">Cargando materia...</h1>
@@ -24,7 +25,7 @@
         <div id="asistencia-content" class="tab-content active">
             <div class="attendance-panel">
                 <div class="control-panel form-card">
-                    <h2>Control de Asistencia</h2>
+                    <h2>Control de Asistencia por QR</h2>
                     <div class="input-group">
                         <label for="unit-number">Seleccionar Unidad</label>
                         <input type="number" id="unit-number" value="1" min="1">
@@ -43,21 +44,17 @@
                 <div class="realtime-list list-card">
                     <h2>Asistencias Registradas (En Vivo)</h2>
                     <ul id="realtime-attendance-list">
-                        </ul>
+                    </ul>
                 </div>
             </div>
-        </div>
-</div>
-
-        <div class="manual-attendance-panel list-card">
-            <h2>Tomar Asistencia Manualmente</h2>
-            <div id="manual-attendance-student-list">
-                </div>
-            <button id="save-manual-attendance-btn" class="btn btn-primary" style="margin-top: 1rem;">Guardar Asistencia</button>
+            <div class="manual-attendance-panel list-card" style="margin-top: 2rem;">
+                <h2>Tomar Asistencia Manualmente</h2>
+                <div id="manual-attendance-student-list">
+                    </div>
+                <button id="save-manual-attendance-btn" class="btn btn-primary" style="margin-top: 1rem;">Guardar Asistencia Manual</button>
+            </div>
         </div>
 
-    </div>
-</div>
         <div id="alumnos-content" class="tab-content">
             <section class="form-card">
                 <h2>Añadir Alumno Manualmente</h2>
@@ -83,158 +80,136 @@
             <section class="list-card">
                 <h2>Alumnos Inscritos</h2>
                 <ul id="student-list" class="student-list">
-                    </ul>
+                </ul>
             </section>
         </div>
         
         <div id="actividades-content" class="tab-content">
-    <div class="activities-panel" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
-    <div id="grading-panel" class="hidden">
-    <div class="list-card">
-        <div class="grading-header">
-            <button id="back-to-activities-btn" class="btn btn-secondary">&larr; Volver</button>
-            <h2 id="grading-activity-title">Calificando Actividad</h2>
+            <div class="activities-panel">
+                <section class="form-card">
+                    <h2>Añadir Nueva Actividad</h2>
+                    <form id="add-activity-form">
+                        <div class="input-group">
+                            <label for="activity-title">Título de la Actividad</label>
+                            <input type="text" id="activity-title" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="activity-unit">Unidad</label>
+                            <input type="number" id="activity-unit" value="1" min="1" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="activity-description">Descripción / Instrucciones</label>
+                            <textarea id="activity-description" rows="4"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label for="activity-due-date">Fecha de Entrega</label>
+                            <input type="date" id="activity-due-date">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar Actividad</button>
+                    </form>
+                </section>
+
+                <section class="list-card">
+                    <h2>Actividades de la Materia</h2>
+                    <div id="activities-list">
+                    </div>
+                </section>
+            </div>
+            <div id="grading-panel" class="hidden">
+                <div class="list-card">
+                    <div class="grading-header">
+                        <button id="back-to-activities-btn" class="btn btn-secondary">&larr; Volver</button>
+                        <h2 id="grading-activity-title">Calificando Actividad</h2>
+                    </div>
+                    <form id="grading-form">
+                        <table class="grading-table">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>Matrícula</th>
+                                    <th>Calificación</th>
+                                    <th>Comentarios</th>
+                                </tr>
+                            </thead>
+                            <tbody id="grading-student-list">
+                            </tbody>
+                        </table>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Guardar Calificaciones</button>
+                    </form>
+                </div>
+            </div>
         </div>
-        
-        <form id="grading-form">
-            <table class="grading-table">
-                <thead>
-                    <tr>
-                        <th>Alumno</th>
-                        <th>Matrícula</th>
-                        <th>Calificación</th>
-                        <th>Comentarios</th>
-                    </tr>
-                </thead>
-                <tbody id="grading-student-list">
-                    </tbody>
-            </table>
-            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Guardar Calificaciones</button>
-        </form>
-    </div>
-</div>    
-        <section class="form-card">
-            <h2>Añadir Nueva Actividad</h2>
-            <form id="add-activity-form">
-                <div class="input-group">
-                    <label for="activity-title">Título de la Actividad</label>
-                    <input type="text" id="activity-title" required>
-                </div>
-                <div class="input-group">
-                    <label for="activity-unit">Unidad</label>
-                    <input type="number" id="activity-unit" value="1" min="1" required>
-                </div>
-                <div class="input-group">
-                    <label for="activity-description">Descripción / Instrucciones</label>
-                    <textarea id="activity-description" rows="4"></textarea>
-                </div>
-                <div class="input-group">
-                    <label for="activity-due-date">Fecha de Entrega</label>
-                    <input type="date" id="activity-due-date">
-                </div>
-                <button type="submit" class="btn btn-primary">Guardar Actividad</button>
-            </form>
-        </section>
 
-        <section class="list-card">
-            <h2>Actividades de la Materia</h2>
-            <div id="activities-list">
-                </div>
-        </section>
-
-    </div>
-</div>
         <div id="evaluaciones-content" class="tab-content">
-    <div class="evaluations-panel" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
-        <section class="form-card">
-            <h2>Añadir Nueva Evaluación</h2>
-            <form id="add-evaluation-form">
-                <div class="input-group">
-                    <label for="evaluation-title">Título de la Evaluación</label>
-                    <input type="text" id="evaluation-title" required>
-                </div>
-                <div class="input-group">
-                    <label for="evaluation-unit">Unidad</label>
-                    <input type="number" id="evaluation-unit" value="1" min="1" required>
-                </div>
-                <div class="input-group">
-                    <label for="evaluation-description">Descripción / Temario</label>
-                    <textarea id="evaluation-description" rows="4"></textarea>
-                </div>
-                <div class="input-group">
-                    <label for="evaluation-date">Fecha de la Evaluación</label>
-                    <input type="date" id="evaluation-date">
-                </div>
-                <button type="submit" class="btn btn-primary">Guardar Evaluación</button>
-            </form>
-        </section>
+            <div class="evaluations-panel">
+                <section class="form-card">
+                    <h2>Añadir Nueva Evaluación</h2>
+                    <form id="add-evaluation-form">
+                        <div class="input-group">
+                            <label for="evaluation-title">Título de la Evaluación</label>
+                            <input type="text" id="evaluation-title" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="evaluation-unit">Unidad</label>
+                            <input type="number" id="evaluation-unit" value="1" min="1" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="evaluation-description">Descripción / Temario</label>
+                            <textarea id="evaluation-description" rows="4"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label for="evaluation-date">Fecha de la Evaluación</label>
+                            <input type="date" id="evaluation-date">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar Evaluación</button>
+                    </form>
+                </section>
 
-        <section class="list-card">
-            <h2>Evaluaciones de la Materia</h2>
-            <div id="evaluations-list">
-                </div>
-        </section>
-    </div>
-
-    <div id="evaluation-grading-panel" class="hidden">
-        <div class="list-card">
-            <div class="grading-header">
-                <button id="back-to-evaluations-btn" class="btn btn-secondary">&larr; Volver</button>
-                <h2 id="evaluation-grading-title">Calificando Evaluación</h2>
+                <section class="list-card">
+                    <h2>Evaluaciones de la Materia</h2>
+                    <div id="evaluations-list">
+                    </div>
+                </section>
             </div>
-            
-            <form id="evaluation-grading-form">
-                <table class="grading-table">
-                    <thead>
-                        <tr>
-                            <th>Alumno</th>
-                            <th>Matrícula</th>
-                            <th>Calificación</th>
-                            <th>Comentarios</th>
-                        </tr>
-                    </thead>
-                    <tbody id="evaluation-grading-student-list">
-                        </tbody>
-                </table>
-                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Guardar Calificaciones</button>
-            </form>
+
+            <div id="evaluation-grading-panel" class="hidden">
+                <div class="list-card">
+                    <div class="grading-header">
+                        <button id="back-to-evaluations-btn" class="btn btn-secondary">&larr; Volver</button>
+                        <h2 id="evaluation-grading-title">Calificando Evaluación</h2>
+                    </div>
+                    <form id="evaluation-grading-form">
+                        <table class="grading-table">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>Matrícula</th>
+                                    <th>Calificación</th>
+                                    <th>Comentarios</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evaluation-grading-student-list">
+                            </tbody>
+                        </table>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Guardar Calificaciones</button>
+                    </form>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+
         <div id="material-content" class="tab-content">
-    <section class="list-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h2>Material Didáctico</h2>
-            <button id="add-material-btn" class="btn btn-primary">Añadir Material desde Drive</button>
+            <section class="list-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2>Material Didáctico</h2>
+                    <button id="add-material-btn" class="btn btn-primary">Añadir Material desde Drive</button>
+                </div>
+                <div id="materials-list">
+                </div>
+            </section>
         </div>
-        <div id="materials-list">
-            </div>
-    </section>
-</div>
     </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
 
-    <script>
-        const PLATFORM_CONFIG = {
-            supabaseUrl: 'https://pyurfviezihdfnxfgnxw.supabase.co',
-            supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU6NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c',
-            // Estas claves las reemplazará Render automáticamente durante el despliegue
-            GOOGLE_API_KEY: '__GOOGLE_API_KEY__',
-            GOOGLE_CLIENT_ID: '__GOOGLE_CLIENT_ID__',
-            SCOPES: 'https://www.googleapis.com/auth/drive.readonly'
-        };
-
-        // Creamos el cliente de Supabase aquí para que esté disponible globalmente
-        const supabaseClient = supabase.createClient(PLATFORM_CONFIG.supabaseUrl, PLATFORM_CONFIG.supabaseKey);
-
-        // Variables de estado de Google
-        let tokenClient;
-        let gapiInited = false;
-        let gisInited = false;
-    </script>
-     </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
     
     <script src="materia.js"></script>
