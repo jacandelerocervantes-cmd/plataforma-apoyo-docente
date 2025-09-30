@@ -1027,19 +1027,58 @@ async function exportToSheet(sheetType) {
         const studentIds = Array.from(studentsMap.keys()); // IDs de estudiantes para filtrar
 
         if (sheetType === 'sheet_asistencias') {
-            headers = [['Matrícula', 'Nombre', 'Apellido', 'Fecha Asistencia', 'Estatus', 'Unidad']];
             const { data: asistencias, error } = await supabaseClient
                 .from('attendance')
-                .select('student_id, attendance_date, status, unit_number')
+                .select('student_id, attendance_date, status')
                 .eq('materia_id', currentMateriaId)
                 .eq('unit_number', unitNumber)
-                .in('student_id', studentIds); // Filtrar solo alumnos inscritos
+                .in('student_id', studentIds) // Filtrar solo alumnos inscritos
+                .order('attendance_date', { ascending: true });
+
             if (error) throw new Error('Error al obtener los datos de asistencia.');
 
-            values = asistencias.map(a => {
-                const student = studentsMap.get(a.student_id);
-                return [student?.student_id || 'N/A', student?.first_name || 'N/A', student?.last_name || 'N/A', a.attendance_date, a.status, a.unit_number];
+            // Reestructurar los datos para el formato de matriz alumno/fecha
+            const attendanceByStudentAndDate = {};
+            const dates = new Set(); // Para recolectar todas las fechas únicas
+
+            enrollments.forEach(e => {
+                const student = e.students;
+                attendanceByStudentAndDate[student.id] = {
+                    student_id_num: student.student_id, // Matrícula real
+                    first_name: student.first_name,
+                    last_name: student.last_name,
+                    dates: {} // Objeto para guardar status por fecha
+                };
             });
+
+            asistencias.forEach(a => {
+                if (attendanceByStudentAndDate[a.student_id]) {
+                    // Convertir "Presente" a 1, cualquier otra cosa a 0
+                    attendanceByStudentAndDate[a.student_id].dates[a.attendance_date] = (a.status === 'Presente' ? 1 : 0);
+                    dates.add(a.attendance_date);
+                }
+            });
+
+            const sortedDates = Array.from(dates).sort(); // Ordenar las fechas cronológicamente
+
+            headers = [['Matrícula', 'Nombre', 'Apellido', ...sortedDates]];
+            
+            values = [];
+            for (const studentSupabaseId of studentIds) {
+                const studentData = attendanceByStudentAndDate[studentSupabaseId];
+                if (studentData) {
+                    const row = [
+                        studentData.student_id_num,
+                        studentData.first_name,
+                        studentData.last_name
+                    ];
+                    sortedDates.forEach(date => {
+                        // Si hay un registro para esa fecha, úsalo. Si no, es 0 (Ausente).
+                        row.push(studentData.dates[date] !== undefined ? studentData.dates[date] : 0);
+                    });
+                    values.push(row);
+                }
+            }
 
         } else if (sheetType === 'sheet_actividades') {
             headers = [['Matrícula', 'Nombre', 'Apellido', 'Título Actividad', 'Calificación', 'Comentarios', 'Unidad']];
