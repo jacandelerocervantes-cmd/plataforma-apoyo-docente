@@ -1,3 +1,14 @@
+// --- CONFIGURACIÓN DE SUPABASE Y GOOGLE ---
+const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+const GOOGLE_API_KEY = '__GOOGLE_API_KEY__'; // Reemplazado por Render
+const GOOGLE_CLIENT_ID = '__GOOGLE_CLIENT_ID__'; // Reemplazado por Render
+const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
 // --- ESTADO Y VARIABLES GLOBALES ---
 let currentMateriaId = null;
 let activeSessionId = null;
