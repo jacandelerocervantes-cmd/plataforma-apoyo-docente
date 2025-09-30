@@ -3,12 +3,17 @@ const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-const GOOGLE_API_KEY = '__GOOGLE_API_KEY__'; // Reemplazado por Render
-const GOOGLE_CLIENT_ID = '__GOOGLE_CLIENT_ID__'; // Reemplazado por Render
+// Estos valores los reemplazará Render durante el despliegue
+const GOOGLE_API_KEY = '__GOOGLE_API_KEY__';
+const GOOGLE_CLIENT_ID = '__GOOGLE_CLIENT_ID__';
 const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+
 let tokenClient;
 let gapiInited = false;
 let gisInited = false;
+
+// --- INICIO DE LA LÓGICA DE LA APLICACIÓN ---
+
 // --- ESTADO Y VARIABLES GLOBALES ---
 let currentMateriaId = null;
 let activeSessionId = null;
@@ -49,6 +54,8 @@ const backToEvaluationsBtn = document.getElementById('back-to-evaluations-btn');
 const evaluationGradingForm = document.getElementById('evaluation-grading-form');
 const addMaterialBtn = document.getElementById('add-material-btn');
 const materialsList = document.getElementById('materials-list');
+const manualAttendanceList = document.getElementById('manual-attendance-student-list');
+const saveManualAttendanceBtn = document.getElementById('save-manual-attendance-btn');
 
 // --- INICIALIZACIÓN DE LA PÁGINA ---
 document.addEventListener('DOMContentLoaded', async () => {
@@ -67,11 +74,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadEvaluations();
     loadMaterials();
     setupEventListeners();
-    loadStudentsForManualAttendance(); // Cargar alumnos para asistencia manual
+    loadStudentsForManualAttendance();
 });
 
 // --- FUNCIONES DE CONFIGURACIÓN Y CARGA INICIAL ---
-
 async function loadMateriaDetails() {
     const { data: materia, error } = await supabaseClient.from('materias').select('name').eq('id', currentMateriaId).single();
     if (error || !materia) {
@@ -124,10 +130,10 @@ function setupEventListeners() {
             alert("La API de Google no ha cargado completamente. Intente de nuevo en unos segundos.");
         }
     });
+    saveManualAttendanceBtn.addEventListener('click', handleSaveManualAttendance);
 }
 
 // --- LÓGICA DE ASISTENCIA (QR y SESIÓN) ---
-
 async function createNewAttendanceSession() {
     const unitNumber = unitNumberInput.value;
     if (!unitNumber) {
@@ -585,8 +591,8 @@ function gapiLoaded() {
 
 function gisLoaded() {
     tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: PLATFORM_CONFIG.GOOGLE_CLIENT_ID,
-        scope: PLATFORM_CONFIG.SCOPES,
+        client_id: GOOGLE_CLIENT_ID,
+        scope: SCOPES,
         callback: async (resp) => {
             if (resp.error !== undefined) {
                 throw (resp);
@@ -603,7 +609,7 @@ function showPicker(accessToken) {
         const picker = new google.picker.PickerBuilder()
             .setAppId(null)
             .setOAuthToken(accessToken)
-            .setDeveloperKey(PLATFORM_CONFIG.GOOGLE_API_KEY)
+            .setDeveloperKey(GOOGLE_API_KEY)
             .addView(view)
             .setCallback(pickerCallback)
             .build();
@@ -642,10 +648,7 @@ async function pickerCallback(data) {
     }
 }
 
-// --- LÓGICA DE ASISTENCIA MANUAL (NUEVO CÓDIGO) ---
-
-const manualAttendanceList = document.getElementById('manual-attendance-student-list');
-const saveManualAttendanceBtn = document.getElementById('save-manual-attendance-btn');
+// --- LÓGICA DE ASISTENCIA MANUAL ---
 
 async function loadStudentsForManualAttendance() {
     const { data, error } = await supabaseClient.from('enrollments').select(`students (*)`).eq('materia_id', currentMateriaId);
@@ -666,7 +669,7 @@ async function loadStudentsForManualAttendance() {
         const student = enrollment.students;
         const studentElement = document.createElement('div');
         studentElement.classList.add('manual-student-item');
-        studentElement.style.padding = '0.5rem 0'; // Estilo simple
+        studentElement.style.padding = '0.5rem 0';
         studentElement.innerHTML = `
             <input type="checkbox" id="student-${student.id}" data-studentid="${student.id}" style="margin-right: 0.5rem;">
             <label for="student-${student.id}">${student.first_name} ${student.last_name} (${student.student_id})</label>
@@ -713,6 +716,3 @@ async function handleSaveManualAttendance() {
         checkboxes.forEach(box => box.checked = false);
     }
 }
-
-// Añadimos el listener para el nuevo botón de asistencia manual
-saveManualAttendanceBtn.addEventListener('click', handleSaveManualAttendance);
