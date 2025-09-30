@@ -4,8 +4,8 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // Estos valores los reemplazará Render durante el despliegue
-const GOOGLE_API_KEY = '__GOOGLE_API_KEY__';
-const GOOGLE_CLIENT_ID = '__GOOGLE_CLIENT_ID__';
+const GOOGLE_API_KEY = '__GOOGLE_API_KEY__'; // ¡Importante que estén aquí y no en el HTML!
+const GOOGLE_CLIENT_ID = '__GOOGLE_CLIENT_ID__'; // ¡Importante que estén aquí y no en el HTML!
 const SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets';
 
 let tokenClient;
@@ -13,6 +13,7 @@ let gapiInited = false;
 let gisInited = false;
 
 // --- INICIO DE LA LÓGICA DE LA APLICACIÓN ---
+
 // --- ESTADO Y VARIABLES GLOBALES ---
 let currentMateriaId = null;
 let activeSessionId = null;
@@ -59,7 +60,7 @@ const createUnitForm = document.getElementById('create-unit-form');
 const unitsListContainer = document.getElementById('units-list');
 const exportAsistenciaBtn = document.getElementById('export-asistencia-btn');
 const exportActividadesBtn = document.getElementById('export-actividades-btn');
-const exportEvaluacionesBtn = document.getElementById('export-evaluaciones-btn');
+const exportEvaluacionesBtn = document.getElementById('export-evaluaciones-btn'); // Esta es la línea que fallaba
 
 // --- INICIALIZACIÓN DE LA PÁGINA ---
 document.addEventListener('DOMContentLoaded', async () => {
@@ -75,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadActivities();
     loadEvaluations();
     loadMaterials();
-    setupEventListeners();
+    setupEventListeners(); // Esto se ejecuta ahora con todos los elementos en el DOM
     loadStudentsForManualAttendance();
     loadUnits();
 });
