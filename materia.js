@@ -4,11 +4,8 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // Estos valores los reemplazará Render durante el despliegue
-// Asegúrate de que tus variables de entorno en Render estén configuradas
-// para GOOGLE_API_KEY y GOOGLE_CLIENT_ID
-const GOOGLE_API_KEY = '__GOOGLE_API_KEY__'; // Reemplazar con tu clave de API
-const GOOGLE_CLIENT_ID = '__GOOGLE_CLIENT_ID__'; // Reemplazar con tu ID de Cliente
-// SCOPES AHORA INCLUYE SPREADSHEETS
+const GOOGLE_API_KEY = '__GOOGLE_API_KEY__';
+const GOOGLE_CLIENT_ID = '__GOOGLE_CLIENT_ID__';
 const SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets';
 
 let tokenClient;
@@ -35,7 +32,7 @@ const qrcodeContainer = document.getElementById('qrcode-container');
 const timerElement = document.getElementById('timer');
 const renewQRBtn = document.getElementById('renew-qr-btn');
 const cancelQRBtn = document.getElementById('cancel-qr-btn');
-const unitNumberInput = document.getElementById('unit-number'); // Input de unidad para QR/Export
+const unitNumberInput = document.getElementById('unit-number');
 const realtimeAttendanceList = document.getElementById('realtime-attendance-list');
 const addStudentForm = document.getElementById('add-student-form');
 const studentList = document.getElementById('student-list');
@@ -59,28 +56,21 @@ const addMaterialBtn = document.getElementById('add-material-btn');
 const materialsList = document.getElementById('materials-list');
 const manualAttendanceList = document.getElementById('manual-attendance-student-list');
 const saveManualAttendanceBtn = document.getElementById('save-manual-attendance-btn');
-
-// Nuevos elementos para UNIDADES (ya existentes en el HTML final que te di)
 const createUnitForm = document.getElementById('create-unit-form');
 const unitsListContainer = document.getElementById('units-list');
-
-// Nuevos elementos para EXPORTACIÓN (añadidos en el último HTML)
 const exportAsistenciaBtn = document.getElementById('export-asistencia-btn');
 const exportActividadesBtn = document.getElementById('export-actividades-btn');
 const exportEvaluacionesBtn = document.getElementById('export-evaluaciones-btn');
-
 
 // --- INICIALIZACIÓN DE LA PÁGINA ---
 document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     currentMateriaId = params.get('id');
-
     if (!currentMateriaId) {
         alert("ID de materia no encontrado.");
         window.location.href = '/dashboard.html';
         return;
     }
-
     loadMateriaDetails();
     loadEnrolledStudents();
     loadActivities();
@@ -88,13 +78,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadMaterials();
     setupEventListeners();
     loadStudentsForManualAttendance();
-    loadUnits(); // Cargar las nuevas unidades
+    loadUnits();
 });
 
 // --- FUNCIONES DE CONFIGURACIÓN Y CARGA INICIAL ---
 async function loadMateriaDetails() {
     const { data: materia, error } = await supabaseClient.from('materias').select('name').eq('id', currentMateriaId).single();
-    if (error || !materia) {
+    if (error) {
         console.error("No se pudo cargar la materia", error);
         materiaNameHeader.textContent = "Error al cargar la materia";
     } else {
@@ -110,18 +100,13 @@ function setupEventListeners() {
             tab.classList.add('active');
             const targetTab = tab.getAttribute('data-tab');
             tabContents.forEach(content => {
-                content.style.display = 'none'; // Ocultar todos
+                content.style.display = 'none';
                 if (content.id === `${targetTab}-content`) {
-                    content.style.display = 'block'; // Mostrar solo el activo
+                    content.style.display = 'block';
                 }
             });
-            // Si la pestaña de unidades se activa, cargar las unidades
-            if (targetTab === 'unidades') {
-                loadUnits();
-            }
         });
     });
-
     generateQRBtn.addEventListener('click', createNewAttendanceSession);
     renewQRBtn.addEventListener('click', renewSession);
     cancelQRBtn.addEventListener('click', cancelSession);
@@ -140,24 +125,21 @@ function setupEventListeners() {
     });
     addMaterialBtn.addEventListener('click', () => {
         if (gapiInited && gisInited) {
-            tokenClient.requestAccessToken({ prompt: '' });
+            tokenClient.callback = (resp) => { // Redefinir callback para el picker
+                if (resp.error !== undefined) throw (resp);
+                showPicker(resp.access_token);
+            };
+            tokenClient.requestAccessToken({ prompt: 'consent' });
         } else {
-            alert("La API de Google no ha cargado completamente. Intente de nuevo en unos segundos.");
+            alert("La API de Google no ha cargado completamente.");
         }
     });
     saveManualAttendanceBtn.addEventListener('click', handleSaveManualAttendance);
-
-    // 👇 LISTENERS PARA LA GESTIÓN DE UNIDADES 👇
     createUnitForm.addEventListener('submit', handleCreateUnit);
-    // Los listeners para .update-unit-form se asignan en loadUnits()
-
-    // 👇 LISTENERS PARA LA EXPORTACIÓN A SHEETS 👇
     exportAsistenciaBtn.addEventListener('click', () => exportToSheet('sheet_asistencias'));
-    // Desactivamos temporalmente las otras exportaciones hasta que se implemente la lógica
-    exportActividadesBtn.addEventListener('click', () => alert('La exportación de actividades aún está en desarrollo.'));
-    exportEvaluacionesBtn.addEventListener('click', () => alert('La exportación de evaluaciones aún está en desarrollo.'));
+    exportActividadesBtn.addEventListener('click', () => exportToSheet('sheet_actividades'));
+    exportEvaluacionesBtn.addEventListener('click', () => exportToSheet('sheet_evaluaciones'));
 }
-
 // --- LÓGICA DE ASISTENCIA (QR y SESIÓN) ---
 async function createNewAttendanceSession() {
     const unitNumber = unitNumberInput.value;
@@ -680,7 +662,6 @@ async function loadMaterials() {
 
 function gapiLoaded() {
     gapi.load('client', initializeGapiClient);
-    gapiInited = true;
 }
 
 async function initializeGapiClient() {
@@ -688,45 +669,39 @@ async function initializeGapiClient() {
         apiKey: GOOGLE_API_KEY,
         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
     });
+    gapiInited = true;
 }
 
 function gisLoaded() {
     tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
-        scope: SCOPES, // Ahora con scope de sheets
-        callback: async (resp) => {
-            if (resp.error !== undefined) {
-                console.error("Error al obtener token de acceso de Google:", resp);
-                throw (resp);
-            }
-            // Si el origen del token fue de Drive Picker, muestra el picker
-            if (tokenClient.callbackOrigin === 'drive_picker') {
-                showPicker(resp.access_token);
-            } else {
-                // Si el origen fue de una exportación a Sheets, ejecutar la exportación
-                // Esto es un placeholder, la lógica de Sheets se llama directamente
-                // desde los botones de exportación, que ya manejarán su propia autorización.
-                console.log('Token de Google obtenido con éxito para la operación de Sheets.');
-            }
-        },
+        scope: SCOPES,
+        callback: () => {}, // Callback vacío, se manejará dinámicamente
     });
     gisInited = true;
 }
 
 function showPicker(accessToken) {
-    if (gapiInited && gisInited) {
+    if (!gapi.picker) {
+        gapi.load('picker', () => { // Cargar picker solo si no está cargado
+            const view = new google.picker.View(google.picker.ViewId.DOCS);
+            const picker = new google.picker.PickerBuilder()
+                .setOAuthToken(accessToken)
+                .setDeveloperKey(GOOGLE_API_KEY)
+                .addView(view)
+                .setCallback(pickerCallback)
+                .build();
+            picker.setVisible(true);
+        });
+    } else {
         const view = new google.picker.View(google.picker.ViewId.DOCS);
-        view.setMimeTypes('application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet,application/pdf');
         const picker = new google.picker.PickerBuilder()
-            .setAppId(null) // Picker usa su propio AppId
             .setOAuthToken(accessToken)
             .setDeveloperKey(GOOGLE_API_KEY)
             .addView(view)
             .setCallback(pickerCallback)
             .build();
         picker.setVisible(true);
-    } else {
-        alert("La API de Google no ha cargado completamente. Intente de nuevo en unos segundos.");
     }
 }
 
@@ -954,27 +929,28 @@ async function handleUpdateUnitURLs(event) {
     }
 }
 
-// --- LÓGICA DE EXPORTACIÓN A GOOGLE SHEETS ---
-
-// Función auxiliar para extraer el ID de una URL de Google Sheets
 function getSheetIdFromUrl(url) {
     if (!url) return null;
     const match = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
     return match ? match[1] : null;
 }
 
-// Función principal para exportar datos
 async function exportToSheet(sheetType) {
-    const unitNumber = unitNumberInput.value; // Usamos el input de unidad global
+    const unitNumber = unitNumberInput.value;
     if (!unitNumber) {
-        alert('Por favor, selecciona una unidad para exportar (campo arriba del botón "Generar QR").');
+        alert('Por favor, selecciona una unidad para exportar.');
         return;
     }
 
-    alert(`Iniciando exportación para la unidad ${unitNumber}. Por favor, espera...`);
+    if (!gapiInited || !gisInited) {
+        alert('Las APIs de Google no están listas. Por favor, espera unos segundos y vuelve a intentarlo.');
+        return;
+    }
+
+    alert(`Preparando datos para la unidad ${unitNumber}. Se pedirá autorización de Google.`);
 
     try {
-        // 1. Obtener la URL de la Sheet para la unidad seleccionada
+        // 1. OBTENER DATOS DE SUPABASE PRIMERO
         const { data: unitData, error: unitError } = await supabaseClient
             .from('unidades')
             .select(`${sheetType}_url`)
@@ -983,48 +959,24 @@ async function exportToSheet(sheetType) {
             .single();
 
         if (unitError || !unitData || !unitData[`${sheetType}_url`]) {
-            throw new Error(`No se encontró la URL de la hoja de cálculo para "${sheetType}" en la unidad ${unitNumber}. Por favor, confígurala en la pestaña "Unidades".`);
+            throw new Error(`No se encontró la URL de la hoja de cálculo para esta unidad.`);
         }
 
-        const sheetUrl = unitData[`${sheetType}_url`];
-        const spreadsheetId = getSheetIdFromUrl(sheetUrl);
-        if (!spreadsheetId) {
-            throw new Error('La URL de la hoja de cálculo configurada no es válida. Asegúrate de que sea un enlace a una Google Sheet.');
-        }
+        const spreadsheetId = getSheetIdFromUrl(unitData[`${sheetType}_url`]);
+        if (!spreadsheetId) throw new Error('La URL de la hoja de cálculo no es válida.');
 
-        // Asegurarse de que gapi.client.sheets esté cargado
-        if (!gapi.client.sheets) {
-            await gapi.client.load('sheets', 'v4');
-        }
-
-        // Obtener el token de acceso del usuario para Google Sheets
-        // Esto lanzará la ventana de autorización si es necesario
-        // tokenClient.callbackOrigin se establece en 'sheets_export' si lo llamas desde un botón de exportación
-        tokenClient.callbackOrigin = 'sheets_export';
-        tokenClient.requestAccessToken({ prompt: '' }); // Pedir token de acceso
-
-        // Ahora el callback de tokenClient manejará la llamada a la función de exportación
-        // Esta parte es un poco tricky, porque la función de exportación real debe esperar
-        // el token. Por simplicidad, volvemos a llamar la exportación con el token ya disponible.
-        // En una implementación real más avanzada, se haría una promesa o un callback.
-        // Aquí, simplemente confiamos en que el usuario ya ha autorizado.
-        // La autorización se maneja a través del listener del tokenClient.
-        // El verdadero truco aquí es que GAPI.client ya tiene el token si el usuario lo autoriza.
-
-        // 2. Obtener los datos a exportar desde Supabase
-        let headers = [];
-        let values = [];
-        
-        // Obtener todos los alumnos inscritos
         const { data: enrollments, error: enrollError } = await supabaseClient
             .from('enrollments')
             .select('students (id, student_id, first_name, last_name)')
             .eq('materia_id', currentMateriaId);
 
-        if (enrollError) throw new Error('Error al obtener la lista de alumnos inscritos.');
-
+        if (enrollError) throw new Error('Error al obtener la lista de alumnos.');
+        
         const studentsMap = new Map(enrollments.map(e => [e.students.id, e.students]));
-        const studentIds = Array.from(studentsMap.keys()); // IDs de estudiantes para filtrar
+        const studentIds = Array.from(studentsMap.keys());
+        
+        let headers = [];
+        let values = [];
 
         if (sheetType === 'sheet_asistencias') {
             const { data: asistencias, error } = await supabaseClient
@@ -1032,149 +984,81 @@ async function exportToSheet(sheetType) {
                 .select('student_id, attendance_date, status')
                 .eq('materia_id', currentMateriaId)
                 .eq('unit_number', unitNumber)
-                .in('student_id', studentIds) // Filtrar solo alumnos inscritos
+                .in('student_id', studentIds)
                 .order('attendance_date', { ascending: true });
-
             if (error) throw new Error('Error al obtener los datos de asistencia.');
-
-            // Reestructurar los datos para el formato de matriz alumno/fecha
+            
             const attendanceByStudentAndDate = {};
-            const dates = new Set(); // Para recolectar todas las fechas únicas
-
+            const dates = new Set();
             enrollments.forEach(e => {
                 const student = e.students;
                 attendanceByStudentAndDate[student.id] = {
-                    student_id_num: student.student_id, // Matrícula real
+                    student_id_num: student.student_id,
                     first_name: student.first_name,
                     last_name: student.last_name,
-                    dates: {} // Objeto para guardar status por fecha
+                    dates: {}
                 };
             });
-
             asistencias.forEach(a => {
                 if (attendanceByStudentAndDate[a.student_id]) {
-                    // Convertir "Presente" a 1, cualquier otra cosa a 0
                     attendanceByStudentAndDate[a.student_id].dates[a.attendance_date] = (a.status === 'Presente' ? 1 : 0);
                     dates.add(a.attendance_date);
                 }
             });
-
-            const sortedDates = Array.from(dates).sort(); // Ordenar las fechas cronológicamente
-
+            const sortedDates = Array.from(dates).sort();
             headers = [['Matrícula', 'Nombre', 'Apellido', ...sortedDates]];
-            
-            values = [];
             for (const studentSupabaseId of studentIds) {
                 const studentData = attendanceByStudentAndDate[studentSupabaseId];
                 if (studentData) {
-                    const row = [
-                        studentData.student_id_num,
-                        studentData.first_name,
-                        studentData.last_name
-                    ];
+                    const row = [studentData.student_id_num, studentData.first_name, studentData.last_name];
                     sortedDates.forEach(date => {
-                        // Si hay un registro para esa fecha, úsalo. Si no, es 0 (Ausente).
                         row.push(studentData.dates[date] !== undefined ? studentData.dates[date] : 0);
                     });
                     values.push(row);
                 }
             }
-
-        } else if (sheetType === 'sheet_actividades') {
-            headers = [['Matrícula', 'Nombre', 'Apellido', 'Título Actividad', 'Calificación', 'Comentarios', 'Unidad']];
-            const { data: activityGrades, error: gradesError } = await supabaseClient
-                .from('grades') // La tabla de calificaciones de actividades
-                .select(`
-                    grade, 
-                    comments, 
-                    students (student_id, first_name, last_name), 
-                    activities (title, unit_number)
-                `)
-                .eq('activity_id', currentGradingActivityId) // Asumiendo que esta es la actividad que se calificó por última vez o se está visualizando
-                .in('students.id', studentIds); // Asegúrate que sea solo de alumnos de la materia.
-            
-            if (gradesError) throw new Error('Error al obtener las calificaciones de actividades.');
-
-            // Filtrar y mapear solo las calificaciones de la unidad correcta
-            const filteredGrades = activityGrades.filter(g => g.activities?.unit_number === parseInt(unitNumber));
-
-            values = filteredGrades.map(g => [
-                g.students.student_id, 
-                g.students.first_name, 
-                g.students.last_name, 
-                g.activities.title, 
-                g.grade, 
-                g.comments, 
-                g.activities.unit_number
-            ]);
-            
-            if (values.length === 0) {
-                 alert(`No hay calificaciones de actividades para la unidad ${unitNumber} para exportar.`);
-                 return; // Salir si no hay datos
-            }
-
-        } else if (sheetType === 'sheet_evaluaciones') {
-            headers = [['Matrícula', 'Nombre', 'Apellido', 'Título Evaluación', 'Calificación', 'Comentarios', 'Unidad']];
-            const { data: evaluationGrades, error: evalGradesError } = await supabaseClient
-                .from('evaluation_grades') // La tabla de calificaciones de evaluaciones
-                .select(`
-                    grade, 
-                    comments, 
-                    students (student_id, first_name, last_name), 
-                    evaluations (title, unit_number)
-                `)
-                .eq('evaluation_id', currentGradingEvaluationId) // Asumiendo la última evaluación calificada/visualizada
-                .in('students.id', studentIds);
-            
-            if (evalGradesError) throw new Error('Error al obtener las calificaciones de evaluaciones.');
-
-            // Filtrar y mapear solo las calificaciones de la unidad correcta
-            const filteredEvalGrades = evaluationGrades.filter(g => g.evaluations?.unit_number === parseInt(unitNumber));
-
-            values = filteredEvalGrades.map(g => [
-                g.students.student_id, 
-                g.students.first_name, 
-                g.students.last_name, 
-                g.evaluations.title, 
-                g.grade, 
-                g.comments, 
-                g.evaluations.unit_number
-            ]);
-
-            if (values.length === 0) {
-                 alert(`No hay calificaciones de evaluaciones para la unidad ${unitNumber} para exportar.`);
-                 return; // Salir si no hay datos
-            }
-        }
-        
-        // Si no hay valores para exportar (más allá de los headers)
-        if (values.length === 0) {
-            alert(`No se encontraron datos para exportar de ${sheetType} en la unidad ${unitNumber}.`);
+        } else {
+            alert('La exportación para actividades y evaluaciones aún está en desarrollo.');
             return;
         }
 
-        // 3. Escribir los datos en Google Sheets
-        // Primero, limpia la hoja
-        await gapi.client.sheets.spreadsheets.values.clear({
-            spreadsheetId: spreadsheetId,
-            range: 'A1:Z', // Limpiar hasta la columna Z, fila ilimitada
-        });
-
-        // Luego, escribe los encabezados y los datos
-        const result = await gapi.client.sheets.spreadsheets.values.update({
-            spreadsheetId: spreadsheetId,
-            range: 'A1', // Empezar a escribir en la celda A1
-            valueInputOption: 'USER_ENTERED', // Interpreta los valores como el usuario los escribiría
-            resource: {
-                values: headers.concat(values)
+        // 2. PEDIR AUTORIZACIÓN Y EJECUTAR LA ESCRITURA
+        tokenClient.callback = async (resp) => {
+            if (resp.error !== undefined) {
+                throw resp;
             }
-        });
 
-        console.log('Datos escritos en Sheets:', result);
-        alert(`¡Exportación a Google Sheets completada con éxito para la unidad ${unitNumber}!`);
+            alert('Autorización recibida. Escribiendo en Google Sheets...');
+            gapi.client.setToken(resp); // Establecer el token para GAPI
+
+            try {
+                // Limpiar la hoja
+                await gapi.client.sheets.spreadsheets.values.clear({
+                    spreadsheetId: spreadsheetId,
+                    range: 'A1:Z',
+                });
+
+                // Escribir los datos
+                await gapi.client.sheets.spreadsheets.values.update({
+                    spreadsheetId: spreadsheetId,
+                    range: 'A1',
+                    valueInputOption: 'USER_ENTERED',
+                    resource: {
+                        values: headers.concat(values)
+                    }
+                });
+                alert(`¡Exportación a Google Sheets completada con éxito!`);
+            } catch (err) {
+                console.error('Error al escribir en Sheets:', err);
+                alert(`Error al escribir en la hoja de cálculo: ${err.result.error.message}`);
+            }
+        };
+
+        // Pedir el token. El callback se encargará del resto.
+        tokenClient.requestAccessToken({ prompt: 'consent' });
 
     } catch (error) {
-        console.error('Error durante la exportación a Sheets:', error);
-        alert(`Error en la exportación: ${error.message}. Verifica la consola para más detalles.`);
+        console.error('Error durante la preparación de la exportación:', error);
+        alert(`Error: ${error.message}`);
     }
 }
