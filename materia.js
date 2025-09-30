@@ -13,7 +13,6 @@ let gapiInited = false;
 let gisInited = false;
 
 // --- INICIO DE LA LÓGICA DE LA APLICACIÓN ---
-
 // --- ESTADO Y VARIABLES GLOBALES ---
 let currentMateriaId = null;
 let activeSessionId = null;

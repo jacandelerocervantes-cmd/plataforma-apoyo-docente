@@ -82,111 +82,37 @@
         </div>
         
         <div id="actividades-content" class="tab-content">
-            <div class="activities-panel">
+            <div class="activities-panel" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
                 <section class="form-card">
                     <h2>Añadir Nueva Actividad</h2>
                     <form id="add-activity-form">
-                        <div class="input-group">
-                            <label for="activity-title">Título</label>
-                            <input type="text" id="activity-title" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="activity-unit">Unidad</label>
-                            <input type="number" id="activity-unit" value="1" min="1" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="activity-description">Descripción</label>
-                            <textarea id="activity-description" rows="4"></textarea>
-                        </div>
-                        <div class="input-group">
-                            <label for="activity-due-date">Fecha de Entrega</label>
-                            <input type="date" id="activity-due-date">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Guardar Actividad</button>
-                    </form>
+                        </form>
                 </section>
                 <section class="list-card">
                     <h2>Actividades de la Materia</h2>
-                    <button id="export-actividades-btn" class="btn btn-secondary" style="margin-bottom: 1rem; background-color: #1D6F42;">Exportar Calificaciones de Actividades a Sheets</button>
+                    <button id="export-actividades-btn" class="btn btn-secondary" style="margin-bottom: 1rem; background-color: #1D6F42;">Exportar Calificaciones a Sheets</button>
                     <div id="activities-list"></div>
                 </section>
             </div>
             <div id="grading-panel" class="hidden">
-                <div class="list-card">
-                    <div class="grading-header">
-                        <button id="back-to-activities-btn" class="btn btn-secondary">&larr; Volver</button>
-                        <h2 id="grading-activity-title">Calificando Actividad</h2>
-                    </div>
-                    <form id="grading-form">
-                        <table class="grading-table">
-                            <thead>
-                                <tr>
-                                    <th>Alumno</th>
-                                    <th>Matrícula</th>
-                                    <th>Calificación</th>
-                                    <th>Comentarios</th>
-                                </tr>
-                            </thead>
-                            <tbody id="grading-student-list"></tbody>
-                        </table>
-                        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Guardar Calificaciones</button>
-                    </form>
                 </div>
-            </div>
         </div>
 
         <div id="evaluaciones-content" class="tab-content">
-            <div class="evaluations-panel">
+            <div class="evaluations-panel" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
                 <section class="form-card">
                     <h2>Añadir Nueva Evaluación</h2>
                     <form id="add-evaluation-form">
-                        <div class="input-group">
-                            <label for="evaluation-title">Título</label>
-                            <input type="text" id="evaluation-title" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="evaluation-unit">Unidad</label>
-                            <input type="number" id="evaluation-unit" value="1" min="1" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="evaluation-description">Descripción</label>
-                            <textarea id="evaluation-description" rows="4"></textarea>
-                        </div>
-                        <div class="input-group">
-                            <label for="evaluation-date">Fecha de Evaluación</label>
-                            <input type="date" id="evaluation-date">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Guardar Evaluación</button>
-                    </form>
+                        </form>
                 </section>
                 <section class="list-card">
                     <h2>Evaluaciones de la Materia</h2>
-                    <button id="export-evaluaciones-btn" class="btn btn-secondary" style="margin-bottom: 1rem; background-color: #1D6F42;">Exportar Calificaciones de Evaluaciones a Sheets</button>
+                    <button id="export-evaluaciones-btn" class="btn btn-secondary" style="margin-bottom: 1rem; background-color: #1D6F42;">Exportar Calificaciones a Sheets</button>
                     <div id="evaluations-list"></div>
                 </section>
             </div>
             <div id="evaluation-grading-panel" class="hidden">
-                <div class="list-card">
-                    <div class="grading-header">
-                        <button id="back-to-evaluations-btn" class="btn btn-secondary">&larr; Volver</button>
-                        <h2 id="evaluation-grading-title">Calificando Evaluación</h2>
-                    </div>
-                    <form id="evaluation-grading-form">
-                        <table class="grading-table">
-                            <thead>
-                                <tr>
-                                    <th>Alumno</th>
-                                    <th>Matrícula</th>
-                                    <th>Calificación</th>
-                                    <th>Comentarios</th>
-                                </tr>
-                            </thead>
-                            <tbody id="evaluation-grading-student-list"></tbody>
-                        </table>
-                        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Guardar Calificaciones</button>
-                    </form>
                 </div>
-            </div>
         </div>
 
         <div id="material-content" class="tab-content">
