@@ -34,17 +34,16 @@
                         <input type="number" id="units" min="1">
                     </div>
                 </div>
-                
-            <form id="create-materia-form">
                 <div class="input-group">
-                    <label for="drive_folder_url">URL de Carpeta Principal de Google Drive (Materia)</label>
-                    <input type="url" id="drive_folder_url" placeholder="Ej: https://drive.google.com/drive/folders/ABCDEFGH">
+                    <label for="drive_folder_url">URL de Carpeta Principal de Google Drive</label>
+                    <input type="url" id="drive_folder_url" placeholder="Pega la URL de la carpeta de la materia">
                 </div>
                 <div class="input-group">
-                    <label for="sheet_promedio_general_url">URL de Hoja de Cálculo (Promedio General Materia)</label>
-                    <input type="url" id="sheet_promedio_general_url" placeholder="Ej: https://docs.google.com/spreadsheets/d/12345ABCDEF"> 
-                        </div>
-             <button type="submit" class="btn btn-primary">Crear Materia</button>
+                    <label for="sheet_promedio_general_url">URL de Hoja de Cálculo (Promedio General)</label>
+                    <input type="url" id="sheet_promedio_general_url" placeholder="Pega la URL del sheet para promedios">
+                </div>
+                <button type="submit" class="btn btn-primary">Crear Materia</button>
+            </form>
         </section>
 
         <section class="materias-section">
@@ -53,7 +52,8 @@
                 </div>
         </section>
     </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>

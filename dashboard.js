@@ -17,9 +17,7 @@ function initializeDashboard(session) {
 }
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
-    if (session) {
-        initializeDashboard(session);
-    } else if (event === 'SIGNED_OUT') {
+    if (!session) {
         window.location.href = '/index.html';
     }
 });
@@ -29,7 +27,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (session) {
         initializeDashboard(session);
     } else {
-        // Si no hay sesión al cargar, redirigir al login
         window.location.href = '/index.html';
     }
 
@@ -38,46 +35,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     createMateriaForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const name = document.getElementById('name').value;
-    const semester = document.getElementById('semester').value;
-    const year = document.getElementById('year').value;
-    const units = document.getElementById('units').value;
-    // Captura los nuevos valores
-    const drive_folder_url = document.getElementById('drive_folder_url').value;
-    const sheet_promedio_general_url = document.getElementById('sheet_promedio_general_url').value;
+        event.preventDefault();
+        const name = document.getElementById('name').value;
+        const semester = document.getElementById('semester').value;
+        const year = document.getElementById('year').value;
+        const units = document.getElementById('units').value;
+        const drive_folder_url = document.getElementById('drive_folder_url').value;
+        const sheet_promedio_general_url = document.getElementById('sheet_promedio_general_url').value;
 
-    const { error } = await supabaseClient.from('materias').insert({
-        name,
-        semester,
-        year,
-        units,
-        drive_folder_url: drive_folder_url || null,
-        sheet_promedio_general_url: sheet_promedio_general_url || null
+        const { error } = await supabaseClient.from('materias').insert({
+            name,
+            semester,
+            year,
+            units,
+            drive_folder_url: drive_folder_url || null,
+            sheet_promedio_general_url: sheet_promedio_general_url || null
+        });
+        
+        if (error) {
+            alert(`Error al crear la materia: ${error.message}`);
+        } else {
+            alert("¡Materia creada con éxito!");
+            createMateriaForm.reset();
+            loadMaterias();
+        }
     });
-    if (error) {
-        alert(`Error al crear la materia: ${error.message}`);
-    } else {
-        alert("¡Materia creada con éxito!");
-        createMateriaForm.reset();
-        loadMaterias();
-    }
-    });
-
 });
 
 async function loadMaterias() {
-    const { data: materias, error } = await supabaseClient.from('materias').select('*').order('created_at', { ascending: false });
+    const { data: materias, error } = await supabaseClient
+        .from('materias')
+        .select('*')
+        .order('created_at', { ascending: false });
+
     if (error) {
         console.error("Error al cargar materias:", error);
         return;
     }
+
     materiasGrid.innerHTML = '';
     materias.forEach(materia => {
-        const cardLink = document.createElement('a');
-        cardLink.href = `materia.html?id=${materia.id}`;
-        cardLink.classList.add('materia-card-link');
-        cardLink.innerHTML = `<h3>${materia.name}</h3><p><strong>Semestre:</strong> ${materia.semester || 'N/A'}</p><p><strong>Año:</strong> ${materia.year || 'N/A'}</p>`;
-        materiasGrid.appendChild(cardLink);
+        const card = document.createElement('div');
+        card.classList.add('materia-card-link'); // Usamos la clase que ya tienes para el estilo
+        card.innerHTML = `
+            <h3>${materia.name}</h3>
+            <p><strong>Semestre:</strong> ${materia.semester || 'No especificado'}</p>
+            <p><strong>Año:</strong> ${materia.year || 'No especificado'}</p>
+        `;
+        
+        // ESTA ES LA LÓGICA CLAVE QUE FALTABA:
+        card.addEventListener('click', () => {
+            window.location.href = `/materia.html?id=${materia.id}`;
+        });
+        
+        materiasGrid.appendChild(card);
     });
 }
