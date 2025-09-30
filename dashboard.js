@@ -45,15 +45,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const units = document.getElementById('units').value;
     // Captura los nuevos valores
     const drive_folder_url = document.getElementById('drive_folder_url').value;
-    const google_sheet_url = document.getElementById('google_sheet_url').value;
+    const sheet_promedio_general_url = document.getElementById('sheet_promedio_general_url').value;
 
     const { error } = await supabaseClient.from('materias').insert({
         name,
         semester,
         year,
         units,
-        drive_folder_url: drive_folder_url || null, // Guardar como null si está vacío
-        google_sheet_url: google_sheet_url || null  // Guardar como null si está vacío
+        drive_folder_url: drive_folder_url || null,
+        sheet_promedio_general_url: sheet_promedio_general_url || null
     });
     if (error) {
         alert(`Error al crear la materia: ${error.message}`);
