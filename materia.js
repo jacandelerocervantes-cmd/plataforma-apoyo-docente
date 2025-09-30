@@ -1,15 +1,5 @@
-// --- CONFIGURACIÓN DE SUPABASE ---
-const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-// --- CONFIGURACIÓN DE GOOGLE API ---
-const GOOGLE_API_KEY = config.GOOGLE_API_KEY;
-const GOOGLE_CLIENT_ID = config.GOOGLE_CLIENT_ID;
-const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
-let tokenClient;
-let gapiInited = false;
-let gisInited = false;
+// AHORA ESTE ARCHIVO NO TIENE NINGUNA CLAVE O CONFIGURACIÓN.
+// TOMA LOS VALORES DE 'config.js' QUE SE CARGA ANTES.
 
 // --- ESTADO Y VARIABLES GLOBALES ---
 let currentMateriaId = null;
@@ -23,8 +13,6 @@ let currentGradingEvaluationId = null;
 const materiaNameHeader = document.getElementById('materia-name-header');
 const tabs = document.querySelectorAll('.tab');
 const tabContents = document.querySelectorAll('.tab-content');
-
-// Pestaña de Asistencia
 const generateQRBtn = document.getElementById('generate-qr-btn');
 const qrSessionActiveDiv = document.getElementById('qr-session-active');
 const qrcodeContainer = document.getElementById('qrcode-container');
@@ -33,12 +21,8 @@ const renewQRBtn = document.getElementById('renew-qr-btn');
 const cancelQRBtn = document.getElementById('cancel-qr-btn');
 const unitNumberInput = document.getElementById('unit-number');
 const realtimeAttendanceList = document.getElementById('realtime-attendance-list');
-
-// Pestaña de Alumnos
 const addStudentForm = document.getElementById('add-student-form');
 const studentList = document.getElementById('student-list');
-
-// Pestaña de Actividades
 const addActivityForm = document.getElementById('add-activity-form');
 const activitiesList = document.getElementById('activities-list');
 const activitiesPanel = document.querySelector('.activities-panel');
@@ -47,8 +31,6 @@ const gradingActivityTitle = document.getElementById('grading-activity-title');
 const gradingStudentList = document.getElementById('grading-student-list');
 const backToActivitiesBtn = document.getElementById('back-to-activities-btn');
 const gradingForm = document.getElementById('grading-form');
-
-// Pestaña de Evaluaciones
 const addEvaluationForm = document.getElementById('add-evaluation-form');
 const evaluationsList = document.getElementById('evaluations-list');
 const evaluationsPanel = document.querySelector('.evaluations-panel');
@@ -57,11 +39,8 @@ const evaluationGradingTitle = document.getElementById('evaluation-grading-title
 const evaluationGradingStudentList = document.getElementById('evaluation-grading-student-list');
 const backToEvaluationsBtn = document.getElementById('back-to-evaluations-btn');
 const evaluationGradingForm = document.getElementById('evaluation-grading-form');
-
-// Pestaña de Material Didáctico
 const addMaterialBtn = document.getElementById('add-material-btn');
 const materialsList = document.getElementById('materials-list');
-
 
 // --- INICIALIZACIÓN DE LA PÁGINA ---
 document.addEventListener('DOMContentLoaded', async () => {
@@ -74,7 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Cargar toda la información inicial
     loadMateriaDetails();
     loadEnrolledStudents();
     loadActivities();
@@ -96,7 +74,6 @@ async function loadMateriaDetails() {
 }
 
 function setupEventListeners() {
-    // Listener para el cambio de pestañas
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
@@ -115,33 +92,23 @@ function setupEventListeners() {
         });
     });
 
-    // Listeners de Asistencia
     generateQRBtn.addEventListener('click', createNewAttendanceSession);
     renewQRBtn.addEventListener('click', renewSession);
     cancelQRBtn.addEventListener('click', cancelSession);
-
-    // Listener de Alumnos
     addStudentForm.addEventListener('submit', handleAddStudent);
-
-    // Listeners de Actividades
     addActivityForm.addEventListener('submit', handleAddActivity);
     backToActivitiesBtn.addEventListener('click', showActivitiesPanel);
     gradingForm.addEventListener('submit', (e) => {
         e.preventDefault();
         handleSaveGrades(currentGradingActivityId);
     });
-    
-    // Listeners de Evaluaciones
     addEvaluationForm.addEventListener('submit', handleAddEvaluation);
     backToEvaluationsBtn.addEventListener('click', showEvaluationsPanel);
     evaluationGradingForm.addEventListener('submit', (e) => {
         e.preventDefault();
         handleSaveEvaluationGrades(currentGradingEvaluationId);
     });
-    
-    // Listener de Material Didáctico
     addMaterialBtn.addEventListener('click', () => {
-        // Solicitar un token de acceso y luego mostrar el selector
         if (gapiInited && gisInited) {
             tokenClient.requestAccessToken({ prompt: '' });
         } else {
@@ -599,7 +566,6 @@ async function loadMaterials() {
 }
 
 // --- LÓGICA DE GOOGLE PICKER API ---
-
 function gapiLoaded() {
     gapi.load('client:picker', () => {
         gapiInited = true;
@@ -624,7 +590,7 @@ function showPicker(accessToken) {
     if (gapiInited && gisInited) {
         const view = new google.picker.View(google.picker.ViewId.DOCS);
         const picker = new google.picker.PickerBuilder()
-            .setAppId(null) // App ID no es necesario para este flujo
+            .setAppId(null)
             .setOAuthToken(accessToken)
             .setDeveloperKey(GOOGLE_API_KEY)
             .addView(view)
@@ -639,7 +605,7 @@ async function pickerCallback(data) {
         const materialsToInsert = [];
         for (const doc of data.docs) {
             const unit = prompt(`¿A qué unidad pertenece el material "${doc.name}"?`, "1");
-            if (unit) { // Proceed only if the user provides a unit
+            if (unit) {
                 materialsToInsert.push({
                     materia_id: currentMateriaId,
                     unit_number: parseInt(unit),
