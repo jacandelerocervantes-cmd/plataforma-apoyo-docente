@@ -1,6 +1,10 @@
 // --- CONFIGURACIÓN DE SUPABASE ---
-const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co'; // Reemplaza con tu URL
+// ⚠️ Reemplaza con tus claves si no son las correctas
+const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co'; 
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';     
+
+// URL de tu Web App de Google Apps Script (GAS) para crear la carpeta de Drive
+const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbynqwAV6Uh9MUrWYPhLP9hHZoOkUnvIz2MVobRQcq1XXCSM5BAI4KhG_2DPY68hhhYJ/exec'; 
 
 // FORZAR LA PERSISTENCIA DE SESIÓN
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
@@ -10,8 +14,6 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
     }
 });
 
-const SETUP_DRIVE_FUNCTION_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co/functions/v1/setup-drive-folder'; 
-
 // --- ESTADO GLOBAL Y ELEMENTOS DEL DOM ---
 const logoutButton = document.getElementById('logout-button');
 const createMateriaForm = document.getElementById('create-materia-form');
@@ -20,36 +22,40 @@ const teacherNameElement = document.getElementById('teacher-name');
 
 let isDashboardInitialized = false; 
 
-// --- FUNCIONES AUXILIARES DE DRIVE ---
+// --- FUNCIÓN DE INTEGRACIÓN DE DRIVE CON GAS ---
 
+/**
+ * Llama al Web App de Google Apps Script para crear la carpeta Drive inicial.
+ * Esto evita el problema de la verificación de Scopes de Drive en Supabase.
+ */
 async function setupUserDrive(session) {
-    const googleAccessToken = session.provider_token;
-    console.log("Intento de configuración de Drive. Token de Google (provider_token) presente:", !!googleAccessToken); 
-
-    if (!googleAccessToken) {
-        console.warn("No se encontró el token de acceso de Google. No se puede configurar Drive.");
-        return;
-    }
+    const userEmail = session.user.email; 
 
     try {
-        const response = await fetch(SETUP_DRIVE_FUNCTION_URL, {
+        const response = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
+            mode: 'cors', 
             headers: {
-                'Authorization': `Bearer ${googleAccessToken}`,
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+                // Se envía el email del usuario para identificación en el servidor GAS
+                'X-User-Email': userEmail 
+            },
+            body: JSON.stringify({ userEmail: userEmail })
         });
 
         const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.error || `Error del servidor: ${response.status}`);
+        if (response.ok && !data.error) {
+            console.log("✅ Drive Folder Setup Success (via GAS):", data);
+            // Si todo sale bien, la carpeta 'Plataforma de Apoyo Docente' está en el Drive del usuario.
+        } else {
+            // Un error del servidor de GAS o un error reportado por GAS
+            throw new Error(data.error || "GAS Server Error. Check GAS logs for details.");
         }
-
-        console.log("✅ RESPUESTA EXITOSA DE LA FUNCIÓN setupDrive:", data);
         
     } catch (error) {
-        console.error("❌ ERROR AL LLAMAR A LA FUNCIÓN setupDrive:", error.message);
+        // Un error de red o de código
+        console.error("❌ ERROR setting up Drive via GAS:", error.message);
     }
 }
 
@@ -63,31 +69,29 @@ function initializeDashboard(session) {
     const displayName = user.user_metadata?.full_name || user.email;
     teacherNameElement.textContent = displayName;
 
+    // 1. Intentar crear la carpeta de Drive. 
+    // Solo se debe hacer si el usuario se autenticó con Google (para asegurar que tiene una cuenta de Google activa).
     const isGoogleUser = user.app_metadata.provider === 'google';
-    const hasProviderToken = session.provider_token; 
-    
-    console.log(`Debug de sesión: esGoogleUser=${isGoogleUser}, tieneProviderToken=${!!hasProviderToken}`);
-
-    if (isGoogleUser && hasProviderToken) {
-        console.log("Detectado inicio de sesión de Google. Configurando Drive...");
-        setupUserDrive(session);
-    } else {
-        console.warn("No se llama a setupDrive. (Token de Drive no presente en la sesión)");
+    if (isGoogleUser) {
+        setupUserDrive(session); 
     }
-
+    
+    // 2. Cargar las materias
     loadMaterias();
     isDashboardInitialized = true; 
 }
 
 
-// --- MANEJO DE LA SESIÓN: LISTENER CRÍTICO CORREGIDO ---
+// --- MANEJO DE LA SESIÓN: LISTENER CRÍTICO Y ROBUSTO ---
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
     console.log(`Evento de Auth: ${event}, Sesión: ${!!session}`);
 
     if (session) {
+        // Inicializa después de un breve retraso para asegurar que el DOM esté listo
         setTimeout(() => initializeDashboard(session), 100); 
     } else {
+        // Redirige solo si la acción fue cerrar sesión o si la sesión no es válida.
         if (event === 'SIGNED_OUT') {
              window.location.href = '/index.html'; 
         }
@@ -99,26 +103,33 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 
 document.addEventListener('DOMContentLoaded', async () => {
     
+    // Iniciar la verificación de sesión para el caso de usuario que regresa
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
         initializeDashboard(session);
     }
     
+    // Configuración del botón de Cerrar Sesión
     logoutButton.addEventListener('click', async () => {
         const { error } = await supabaseClient.auth.signOut();
         if (error) {
             console.error("Error al cerrar sesión:", error);
         } 
+        // La redirección es manejada por onAuthStateChange
     });
 
+    // Configuración del formulario de Creación de Materia
     createMateriaForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
+        // 1. Obtener datos del formulario
         const name = document.getElementById('name').value;
         const semester = document.getElementById('semester').value;
         const year = document.getElementById('year').value;
         const units = document.getElementById('units').value;
 
+        // 2. Insertar en la base de datos
+        // La columna user_id será llenada automáticamente por el DEFAULT auth.uid() en la DB.
         const { error } = await supabaseClient
             .from('materias')
             .insert({ 
@@ -132,6 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error("Error al crear materia:", error);
             alert(`Error al crear la materia: ${error.message || 'Verifica la consola para más detalles.'}`);
         } else {
+            alert("¡Materia creada con éxito!");
             createMateriaForm.reset();
             loadMaterias();
         }
@@ -139,9 +151,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// --- LÓGICA DE MATERIAS ---
+// --- LÓGICA DE CARGA DE MATERIAS ---
 
 async function loadMaterias() {
+    // La política RLS (auth.uid() = user_id) asegura que solo se carguen las materias del usuario.
     const { data: materias, error } = await supabaseClient
         .from('materias')
         .select('*')
