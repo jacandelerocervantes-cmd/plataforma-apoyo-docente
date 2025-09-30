@@ -1,3 +1,267 @@
+¡Perfecto! Continuamos.
+
+Ya hemos preparado la base de datos para tu estructura detallada de unidades y ponderaciones. Ahora vamos a la Fase 2, que es la más visible: actualizar la interfaz para que puedas gestionar toda esta nueva información.
+
+Aquí te proporciono los códigos completos y finales de materia.html y materia.js. Estos archivos incluyen la nueva pestaña "Unidades" y toda la lógica necesaria para que funcione, además de mantener todas las funcionalidades que ya teníamos.
+
+Por favor, reemplaza el contenido completo de tus archivos existentes con estos.
+
+materia.html (Completo y Final)
+Este código añade la nueva pestaña "Unidades" y su correspondiente panel con los formularios para crear unidades y actualizar sus URLs.
+
+HTML
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Materia</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="main-header">
+        <h1 id="materia-name-header">Cargando materia...</h1>
+        <a href="/dashboard.html" class="btn btn-secondary">Volver al Dashboard</a>
+    </header>
+
+    <main class="container">
+        <nav class="tabs">
+            <a href="#" class="tab active" data-tab="asistencia">Asistencia</a>
+            <a href="#" class="tab" data-tab="alumnos">Alumnos</a>
+            <a href="#" class="tab" data-tab="actividades">Actividades</a>
+            <a href="#" class="tab" data-tab="evaluaciones">Evaluaciones</a>
+            <a href="#" class="tab" data-tab="material">Material Didáctico</a>
+            <a href="#" class="tab" data-tab="unidades">Unidades</a>
+        </nav>
+
+        <div id="asistencia-content" class="tab-content active">
+            <div class="attendance-panel">
+                <div class="control-panel form-card">
+                    <h2>Control de Asistencia por QR</h2>
+                    <div class="input-group">
+                        <label for="unit-number">Seleccionar Unidad</label>
+                        <input type="number" id="unit-number" value="1" min="1">
+                    </div>
+                    <button id="generate-qr-btn" class="btn btn-primary">Generar QR para Asistencia</button>
+                    <div id="qr-session-active" class="hidden">
+                        <div id="qrcode-container"></div>
+                        <div id="timer">05:00</div>
+                        <div class="qr-actions">
+                            <button id="renew-qr-btn" class="btn btn-secondary">Renovar (5 min)</button>
+                            <button id="cancel-qr-btn" class="btn btn-danger">Cancelar Sesión</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="realtime-list list-card">
+                    <h2>Asistencias Registradas (En Vivo)</h2>
+                    <ul id="realtime-attendance-list">
+                    </ul>
+                </div>
+            </div>
+            <div class="manual-attendance-panel list-card" style="margin-top: 2rem;">
+                <h2>Tomar Asistencia Manualmente</h2>
+                <div id="manual-attendance-student-list">
+                    </div>
+                <button id="save-manual-attendance-btn" class="btn btn-primary" style="margin-top: 1rem;">Guardar Asistencia Manual</button>
+            </div>
+        </div>
+
+        <div id="alumnos-content" class="tab-content">
+            <section class="form-card">
+                <h2>Añadir Alumno Manualmente</h2>
+                <form id="add-student-form">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="first_name">Nombre(s)</label>
+                            <input type="text" id="first_name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="last_name">Apellidos</label>
+                            <input type="text" id="last_name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="student_id">Matrícula</label>
+                            <input type="text" id="student_id" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Añadir Alumno</button>
+                </form>
+            </section>
+
+            <section class="list-card">
+                <h2>Alumnos Inscritos</h2>
+                <ul id="student-list" class="student-list">
+                </ul>
+            </section>
+        </div>
+        
+        <div id="actividades-content" class="tab-content">
+            <div class="activities-panel" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+                <section class="form-card">
+                    <h2>Añadir Nueva Actividad</h2>
+                    <form id="add-activity-form">
+                        <div class="input-group">
+                            <label for="activity-title">Título de la Actividad</label>
+                            <input type="text" id="activity-title" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="activity-unit">Unidad</label>
+                            <input type="number" id="activity-unit" value="1" min="1" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="activity-description">Descripción / Instrucciones</label>
+                            <textarea id="activity-description" rows="4"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label for="activity-due-date">Fecha de Entrega</label>
+                            <input type="date" id="activity-due-date">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar Actividad</button>
+                    </form>
+                </section>
+
+                <section class="list-card">
+                    <h2>Actividades de la Materia</h2>
+                    <div id="activities-list">
+                    </div>
+                </section>
+            </div>
+            <div id="grading-panel" class="hidden">
+                <div class="list-card">
+                    <div class="grading-header">
+                        <button id="back-to-activities-btn" class="btn btn-secondary">&larr; Volver</button>
+                        <h2 id="grading-activity-title">Calificando Actividad</h2>
+                    </div>
+                    <form id="grading-form">
+                        <table class="grading-table">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>Matrícula</th>
+                                    <th>Calificación</th>
+                                    <th>Comentarios</th>
+                                </tr>
+                            </thead>
+                            <tbody id="grading-student-list">
+                            </tbody>
+                        </table>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Guardar Calificaciones</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="evaluaciones-content" class="tab-content">
+            <div class="evaluations-panel" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+                <section class="form-card">
+                    <h2>Añadir Nueva Evaluación</h2>
+                    <form id="add-evaluation-form">
+                        <div class="input-group">
+                            <label for="evaluation-title">Título de la Evaluación</label>
+                            <input type="text" id="evaluation-title" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="evaluation-unit">Unidad</label>
+                            <input type="number" id="evaluation-unit" value="1" min="1" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="evaluation-description">Descripción / Temario</label>
+                            <textarea id="evaluation-description" rows="4"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label for="evaluation-date">Fecha de la Evaluación</label>
+                            <input type="date" id="evaluation-date">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar Evaluación</button>
+                    </form>
+                </section>
+
+                <section class="list-card">
+                    <h2>Evaluaciones de la Materia</h2>
+                    <div id="evaluations-list">
+                    </div>
+                </section>
+            </div>
+
+            <div id="evaluation-grading-panel" class="hidden">
+                <div class="list-card">
+                    <div class="grading-header">
+                        <button id="back-to-evaluations-btn" class="btn btn-secondary">&larr; Volver</button>
+                        <h2 id="evaluation-grading-title">Calificando Evaluación</h2>
+                    </div>
+                    <form id="evaluation-grading-form">
+                        <table class="grading-table">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>Matrícula</th>
+                                    <th>Calificación</th>
+                                    <th>Comentarios</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evaluation-grading-student-list">
+                            </tbody>
+                        </table>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Guardar Calificaciones</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="material-content" class="tab-content">
+            <section class="list-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2>Material Didáctico</h2>
+                    <button id="add-material-btn" class="btn btn-primary">Añadir Material desde Drive</button>
+                </div>
+                <div id="materials-list">
+                </div>
+            </section>
+        </div>
+
+        <div id="unidades-content" class="tab-content">
+            <section class="form-card">
+                <h2>Crear Nueva Unidad</h2>
+                <form id="create-unit-form">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="unit_number_input">Número de Unidad</label>
+                            <input type="number" id="unit_number_input" min="1" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="unit_ponderation">Ponderación (%)</label>
+                            <input type="number" id="unit_ponderation" min="0" max="100" step="0.1" required placeholder="Ej: 25">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Crear Unidad</button>
+                </form>
+            </section>
+    
+            <section class="list-card">
+                <h2>Unidades de la Materia</h2>
+                <div id="units-list">
+                    </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+    
+    <script src="materia.js"></script>
+
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+</body>
+</html>
+materia.js (Completo y Final)
+Este archivo ahora incluye toda la lógica para crear, mostrar y actualizar las nuevas unidades y sus URLs.
+
+JavaScript
+
 // --- CONFIGURACIÓN DE SUPABASE Y GOOGLE ---
 const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
@@ -75,6 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadMaterials();
     setupEventListeners();
     loadStudentsForManualAttendance();
+    loadUnits(); // Cargar las nuevas unidades
 });
 
 // --- FUNCIONES DE CONFIGURACIÓN Y CARGA INICIAL ---
@@ -96,13 +361,10 @@ function setupEventListeners() {
             tab.classList.add('active');
             const targetTab = tab.getAttribute('data-tab');
             tabContents.forEach(content => {
-                content.classList.remove('active');
+                content.style.display = 'none'; // Ocultar todos
                 if (content.id === `${targetTab}-content`) {
-                    content.classList.add('active');
+                    content.style.display = 'block'; // Mostrar solo el activo
                 }
-            });
-             tabContents.forEach(content => {
-                content.style.display = content.classList.contains('active') ? 'block' : 'none';
             });
         });
     });
@@ -298,12 +560,12 @@ async function handleAddActivity(event) {
 
 function showActivitiesPanel() {
     gradingPanel.classList.add('hidden');
-    activitiesPanel.classList.remove('hidden');
+    document.querySelector('.activities-panel').style.display = 'grid';
 }
 
 async function showGradingPanel(activity) {
     currentGradingActivityId = activity.id;
-    activitiesPanel.classList.add('hidden');
+    document.querySelector('.activities-panel').style.display = 'none';
     gradingPanel.classList.remove('hidden');
     gradingActivityTitle.textContent = `Calificando: ${activity.title}`;
     loadStudentsForGrading(activity.id);
@@ -433,12 +695,12 @@ async function handleAddEvaluation(event) {
 
 function showEvaluationsPanel() {
     evaluationGradingPanel.classList.add('hidden');
-    evaluationsPanel.classList.remove('hidden');
+    document.querySelector('.evaluations-panel').style.display = 'grid';
 }
 
 async function showEvaluationGradingPanel(evaluation) {
     currentGradingEvaluationId = evaluation.id;
-    evaluationsPanel.classList.add('hidden');
+    document.querySelector('.evaluations-panel').style.display = 'none';
     evaluationGradingPanel.classList.remove('hidden');
     evaluationGradingTitle.textContent = `Calificando: ${evaluation.title}`;
     loadStudentsForEvaluationGrading(evaluation.id);
@@ -585,10 +847,6 @@ async function loadMaterials() {
 
 function gapiLoaded() {
     gapiInited = true;
-    if (gapiInited && gisInited) {
-        // Opcional: inicializar tokenClient aquí si se quiere autorizar automáticamente
-        // tokenClient.requestAccessToken({ prompt: '' });
-    }
 }
 
 function gisLoaded() {
@@ -604,19 +862,14 @@ function gisLoaded() {
         },
     });
     gisInited = true;
-    if (gapiInited && gisInited) {
-        // Opcional: inicializar tokenClient aquí si se quiere autorizar automáticamente
-        // tokenClient.requestAccessToken({ prompt: '' });
-    }
 }
 
 function showPicker(accessToken) {
-    // Asegurarse de que ambas APIs de Google estén cargadas e inicializadas
     if (gapiInited && gisInited) {
         const view = new google.picker.View(google.picker.ViewId.DOCS);
-        view.setMimeTypes('application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet,application/pdf'); // Tipos de archivo
+        view.setMimeTypes('application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet,application/pdf');
         const picker = new google.picker.PickerBuilder()
-            .setAppId(null) // Usar null para apps no registradas en Google Workspace Marketplace
+            .setAppId(null)
             .setOAuthToken(accessToken)
             .setDeveloperKey(GOOGLE_API_KEY)
             .addView(view)
@@ -624,11 +877,9 @@ function showPicker(accessToken) {
             .build();
         picker.setVisible(true);
     } else {
-        console.warn("Google API no completamente cargada. Intente de nuevo.");
         alert("La API de Google no ha cargado completamente. Intente de nuevo en unos segundos.");
     }
 }
-
 
 async function pickerCallback(data) {
     if (data.action === google.picker.Action.PICKED) {
@@ -647,9 +898,7 @@ async function pickerCallback(data) {
         }
 
         if (materialsToInsert.length > 0) {
-            const { error } = await supabaseClient
-                .from('materials').insert(materialsToInsert);
-            
+            const { error } = await supabaseClient.from('materials').insert(materialsToInsert);
             if (error) {
                 console.error("Error guardando el material:", error);
                 alert("No se pudieron guardar los materiales seleccionados.");
@@ -665,18 +914,15 @@ async function pickerCallback(data) {
 
 async function loadStudentsForManualAttendance() {
     const { data, error } = await supabaseClient.from('enrollments').select(`students (*)`).eq('materia_id', currentMateriaId);
-    
     if (error) {
         console.error("Error cargando alumnos para asistencia manual:", error);
         manualAttendanceList.innerHTML = "<p>No se pudieron cargar los alumnos.</p>";
         return;
     }
-
     if (data.length === 0) {
         manualAttendanceList.innerHTML = "<p>No hay alumnos inscritos en esta materia.</p>";
         return;
     }
-
     manualAttendanceList.innerHTML = '';
     data.forEach(enrollment => {
         const student = enrollment.students;
@@ -697,11 +943,9 @@ async function handleSaveManualAttendance() {
         alert("Por favor, selecciona una unidad antes de guardar la asistencia.");
         return;
     }
-
     const checkboxes = manualAttendanceList.querySelectorAll('input[type="checkbox"]');
     const attendanceRecords = [];
     const today = new Date().toISOString().slice(0, 10);
-
     checkboxes.forEach(box => {
         if (box.checked) {
             attendanceRecords.push({
@@ -713,14 +957,11 @@ async function handleSaveManualAttendance() {
             });
         }
     });
-
     if (attendanceRecords.length === 0) {
         alert("No has seleccionado ningún alumno.");
         return;
     }
-
     const { error } = await supabaseClient.from('attendance').insert(attendanceRecords);
-
     if (error) {
         console.error("Error al guardar la asistencia manual:", error);
         alert("Hubo un error al guardar la asistencia. Es posible que para algunos alumnos ya exista un registro hoy.");
@@ -729,3 +970,110 @@ async function handleSaveManualAttendance() {
         checkboxes.forEach(box => box.checked = false);
     }
 }
+
+// --- LÓGICA DE GESTIÓN DE UNIDADES (NUEVO) ---
+
+const createUnitForm = document.getElementById('create-unit-form');
+const unitsListContainer = document.getElementById('units-list');
+
+async function loadUnits() {
+    const { data: units, error } = await supabaseClient
+        .from('unidades')
+        .select('*')
+        .eq('materia_id', currentMateriaId)
+        .order('unit_number', { ascending: true });
+
+    if (error) {
+        console.error('Error cargando unidades:', error);
+        unitsListContainer.innerHTML = '<p>Error al cargar las unidades.</p>';
+        return;
+    }
+
+    unitsListContainer.innerHTML = '';
+    if (units.length === 0) {
+        unitsListContainer.innerHTML = '<p>Aún no has creado ninguna unidad para esta materia.</p>';
+        return;
+    }
+
+    units.forEach(unit => {
+        const unitElement = document.createElement('div');
+        unitElement.classList.add('activity-item');
+        unitElement.innerHTML = `
+            <h4>Unidad ${unit.unit_number} (Ponderación: ${unit.ponderation}%)</h4>
+            <form class="update-unit-form" data-unit-id="${unit.id}">
+                <div class="input-group">
+                    <label>URL Sheet Asistencias</label>
+                    <input type="url" name="sheet_asistencias_url" value="${unit.sheet_asistencias_url || ''}" placeholder="Pega la URL aquí">
+                </div>
+                <div class="input-group">
+                    <label>URL Sheet Actividades</label>
+                    <input type="url" name="sheet_actividades_url" value="${unit.sheet_actividades_url || ''}" placeholder="Pega la URL aquí">
+                </div>
+                <div class="input-group">
+                    <label>URL Sheet Evaluaciones</label>
+                    <input type="url" name="sheet_evaluaciones_url" value="${unit.sheet_evaluaciones_url || ''}" placeholder="Pega la URL aquí">
+                </div>
+                <div class="input-group">
+                    <label>URL Sheet Promedio de Unidad</label>
+                    <input type="url" name="sheet_promedio_unidad_url" value="${unit.sheet_promedio_unidad_url || ''}" placeholder="Pega la URL aquí">
+                </div>
+                <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem;">Guardar URLs de Unidad</button>
+            </form>
+        `;
+        unitsListContainer.appendChild(unitElement);
+    });
+
+    document.querySelectorAll('.update-unit-form').forEach(form => {
+        form.addEventListener('submit', handleUpdateUnitURLs);
+    });
+}
+
+async function handleCreateUnit(event) {
+    event.preventDefault();
+    const unitNumber = document.getElementById('unit_number_input').value;
+    const ponderation = document.getElementById('unit_ponderation').value;
+
+    const { error } = await supabaseClient
+        .from('unidades')
+        .insert({
+            materia_id: currentMateriaId,
+            unit_number: unitNumber,
+            ponderation: ponderation
+        });
+
+    if (error) {
+        console.error('Error creando unidad:', error);
+        alert(`Error al crear la unidad: ${error.message}`);
+    } else {
+        alert('¡Unidad creada con éxito!');
+        createUnitForm.reset();
+        loadUnits();
+    }
+}
+
+async function handleUpdateUnitURLs(event) {
+    event.preventDefault();
+    const form = event.target;
+    const unitId = form.dataset.unitId;
+    const formData = new FormData(form);
+    const updates = {
+        sheet_asistencias_url: formData.get('sheet_asistencias_url'),
+        sheet_actividades_url: formData.get('sheet_actividades_url'),
+        sheet_evaluaciones_url: formData.get('sheet_evaluaciones_url'),
+        sheet_promedio_unidad_url: formData.get('sheet_promedio_unidad_url')
+    };
+
+    const { error } = await supabaseClient
+        .from('unidades')
+        .update(updates)
+        .eq('id', unitId);
+
+    if (error) {
+        console.error('Error actualizando URLs de la unidad:', error);
+        alert('Hubo un error al guardar las URLs.');
+    } else {
+        alert('URLs de la unidad guardadas con éxito.');
+    }
+}
+
+createUnitForm.addEventListener('submit', handleCreateUnit);

@@ -20,6 +20,7 @@
             <a href="#" class="tab" data-tab="actividades">Actividades</a>
             <a href="#" class="tab" data-tab="evaluaciones">Evaluaciones</a>
             <a href="#" class="tab" data-tab="material">Material Didáctico</a>
+            <a href="#" class="tab" data-tab="unidades">Unidades</a>
         </nav>
 
         <div id="asistencia-content" class="tab-content active">
@@ -85,7 +86,7 @@
         </div>
         
         <div id="actividades-content" class="tab-content">
-            <div class="activities-panel">
+            <div class="activities-panel" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
                 <section class="form-card">
                     <h2>Añadir Nueva Actividad</h2>
                     <form id="add-activity-form">
@@ -141,7 +142,7 @@
         </div>
 
         <div id="evaluaciones-content" class="tab-content">
-            <div class="evaluations-panel">
+            <div class="evaluations-panel" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
                 <section class="form-card">
                     <h2>Añadir Nueva Evaluación</h2>
                     <form id="add-evaluation-form">
@@ -205,6 +206,31 @@
                 </div>
                 <div id="materials-list">
                 </div>
+            </section>
+        </div>
+
+        <div id="unidades-content" class="tab-content">
+            <section class="form-card">
+                <h2>Crear Nueva Unidad</h2>
+                <form id="create-unit-form">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="unit_number_input">Número de Unidad</label>
+                            <input type="number" id="unit_number_input" min="1" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="unit_ponderation">Ponderación (%)</label>
+                            <input type="number" id="unit_ponderation" min="0" max="100" step="0.1" required placeholder="Ej: 25">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Crear Unidad</button>
+                </form>
+            </section>
+    
+            <section class="list-card">
+                <h2>Unidades de la Materia</h2>
+                <div id="units-list">
+                    </div>
             </section>
         </div>
     </main>
