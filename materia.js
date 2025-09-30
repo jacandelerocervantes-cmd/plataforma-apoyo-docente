@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadEvaluations();
     loadMaterials();
     setupEventListeners();
+    loadStudentsForManualAttendance(); // Cargar alumnos para asistencia manual
 });
 
 // --- FUNCIONES DE CONFIGURACIÓN Y CARGA INICIAL ---
@@ -531,6 +532,7 @@ async function handleAddStudent(event) {
 
     addStudentForm.reset();
     loadEnrolledStudents();
+    loadStudentsForManualAttendance(); // Recargar la lista de asistencia manual
 }
 
 // --- LÓGICA DE GESTIÓN DE MATERIAL DIDÁCTICO ---
@@ -628,3 +630,78 @@ async function pickerCallback(data) {
         }
     }
 }
+
+// --- LÓGICA DE ASISTENCIA MANUAL (NUEVO CÓDIGO) ---
+
+const manualAttendanceList = document.getElementById('manual-attendance-student-list');
+const saveManualAttendanceBtn = document.getElementById('save-manual-attendance-btn');
+
+async function loadStudentsForManualAttendance() {
+    const { data, error } = await supabaseClient.from('enrollments').select(`students (*)`).eq('materia_id', currentMateriaId);
+    
+    if (error) {
+        console.error("Error cargando alumnos para asistencia manual:", error);
+        manualAttendanceList.innerHTML = "<p>No se pudieron cargar los alumnos.</p>";
+        return;
+    }
+
+    if (data.length === 0) {
+        manualAttendanceList.innerHTML = "<p>No hay alumnos inscritos en esta materia.</p>";
+        return;
+    }
+
+    manualAttendanceList.innerHTML = '';
+    data.forEach(enrollment => {
+        const student = enrollment.students;
+        const studentElement = document.createElement('div');
+        studentElement.classList.add('manual-student-item');
+        studentElement.style.padding = '0.5rem 0'; // Estilo simple
+        studentElement.innerHTML = `
+            <input type="checkbox" id="student-${student.id}" data-studentid="${student.id}" style="margin-right: 0.5rem;">
+            <label for="student-${student.id}">${student.first_name} ${student.last_name} (${student.student_id})</label>
+        `;
+        manualAttendanceList.appendChild(studentElement);
+    });
+}
+
+async function handleSaveManualAttendance() {
+    const unitNumber = unitNumberInput.value;
+    if (!unitNumber) {
+        alert("Por favor, selecciona una unidad antes de guardar la asistencia.");
+        return;
+    }
+
+    const checkboxes = manualAttendanceList.querySelectorAll('input[type="checkbox"]');
+    const attendanceRecords = [];
+    const today = new Date().toISOString().slice(0, 10);
+
+    checkboxes.forEach(box => {
+        if (box.checked) {
+            attendanceRecords.push({
+                materia_id: currentMateriaId,
+                student_id: box.dataset.studentid,
+                unit_number: unitNumber,
+                attendance_date: today,
+                status: 'Presente'
+            });
+        }
+    });
+
+    if (attendanceRecords.length === 0) {
+        alert("No has seleccionado ningún alumno.");
+        return;
+    }
+
+    const { error } = await supabaseClient.from('attendance').insert(attendanceRecords);
+
+    if (error) {
+        console.error("Error al guardar la asistencia manual:", error);
+        alert("Hubo un error al guardar la asistencia. Es posible que para algunos alumnos ya exista un registro hoy.");
+    } else {
+        alert("¡Asistencia guardada con éxito!");
+        checkboxes.forEach(box => box.checked = false);
+    }
+}
+
+// Añadimos el listener para el nuevo botón de asistencia manual
+saveManualAttendanceBtn.addEventListener('click', handleSaveManualAttendance);
