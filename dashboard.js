@@ -19,7 +19,7 @@ function initializeDashboard(session) {
 supabaseClient.auth.onAuthStateChange((event, session) => {
     if (session) {
         initializeDashboard(session);
-    } else {
+    } else if (event === 'SIGNED_OUT') {
         window.location.href = '/index.html';
     }
 });
@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
         initializeDashboard(session);
+    } else {
+        // Si no hay sesión al cargar, redirigir al login
+        window.location.href = '/index.html';
     }
 
     logoutButton.addEventListener('click', async () => {

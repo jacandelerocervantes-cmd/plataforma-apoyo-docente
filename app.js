@@ -4,32 +4,9 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // --- LÓGICA DE LA APLICACIÓN ---
-const SETUP_DRIVE_FUNCTION_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co/functions/v1/setup-drive-folder';
 const loginForm = document.getElementById('login-form');
 const googleLoginButton = document.getElementById('google-login-btn');
 const errorMessageDiv = document.getElementById('error-message');
-
-async function setupUserDrive(session) {
-    const googleAccessToken = session.provider_token;
-    if (!googleAccessToken) {
-        console.warn("No se encontró el token de acceso de Google.");
-        return;
-    }
-    try {
-        const response = await fetch(SETUP_DRIVE_FUNCTION_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${googleAccessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || `Error del servidor: ${response.status}`);
-        console.log("Respuesta de la función setupDrive:", data);
-    } catch (error) {
-        console.error("Error al llamar a la función setupDrive:", error.message);
-    }
-}
 
 loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -42,7 +19,6 @@ loginForm.addEventListener('submit', async (event) => {
         errorMessageDiv.textContent = `Error de inicio de sesión: ${error.message}`;
         errorMessageDiv.style.display = 'block';
     } else if (session) {
-        await setupUserDrive(session);
         window.location.href = '/dashboard.html';
     }
 });

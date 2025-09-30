@@ -26,10 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const { data: session, error } = await supabaseClient
         .from('attendance_sessions')
-        .select(`
-            *,
-            materias (name)
-        `)
+        .select(`*, materias (name)`)
         .eq('id', sessionId)
         .single();
 
@@ -73,7 +70,7 @@ attendanceForm.addEventListener('submit', async (event) => {
     }
     const studentId = student.id;
 
-    const { data: existingAttendance, error: checkError } = await supabaseClient
+    const { data: existingAttendance } = await supabaseClient
         .from('attendance')
         .select('id')
         .eq('session_id', activeSession.id)
@@ -104,7 +101,6 @@ attendanceForm.addEventListener('submit', async (event) => {
         showMessage("success", "¡Asistencia registrada con éxito!");
     }
 });
-
 
 // --- FUNCIONES AUXILIARES ---
 function showMessage(type, text) {

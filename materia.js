@@ -270,9 +270,9 @@ async function loadActivities() {
             <h4>${activity.title} (Unidad ${activity.unit_number})</h4>
             <p>${activity.description || 'Sin descripción.'}</p>
             <small>Fecha de entrega: ${activity.due_date || 'No definida'}</small>
-            <button class="btn btn-secondary" style="margin-top: 10px; font-size: 0.8rem; padding: 0.4rem 0.8rem;">Calificar</button>
+            <button class="btn btn-secondary btn-calificar" style="margin-top: 10px; font-size: 0.8rem; padding: 0.4rem 0.8rem;">Calificar</button>
         `;
-        activityElement.querySelector('button').addEventListener('click', () => showGradingPanel(activity));
+        activityElement.querySelector('.btn-calificar').addEventListener('click', () => showGradingPanel(activity));
         activitiesList.appendChild(activityElement);
     });
 }
@@ -405,9 +405,9 @@ async function loadEvaluations() {
             <h4>${evaluation.title} (Unidad ${evaluation.unit_number})</h4>
             <p>${evaluation.description || 'Sin descripción.'}</p>
             <small>Fecha: ${evaluation.evaluation_date || 'No definida'}</small>
-            <button class="btn btn-secondary" style="margin-top: 10px; font-size: 0.8rem; padding: 0.4rem 0.8rem;">Calificar</button>
+            <button class="btn btn-secondary btn-calificar-eval" style="margin-top: 10px; font-size: 0.8rem; padding: 0.4rem 0.8rem;">Calificar</button>
         `;
-        evalElement.querySelector('button').addEventListener('click', () => showEvaluationGradingPanel(evaluation));
+        evalElement.querySelector('.btn-calificar-eval').addEventListener('click', () => showEvaluationGradingPanel(evaluation));
         evaluationsList.appendChild(evalElement);
     });
 }
@@ -584,9 +584,11 @@ async function loadMaterials() {
 // --- LÓGICA DE GOOGLE PICKER API ---
 
 function gapiLoaded() {
-    gapi.load('client:picker', () => {
-        gapiInited = true;
-    });
+    gapiInited = true;
+    if (gapiInited && gisInited) {
+        // Opcional: inicializar tokenClient aquí si se quiere autorizar automáticamente
+        // tokenClient.requestAccessToken({ prompt: '' });
+    }
 }
 
 function gisLoaded() {
@@ -595,39 +597,50 @@ function gisLoaded() {
         scope: SCOPES,
         callback: async (resp) => {
             if (resp.error !== undefined) {
+                console.error("Error al obtener token de acceso de Google:", resp);
                 throw (resp);
             }
             showPicker(resp.access_token);
         },
     });
     gisInited = true;
+    if (gapiInited && gisInited) {
+        // Opcional: inicializar tokenClient aquí si se quiere autorizar automáticamente
+        // tokenClient.requestAccessToken({ prompt: '' });
+    }
 }
 
 function showPicker(accessToken) {
+    // Asegurarse de que ambas APIs de Google estén cargadas e inicializadas
     if (gapiInited && gisInited) {
         const view = new google.picker.View(google.picker.ViewId.DOCS);
+        view.setMimeTypes('application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet,application/pdf'); // Tipos de archivo
         const picker = new google.picker.PickerBuilder()
-            .setAppId(null)
+            .setAppId(null) // Usar null para apps no registradas en Google Workspace Marketplace
             .setOAuthToken(accessToken)
             .setDeveloperKey(GOOGLE_API_KEY)
             .addView(view)
             .setCallback(pickerCallback)
             .build();
         picker.setVisible(true);
+    } else {
+        console.warn("Google API no completamente cargada. Intente de nuevo.");
+        alert("La API de Google no ha cargado completamente. Intente de nuevo en unos segundos.");
     }
 }
+
 
 async function pickerCallback(data) {
     if (data.action === google.picker.Action.PICKED) {
         const materialsToInsert = [];
         for (const doc of data.docs) {
-            const unit = prompt(`¿A qué unidad pertenece el material "${doc.name}"?`, "1");
+            const unit = prompt(`¿A qué unidad pertenece el material "${doc.name}"? (Ej: 1)`, "1");
             if (unit) {
                 materialsToInsert.push({
                     materia_id: currentMateriaId,
                     unit_number: parseInt(unit),
                     title: doc.name,
-                    description: doc.description,
+                    description: doc.description || "Sin descripción.",
                     drive_file_link: doc.url,
                 });
             }
