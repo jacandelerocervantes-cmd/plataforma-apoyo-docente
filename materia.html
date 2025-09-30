@@ -202,17 +202,26 @@
     </section>
 </div>V
     </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
 
-    <script src="config.js"></script>
+    <script>
+        const PLATFORM_CONFIG = {
+            supabaseUrl: 'https://pyurfviezihdfnxfgnxw.supabase.co',
+            supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU6NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c',
+            GOOGLE_API_KEY: '__GOOGLE_API_KEY__', // Render reemplazará esto
+            GOOGLE_CLIENT_ID: '__GOOGLE_CLIENT_ID__', // Render reemplazará esto
+            SCOPES: 'https://www.googleapis.com/auth/drive.readonly'
+        };
 
+        const supabaseClient = supabase.createClient(PLATFORM_CONFIG.supabaseUrl, PLATFORM_CONFIG.supabaseKey);
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+    </script>
+    
     <script src="materia.js"></script>
-
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
-</body>
-</html>    
 </body>
 </html>

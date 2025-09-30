@@ -106,8 +106,8 @@ function setupEventListeners() {
         handleSaveEvaluationGrades(currentGradingEvaluationId);
     });
     addMaterialBtn.addEventListener('click', () => {
-        if (window.gapiInited && window.gisInited) {
-            window.tokenClient.requestAccessToken({ prompt: '' });
+        if (gapiInited && gisInited) {
+            tokenClient.requestAccessToken({ prompt: '' });
         } else {
             alert("La API de Google no ha cargado completamente. Intente de nuevo en unos segundos.");
         }
@@ -566,14 +566,14 @@ async function loadMaterials() {
 
 function gapiLoaded() {
     gapi.load('client:picker', () => {
-        window.gapiInited = true;
+        gapiInited = true;
     });
 }
 
 function gisLoaded() {
-    window.tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: window.GOOGLE_CLIENT_ID,
-        scope: window.SCOPES,
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: PLATFORM_CONFIG.GOOGLE_CLIENT_ID,
+        scope: PLATFORM_CONFIG.SCOPES,
         callback: async (resp) => {
             if (resp.error !== undefined) {
                 throw (resp);
@@ -581,16 +581,16 @@ function gisLoaded() {
             showPicker(resp.access_token);
         },
     });
-    window.gisInited = true;
+    gisInited = true;
 }
 
 function showPicker(accessToken) {
-    if (window.gapiInited && window.gisInited) {
+    if (gapiInited && gisInited) {
         const view = new google.picker.View(google.picker.ViewId.DOCS);
         const picker = new google.picker.PickerBuilder()
             .setAppId(null)
             .setOAuthToken(accessToken)
-            .setDeveloperKey(window.GOOGLE_API_KEY)
+            .setDeveloperKey(PLATFORM_CONFIG.GOOGLE_API_KEY)
             .addView(view)
             .setCallback(pickerCallback)
             .build();
