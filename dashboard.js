@@ -38,20 +38,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     createMateriaForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const name = document.getElementById('name').value;
-        const semester = document.getElementById('semester').value;
-        const year = document.getElementById('year').value;
-        const units = document.getElementById('units').value;
-        const { error } = await supabaseClient.from('materias').insert({ name, semester, year, units });
-        if (error) {
-            alert(`Error al crear la materia: ${error.message}`);
-        } else {
-            alert("¡Materia creada con éxito!");
-            createMateriaForm.reset();
-            loadMaterias();
-        }
+    event.preventDefault();
+    const name = document.getElementById('name').value;
+    const semester = document.getElementById('semester').value;
+    const year = document.getElementById('year').value;
+    const units = document.getElementById('units').value;
+    // Captura los nuevos valores
+    const drive_folder_url = document.getElementById('drive_folder_url').value;
+    const google_sheet_url = document.getElementById('google_sheet_url').value;
+
+    const { error } = await supabaseClient.from('materias').insert({
+        name,
+        semester,
+        year,
+        units,
+        drive_folder_url: drive_folder_url || null, // Guardar como null si está vacío
+        google_sheet_url: google_sheet_url || null  // Guardar como null si está vacío
     });
+    if (error) {
+        alert(`Error al crear la materia: ${error.message}`);
+    } else {
+        alert("¡Materia creada con éxito!");
+        createMateriaForm.reset();
+        loadMaterias();
+    }
+    });
+
 });
 
 async function loadMaterias() {
