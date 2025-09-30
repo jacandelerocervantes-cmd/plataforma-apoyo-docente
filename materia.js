@@ -1,6 +1,3 @@
-// AHORA ESTE ARCHIVO NO TIENE NINGUNA CLAVE O CONFIGURACIÓN.
-// TOMA LOS VALORES DE 'config.js' QUE SE CARGA ANTES.
-
 // --- ESTADO Y VARIABLES GLOBALES ---
 let currentMateriaId = null;
 let activeSessionId = null;
@@ -109,8 +106,8 @@ function setupEventListeners() {
         handleSaveEvaluationGrades(currentGradingEvaluationId);
     });
     addMaterialBtn.addEventListener('click', () => {
-        if (gapiInited && gisInited) {
-            tokenClient.requestAccessToken({ prompt: '' });
+        if (window.gapiInited && window.gisInited) {
+            window.tokenClient.requestAccessToken({ prompt: '' });
         } else {
             alert("La API de Google no ha cargado completamente. Intente de nuevo en unos segundos.");
         }
@@ -566,16 +563,17 @@ async function loadMaterials() {
 }
 
 // --- LÓGICA DE GOOGLE PICKER API ---
+
 function gapiLoaded() {
     gapi.load('client:picker', () => {
-        gapiInited = true;
+        window.gapiInited = true;
     });
 }
 
 function gisLoaded() {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: SCOPES,
+    window.tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: window.GOOGLE_CLIENT_ID,
+        scope: window.SCOPES,
         callback: async (resp) => {
             if (resp.error !== undefined) {
                 throw (resp);
@@ -583,16 +581,16 @@ function gisLoaded() {
             showPicker(resp.access_token);
         },
     });
-    gisInited = true;
+    window.gisInited = true;
 }
 
 function showPicker(accessToken) {
-    if (gapiInited && gisInited) {
+    if (window.gapiInited && window.gisInited) {
         const view = new google.picker.View(google.picker.ViewId.DOCS);
         const picker = new google.picker.PickerBuilder()
             .setAppId(null)
             .setOAuthToken(accessToken)
-            .setDeveloperKey(GOOGLE_API_KEY)
+            .setDeveloperKey(window.GOOGLE_API_KEY)
             .addView(view)
             .setCallback(pickerCallback)
             .build();
