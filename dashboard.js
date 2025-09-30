@@ -1,16 +1,14 @@
 // --- CONFIGURACIÓN DE SUPABASE ---
-const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co'; // Reemplaza con tu URL
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';     
+const supabaseUrl = 'https://pyurfviezihdfnxfgnxw.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dXJmdmllemloZGZueGZnbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5OTAwMzksImV4cCI6MjA3NDU2NjAzOX0.-0SeMLWmNPCk4i8qg0-tHhpftBj2DMH5t-bO87Cef2c';
 
 // FORZAR LA PERSISTENCIA DE SESIÓN
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
     auth: {
         persistSession: true,
-        storage: window.localStorage, 
+        storage: window.localStorage,
     }
 });
-
-const SETUP_DRIVE_FUNCTION_URL = 'https://pyurfviezihdfnxfgnxw.supabase.co/functions/v1/setup-drive-folder'; 
 
 // --- ESTADO GLOBAL Y ELEMENTOS DEL DOM ---
 const logoutButton = document.getElementById('logout-button');
@@ -18,99 +16,39 @@ const createMateriaForm = document.getElementById('create-materia-form');
 const materiasGrid = document.getElementById('materias-grid');
 const teacherNameElement = document.getElementById('teacher-name');
 
-let isDashboardInitialized = false; 
-
-// --- FUNCIONES AUXILIARES DE DRIVE ---
-
-async function setupUserDrive(session) {
-    const googleAccessToken = session.provider_token;
-    console.log("Intento de configuración de Drive. Token de Google (provider_token) presente:", !!googleAccessToken); 
-
-    if (!googleAccessToken) {
-        console.warn("No se encontró el token de acceso de Google. No se puede configurar Drive.");
-        return;
-    }
-
-    try {
-        const response = await fetch(SETUP_DRIVE_FUNCTION_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${googleAccessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || `Error del servidor: ${response.status}`);
-        }
-
-        console.log("✅ RESPUESTA EXITOSA DE LA FUNCIÓN setupDrive:", data);
-        
-    } catch (error) {
-        console.error("❌ ERROR AL LLAMAR A LA FUNCIÓN setupDrive:", error.message);
-    }
-}
-
-
 // --- LÓGICA DE INICIALIZACIÓN ---
 
 function initializeDashboard(session) {
-    if (isDashboardInitialized) return; 
-    
     const user = session.user;
     const displayName = user.user_metadata?.full_name || user.email;
     teacherNameElement.textContent = displayName;
-
-    const isGoogleUser = user.app_metadata.provider === 'google';
-    const hasProviderToken = session.provider_token; 
-    
-    console.log(`Debug de sesión: esGoogleUser=${isGoogleUser}, tieneProviderToken=${!!hasProviderToken}`);
-
-    if (isGoogleUser && hasProviderToken) {
-        console.log("Detectado inicio de sesión de Google. Configurando Drive...");
-        setupUserDrive(session);
-    } else {
-        console.warn("No se llama a setupDrive. (Token de Drive no presente en la sesión)");
-    }
-
     loadMaterias();
-    isDashboardInitialized = true; 
 }
 
 
-// --- MANEJO DE LA SESIÓN: LISTENER CRÍTICO CORREGIDO ---
+// --- MANEJO DE LA SESIÓN ---
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
-    console.log(`Evento de Auth: ${event}, Sesión: ${!!session}`);
-
     if (session) {
-        setTimeout(() => initializeDashboard(session), 100); 
+        initializeDashboard(session);
     } else {
-        if (event === 'SIGNED_OUT') {
-             window.location.href = '/index.html'; 
-        }
+        window.location.href = '/index.html';
     }
 });
 
 
 // --- LÓGICA DE EVENTOS DEL DOM ---
 
-document.addEventListener('DOMContentLoaded', async () => {
-    
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        initializeDashboard(session);
-    }
-    
+document.addEventListener('DOMContentLoaded', () => {
+    // Configuración del botón de Cerrar Sesión
     logoutButton.addEventListener('click', async () => {
         const { error } = await supabaseClient.auth.signOut();
         if (error) {
             console.error("Error al cerrar sesión:", error);
-        } 
+        }
     });
 
+    // Configuración del formulario de Creación de Materia
     createMateriaForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
@@ -121,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const { error } = await supabaseClient
             .from('materias')
-            .insert({ 
+            .insert({
                 name: name,
                 semester: semester,
                 year: year,
@@ -130,8 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (error) {
             console.error("Error al crear materia:", error);
-            alert(`Error al crear la materia: ${error.message || 'Verifica la consola para más detalles.'}`);
+            alert(`Error al crear la materia: ${error.message}`);
         } else {
+            alert("¡Materia creada con éxito!");
             createMateriaForm.reset();
             loadMaterias();
         }
@@ -139,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// --- LÓGICA DE MATERIAS ---
+// --- LÓGICA DE CARGA DE MATERIAS ---
 
 async function loadMaterias() {
     const { data: materias, error } = await supabaseClient
@@ -152,13 +91,13 @@ async function loadMaterias() {
         return;
     }
 
-    materiasGrid.innerHTML = ''; 
+    materiasGrid.innerHTML = '';
 
     materias.forEach(materia => {
         const cardLink = document.createElement('a');
-        cardLink.href = `materia.html?id=${materia.id}`; 
+        cardLink.href = `materia.html?id=${materia.id}`;
         cardLink.classList.add('materia-card-link');
-        
+
         if (materia.is_suspended) {
             cardLink.classList.add('suspended');
         }

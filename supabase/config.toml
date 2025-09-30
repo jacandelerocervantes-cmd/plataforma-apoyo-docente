@@ -1,7 +1,0 @@
-[functions.setup-drive-folder]
-enabled = true
-verify_jwt = true
-import_map = "./functions/setup-drive-folder/deno.json
-entrypoint = "./functions/setup-drive-folder/index.ts"
-[auth.external.google]
-enabled = true 
